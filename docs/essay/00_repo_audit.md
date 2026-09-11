@@ -11,7 +11,7 @@
 |---|---|---|
 | 요청 저장소 명칭 | `anti-paper` | 원격 식별 불가 (GitHub API 404) |
 | 로컬 작업 경로 | `<로컬 작업 경로>` | 현재 작업공간 |
-| 원격 origin | `https://github.com/4dong/Anti-paper.git` | remote 변경 금지 원칙 준수 |
+| 원격 origin | `https://github.com/4dong/withHodu.git` | remote 변경 금지 원칙 준수 |
 | 기준 브랜치 | `main` | 최신 커밋 추적 중 |
 | HEAD 커밋 | `21617450b6f07d92fc29f187778244a61053647e` | feat(key_manager): add native .env dual-sync... |
 

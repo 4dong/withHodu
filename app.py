@@ -1,5 +1,5 @@
 """
-Antigravity Scholar: Clean, Minimalist Core Skeleton
+호두랑 (withHodu): paper reader, library, and essay archive
 Google Scholar Search & Authentic Moonlight 3:1 Split Page Reader
 """
 
@@ -11,8 +11,8 @@ import streamlit as st
 
 # Set Streamlit Page Configuration
 st.set_page_config(
-    page_title="Antigravity Scholar",
-    page_icon="🛰️",
+    page_title="호두랑",
+    page_icon="🐶",
     layout="wide",
     initial_sidebar_state="auto"
 )

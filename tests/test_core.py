@@ -1,5 +1,5 @@
 """
-Integration Test for Antigravity Scholar Core Modules
+Integration Test for withHodu Core Modules
 """
 
 import os

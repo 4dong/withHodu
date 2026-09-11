@@ -34,7 +34,7 @@ def render_sidebar(
 ) -> Dict[str, Any]:
     """Renders comprehensive sidebar with Prompt Customization, Multi-Engine Selection, and Workspace Switcher."""
     
-    st.sidebar.title("Anti-paper")
+    st.sidebar.title("호두랑")
 
     # 🌐 Top-Level Workspace Switcher (Paper vs Essay)
     current_ws = st.session_state.get("current_workspace", "paper")
