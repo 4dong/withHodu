@@ -1,0 +1,46 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment and secrets
+.env
+.env.*
+.streamlit/secrets.toml
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Scratch & temporary files
+scratch/
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Paper & essay archives (personal data: never commit)
+# Defaults live outside the repo (~/PaperArchive, ~/EssayArchive); these guard in-repo copies.
+PaperArchive/
+EssayArchive/
+*.pdf
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.zip
+.gemini_paper_keys.json
+
+# Local agent skills (not part of the app)
+.agents/

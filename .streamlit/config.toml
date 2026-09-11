@@ -1,0 +1,18 @@
+[server]
+runOnSave = true
+fileWatcherType = "poll"
+headless = false
+
+[runner]
+fastReruns = true
+
+[client]
+toolbarMode = "minimal"
+
+[theme]
+base = "light"
+primaryColor = "#2563EB"
+backgroundColor = "#F6F7F9"
+secondaryBackgroundColor = "#EEF1F5"
+textColor = "#20242C"
+font = "sans serif"
