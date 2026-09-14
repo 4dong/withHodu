@@ -47,3 +47,6 @@ EssayArchive/
 
 # Animation delivery bundle: duplicates assets/hodu/animations, docs and scripts
 assets/hodu/hodu-animation-v1.zip
+
+# Personal AI assistant instructions (kept locally, not part of the project)
+GEMINI.md
