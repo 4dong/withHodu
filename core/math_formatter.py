@@ -41,37 +41,12 @@ class AcademicMathFormatter:
         (r"오메가", r"\omega"),
     ]
 
-    # Math unicode symbol to LaTeX mapping
-    UNICODE_MATH_MAP = {
-        "±": r"\pm",
-        "×": r"\times",
-        "÷": r"\div",
-        "·": r"\cdot",
-        "≈": r"\approx",
-        "≠": r"\neq",
-        "≤": r"\leq",
-        "≥": r"\geq",
-        "≪": r"\ll",
-        "≫": r"\gg",
-        "∈": r"\in",
-        "∉": r"\notin",
-        "⊂": r"\subset",
-        "⊆": r"\subseteq",
-        "∪": r"\cup",
-        "∩": r"\cap",
-        "→": r"\to",
-        "←": r"\leftarrow",
-        "⇒": r"\Rightarrow",
-        "⇐": r"\Leftarrow",
-        "↔": r"\leftrightarrow",
-        "∇": r"\nabla",
-        "∂": r"\partial",
-        "∞": r"\infty",
-        "∑": r"\sum",
-        "∏": r"\prod",
-        "∫": r"\int",
-        "√": r"\sqrt",
-    }
+    # $$display$$ or $inline$ math. Inline math has no space just inside its delimiters and its closing
+    # $ is not followed by a digit, so prices such as "$5" stay text.
+    MATH_TOKEN = re.compile(r"(\$\$[\s\S]+?\$\$|(?<!\\)\$(?=[^\s$])[^$\n]*?[^\s$]\$(?!\d))")
+
+    # Characters that Markdown (and Streamlit's :color[...] / :emoji: syntax) would interpret.
+    MARKDOWN_SYNTAX = re.compile(r"([\\`*_{}\[\]()#+\-.!|~:$>])")
 
     @classmethod
     def format_math_in_text(cls, text: str) -> str:
@@ -139,6 +114,49 @@ class AcademicMathFormatter:
         return "".join(result_parts)
 
     @classmethod
+    def normalize_llm_math(cls, text: str) -> str:
+        """
+        Tidies LaTeX written by an LLM: \\( \\) and \\[ \\] become $ and $$, formulas get whitespace cleanup.
+        Prose is never rewritten; the transliteration heuristics of format_math_in_text are for Google output.
+        """
+        if not text or not isinstance(text, str):
+            return ""
+        parts = []
+        for token in cls.MATH_TOKEN.split(text):
+            if not token:
+                continue
+            if cls.MATH_TOKEN.fullmatch(token):
+                parts.append(cls._clean_inner_math(token))
+            else:
+                token = re.sub(r"\\\[([\s\S]+?)\\\]", lambda m: "$$" + m.group(1).strip() + "$$", token)
+                parts.append(re.sub(r"\\\(([\s\S]+?)\\\)", lambda m: "$" + m.group(1).strip() + "$", token))
+        return "".join(parts)
+
+    @classmethod
+    def to_markdown(cls, text: str) -> str:
+        """
+        Markdown for Streamlit, whose bundled KaTeX renders $...$ and $$...$$: formulas stay LaTeX
+        (display math on its own lines) and every other character is escaped so it reads literally.
+        """
+        if not text or not isinstance(text, str):
+            return ""
+        parts = []
+        for token in cls.MATH_TOKEN.split(text):
+            if not token:
+                continue
+            if cls.MATH_TOKEN.fullmatch(token):
+                if token.startswith("$$"):
+                    inner = re.sub(r"\n\s*\n", "\n", token[2:-2].strip())  # a blank line would end the formula
+                    if inner:
+                        parts.append("\n\n$$\n" + inner + "\n$$\n\n")
+                else:
+                    parts.append(token)
+            else:
+                literal = html.escape(re.sub(r"\s+", " ", token), quote=False)
+                parts.append(cls.MARKDOWN_SYNTAX.sub(r"\\\1", literal))
+        return re.sub(r"[ \t]*\n\n+[ \t]*", "\n\n", "".join(parts)).strip()
+
+    @classmethod
     def _clean_inner_math(cls, math_token: str) -> str:
         """Sanitizes inner LaTeX math strings, fixing broken backslashes and spacing."""
         if not math_token:
@@ -166,10 +184,8 @@ class AcademicMathFormatter:
         """Transforms broken academic symbols, Greek phonetics, and math expressions into LaTeX notation."""
         t = text
 
-        # 1. Unicode Math Symbols normalization
-        for sym, lat in cls.UNICODE_MATH_MAP.items():
-            if sym in t:
-                t = t.replace(sym, f" {lat} ")
+        # Unicode math symbols (→, ×, ·) stay as they are: they render as text, while a bare LaTeX
+        # command outside $...$ would show up as raw "\\to".
 
         # 1. Variance / SDE / Diffusion terms (Highest precedence to avoid partial word split)
         t = re.sub(r"(?:[σ]|\\\\sigma|sigma)\s*2\s*t\s*2\s*\(\s*1\s*-\s*t\s*\)", r"$\\sigma^2 t^2(1 - t)$", t)
@@ -344,7 +360,7 @@ class AcademicMathFormatter:
         text = re.sub(r"(?<!\$)\$\s*\+\s*\$(?!\$)", " + ", text)
         text = re.sub(r"(?<!\$)\$\s*-\s*\$(?!\$)", " - ", text)
         text = re.sub(r"(?<!\$)\$\s*=\s*\$(?!\$)", " = ", text)
-        # Remove empty inline math with spaces `$ $`, preserving `$$`
-        text = re.sub(r"(?<!\$)\$\s+\$(?!\$)", "", text)
+        # Remove whitespace-only inline math `$ $`; neighbouring formulas such as "$x$ $y$" stay separate
+        text = re.sub(r"(?<![\$\S])\$\s+\$(?![\$\S])", " ", text)
         return text
 

@@ -124,9 +124,9 @@ class TestVisualHighlighter(unittest.TestCase):
         self.assertIn('left:10.0%', html_out)
         self.assertIn('width:80.0%', html_out)
         self.assertIn('height:12.0%', html_out)
-        self.assertIn('onmouseenter=', html_out)
-        self.assertIn('onmouseleave=', html_out)
-        self.assertIn('onclick=', html_out)
+        # Event wiring is delegated: React rejects string event attributes (error #231).
+        self.assertNotIn('onmouse', html_out)
+        self.assertNotIn('onclick=', html_out)
         self.assertIn('<span class="pdf-hl-badge">[3]</span>', html_out)
 
     def test_render_overlay_canvas(self):
