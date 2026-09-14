@@ -339,7 +339,27 @@ def _render_essay_sidebar() -> Dict[str, Any]:
 
 
 
+def _render_notebook_export():
+    from core.notebook_export import DEFAULT_NOTEBOOK_ROOT, build_notebook_folder, reveal_folder
+    from ui.essay.workspace import get_or_create_essay_repo
+
+    st.caption("서재의 논문 PDF는 `논문/`에, 자소서는 `자소서/제목.txt`로 모읍니다. 각 폴더의 파일을 모두 골라 Gemini 노트북에 한 번에 올리세요.")
+    if st.button("업로드 폴더 새로 모으기", key="btn_build_notebook_folder", type="primary", use_container_width=True):
+        res = build_notebook_folder(ArchiveManager(), get_or_create_essay_repo())
+        st.success(f"논문 {res['papers']}편 · 자소서 {res['essays']}건을 모았습니다.")
+        if res["skipped_papers"]:
+            st.caption(f"PDF가 없는 논문 {res['skipped_papers']}편은 제외했습니다.")
+        if res["removed"]:
+            st.caption(f"서재에서 빠진 파일 {res['removed']}개를 정리했습니다.")
+    if st.button("폴더 열기", key="btn_reveal_notebook_folder", use_container_width=True):
+        if not os.path.isdir(DEFAULT_NOTEBOOK_ROOT) or not reveal_folder(DEFAULT_NOTEBOOK_ROOT):
+            st.warning("먼저 업로드 폴더를 모아 주세요.")
+    st.caption(f"위치: `{DEFAULT_NOTEBOOK_ROOT}`", help="환경변수 NOTEBOOK_ARCHIVE_ROOT로 바꿀 수 있습니다.")
+
+
 def _render_maintenance_settings():
+    with st.sidebar.expander("Gemini 노트북 업로드", expanded=False):
+        _render_notebook_export()
     with st.sidebar.expander("화면 설정", expanded=False):
         motion_toggle()
     with st.sidebar.expander("고급 설정", expanded=False):
