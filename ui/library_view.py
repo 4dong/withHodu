@@ -13,6 +13,7 @@ from core.downloader import ArchiveManager
 from core.searcher import Paper
 from core.analyzer import MultiPaperComparativeAgent
 from ui.sidebar import engine_label
+from ui.hodu import page_header, section_intro, show_state, loading
 from core.translator import PaperTranslator
 from core.parser import PaperPDFParser
 from core.key_manager import KeyManager
@@ -35,45 +36,19 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
     # -------------------------------------------------------------
     # 🍎 2. Apple Store Hero Section (Massive Bold 36px Title)
     # -------------------------------------------------------------
-    col_hero_text, col_hero_btn = st.columns([3.8, 1.2])
-    with col_hero_text:
-        if active_folder == "_reports":
-            st.markdown(
-                """
-                <div class="apple-store-hero">
-                    <span class="apple-store-eyebrow">INTELLIGENCE VAULT</span>
-                    <div class="apple-store-title">AI 비교분석 보고서 보관함</div>
-                    <div class="apple-store-subtitle">선택한 논문들의 아키텍처, 벤치마크, 연구 진화 계보를 심층 비교한 보고서 컬렉션입니다.</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-        elif active_folder:
-            st.markdown(
-                f"""
-                <div class="apple-store-hero">
-                    <span class="apple-store-eyebrow">RESEARCH COLLECTION</span>
-                    <div class="apple-store-title">{active_folder} 서재</div>
-                    <div class="apple-store-subtitle">{active_folder} 주제로 분류된 총 {len(archive_mgr.list_papers_in_topic(active_folder))}편의 학술 논문 컬렉션입니다.</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-        else:
-            st.markdown(
-                """
-                <div class="apple-store-hero">
-                    <span class="apple-store-eyebrow">LIBRARY</span>
-                    <div class="apple-store-title">나의 서재</div>
-                    <div class="apple-store-subtitle">주제별로 모은 논문과 비교분석 보고서를 찾아봅니다.</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+    if active_folder == "_reports":
+        page_header("비교분석 보고서", "함께 읽은 논문들의 공통점과 차이를 모아두었어요.", "read", "호두랑 · 나의 서재")
+    elif active_folder:
+        page_header(f"{active_folder} 서재", f"이 주제로 모아 둔 논문 {len(archive_mgr.list_papers_in_topic(active_folder))}편을 꺼내 읽어요.", "organize", "호두랑 · 나의 서재")
+    else:
+        page_header("나의 서재", "호두와 모아 둔 논문을 다시 펼쳐요. 비교한 내용도 여기에서 만나요.", "read", "호두랑 · 읽고 모으기")
 
-    with col_hero_btn:
-        st.markdown("<div style='margin-top: 1.2rem;'></div>", unsafe_allow_html=True)
-        with st.popover("새 컬렉션", icon=":material/add:", use_container_width=True):
+    with st.container(key="library_toolbar"):
+        summary, action = st.columns([3, 1.2], vertical_alignment="center")
+        with summary:
+            st.markdown(f'<div class="h-library-summary"><strong>{len(all_papers)}</strong>편의 논문'
+                        f'<span>컬렉션 {len(topics)}개 · 보고서 {len(reports)}건</span></div>', unsafe_allow_html=True)
+        with action, st.popover("새 컬렉션", icon=":material/add:", use_container_width=True):
             st.markdown("##### 새 컬렉션 만들기")
             new_col_name = st.text_input("폴더 이름", placeholder="예: Diffusion Models", label_visibility="collapsed")
             if st.button("생성하기", key="btn_create_new_topic", type="primary", use_container_width=True) and new_col_name.strip():
@@ -116,28 +91,15 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
             col_white_grid, col_dark_featured = st.columns([2.85, 1.15])
 
             # 🖤 LEFT: High-Contrast Dark Featured Card (#000000)
-            with col_dark_featured:
+            with col_dark_featured, st.container(key="library_reports_card"):
                 st.markdown(
-                    f"""
-                    <div class="apple-dark-featured-card">
-                        <div>
-                            <span class="apple-store-eyebrow">분석 보고서</span>
-                            <div class="apple-dark-title">AI 비교분석 보고서</div>
-                            <div class="apple-dark-desc">
-                                여러 논문을 비교한 결과를 모아 봅니다.
-                            </div>
-                        </div>
-                        <div>
-                            <div class="apple-dark-pill-badge">
-                                보고서 {len(reports)}건
-                            </div>
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
+                    f'<div class="h-report-intro"><span class="apple-store-eyebrow">분석 보고서</span>'
+                    f'<h3>논문 사이의 연결을<br>발견해 보세요.</h3>'
+                    f'<p>여러 논문을 비교한 결과를<br>한곳에서 꺼내 볼 수 있어요.</p>'
+                    f'<span class="ap-badge">보고서 {len(reports)}건</span></div>',
+                    unsafe_allow_html=True,
                 )
-                st.markdown("<div style='margin-top: 0.6rem;'></div>", unsafe_allow_html=True)
-                if st.button("보고서 보관함 열기 ›", key="btn_open_reports_vault", type="secondary", use_container_width=True):
+                if st.button("보고서 보관함 열기", key="btn_open_reports_vault", type="secondary", use_container_width=True):
                     st.session_state["goodnotes_active_folder"] = "_reports"
                     st.rerun()
 
@@ -146,15 +108,15 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
                 st.markdown(
                     f"""
                     <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.8rem;">
-                        <span style="font-size: 1.35rem; font-weight: 800; color: #1D1D1F; letter-spacing: -0.02em;">연구 주제 컬렉션</span>
-                        <span style="font-size: 0.88rem; color: #606875; font-weight: 600;">{len(topics)}개 컬렉션</span>
+                        <span style="font-size: 1.35rem; font-weight: 800; color: #39392E; letter-spacing: -0.02em;">연구 주제 컬렉션</span>
+                        <span style="font-size: 0.88rem; color: #747366; font-weight: 600;">{len(topics)}개 컬렉션</span>
                     </div>
                     """,
                     unsafe_allow_html=True
                 )
 
                 if not topics:
-                    st.info("아직 컬렉션이 없습니다. 논문 검색에서 논문을 열면 검색 주제별 컬렉션에 자동으로 보관됩니다.")
+                    show_state("첫 논문을 모아볼까요?", "논문 검색에서 논문을 열면 주제별 컬렉션에 자동으로 보관해요.", "organize", "empty")
                 else:
                     cols_per_row = 2
                     for r_idx in range(0, len(topics), cols_per_row):
@@ -164,15 +126,15 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
                         for c_idx, t in enumerate(row_topics):
                             with f_cols[c_idx]:
                                 t_papers = archive_mgr.list_papers_in_topic(t)
-                                
+
                                 # Pure White Borderless Card (#FFFFFF) with Soft Elevation
-                                with st.container(border=True):
+                                with st.container(border=True, key=f"library_collection_{r_idx}_{c_idx}"):
                                     col_f_name, col_f_del = st.columns([4, 1])
                                     with col_f_name:
                                         st.markdown(
                                             f"""
-                                            <span class="apple-store-eyebrow" style="color: #606875; font-size: 0.72rem; margin-bottom: 0.1rem;">COLLECTION</span>
-                                            <div class="apple-product-topic-name">{t}</div>
+                                            <span class="apple-store-eyebrow" style="color: #747366; font-size: 0.72rem; margin-bottom: 0.1rem;">컬렉션</span>
+                                            <div class="apple-product-topic-name" title="{html_mod.escape(str(t))}">{html_mod.escape(str(t))}</div>
                                             """,
                                             unsafe_allow_html=True
                                         )
@@ -188,7 +150,7 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
                                             st.rerun()
 
                                     st.markdown(f"<div class='apple-product-price-tag'>보관된 학술 논문 {len(t_papers)}편</div>", unsafe_allow_html=True)
-                                    
+
                                     if st.button(f"컬렉션 열기 ›", key=f"btn_open_f_{t}_{r_idx}_{c_idx}", type="secondary", use_container_width=True):
                                         st.session_state["goodnotes_active_folder"] = t
                                         st.rerun()
@@ -201,8 +163,8 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
             st.markdown(
                 """
                 <div style="margin-bottom: 1.2rem;">
-                    <span class="apple-store-eyebrow">RECENT PAPERS</span>
-                    <div style="font-size: 1.6rem; font-weight: 800; color: #1D1D1F; letter-spacing: -0.025em;">최근 연구 논문 서재</div>
+                    <span class="apple-store-eyebrow">최근에 모은 논문</span>
+                    <div style="font-size: 1.6rem; font-weight: 800; color: #39392E; letter-spacing: -0.025em;">최근 연구 논문 서재</div>
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -221,7 +183,7 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
                     with st.container(border=True):
                         col_r_icon, col_r_info, col_r_actions = st.columns([0.6, 3.4, 1.8])
                         with col_r_icon:
-                            st.markdown("<div style='font-size: 0.75rem; font-weight: 700; color: #2563EB; text-align: center; padding-top: 0.6rem;'>보고서</div>", unsafe_allow_html=True)
+                            st.markdown("<div style='font-size: 0.75rem; font-weight: 700; color: #3F5947; text-align: center; padding-top: 0.6rem;'>보고서</div>", unsafe_allow_html=True)
                         with col_r_info:
                             st.markdown(f"#### {r_meta.get('title')}")
                             st.caption(f"{r_meta.get('created_at')} · {r_meta.get('engine')} · 논문 {r_meta.get('paper_count')}편")
@@ -233,7 +195,7 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
                             with st.popover("보고서 보기", use_container_width=True, key=f"view_rep_card_{r_id}_{idx}"):
                                 if full_rep:
                                     st.markdown(full_rep.get("markdown"), unsafe_allow_html=True)
-                            
+
                             st.download_button(
                                 "Markdown 다운로드",
                                 data=report_md_text,
@@ -254,11 +216,11 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
             # Inside a specific topic folder: Render all papers in this folder
             # ------------------------------------------------------------------------------
             folder_papers = archive_mgr.list_papers_in_topic(active_folder)
-            
+
             col_f_header, col_f_batch_move, col_f_batch_del = st.columns([2.5, 1.3, 1.2])
             with col_f_header:
                 st.markdown(f"### {active_folder} ({len(folder_papers)}편)")
-            
+
             # Folder-level Batch Actions
             if folder_papers:
                 with col_f_batch_move:
@@ -293,16 +255,16 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
         st.markdown(
             """
             <div style="margin-bottom: 1.2rem;">
-                <span class="apple-store-eyebrow">INVENTORY</span>
-                <div style="font-size: 1.8rem; font-weight: 800; color: #1D1D1F; letter-spacing: -0.025em;">전체 논문</div>
-                <div style="font-size: 1rem; color: #606875;">보관한 모든 논문을 찾고, 이름을 바꾸거나 옮기고, 비교분석할 논문을 고릅니다.</div>
+                <span class="apple-store-eyebrow">모든 논문</span>
+                <div style="font-size: 1.8rem; font-weight: 800; color: #39392E; letter-spacing: -0.025em;">전체 논문</div>
+                <div style="font-size: 1rem; color: #747366;">보관한 모든 논문을 찾고, 이름을 바꾸거나 옮기고, 비교분석할 논문을 고릅니다.</div>
             </div>
             """,
             unsafe_allow_html=True
         )
 
         if not all_papers:
-            st.info("서재에 저장된 논문이 없습니다.")
+            show_state("아직 서재가 비어 있어요", "논문 검색에서 첫 논문을 골라 주세요. 호두가 잘 모아둘게요.", "rest", "empty")
         else:
             # Filter bar
             col_s_q, col_s_t, col_s_sort = st.columns([2.5, 1.3, 1.2])
@@ -365,8 +327,8 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
             """
             <div style="margin-bottom: 1.2rem;">
                 <span class="apple-store-eyebrow">LABORATORY</span>
-                <div style="font-size: 1.8rem; font-weight: 800; color: #1D1D1F; letter-spacing: -0.025em;">논문 비교분석</div>
-                <div style="font-size: 1rem; color: #606875;">선택한 논문의 구조, 평가 지표, 학습 방식을 비교한 보고서를 만듭니다.</div>
+                <div style="font-size: 1.8rem; font-weight: 800; color: #39392E; letter-spacing: -0.025em;">논문 비교분석</div>
+                <div style="font-size: 1rem; color: #747366;">선택한 논문의 구조, 평가 지표, 학습 방식을 비교한 보고서를 만듭니다.</div>
             </div>
             """,
             unsafe_allow_html=True
@@ -376,7 +338,7 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
 
         with sub_tab_new:
             all_paper_dict = {f"{p.get('title')} ({p.get('year')}년 / {p.get('topic')})": p for p in all_papers}
-            
+
             default_selected_titles = []
             for name, p_data in all_paper_dict.items():
                 if p_data.get("folder_path") in st.session_state.get("selected_library_paper_paths", []):
@@ -414,12 +376,7 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
             st.divider()
 
             if st.button("비교분석 시작", type="primary", disabled=(len(chosen_papers) < 1), use_container_width=True):
-                prog_holder = st.empty()
-                with prog_holder.container(border=True):
-                    st.markdown(f"#### 논문 {len(chosen_papers)}편을 비교하는 중…")
-                    st.markdown('<div class="shimmer-loader-bar"></div>', unsafe_allow_html=True)
-                    st.caption("초록, 본문 발췌, 평가 지표를 비교해 보고서를 작성하고 있습니다.")
-
+                with loading("호두가 논문을 비교하고 있어요", f"선택한 {len(chosen_papers)}편의 구조와 평가 결과를 나란히 살펴봐요.", "think"):
                     res = MultiPaperComparativeAgent.analyze_papers(
                         papers=chosen_papers,
                         custom_question=custom_q,
@@ -428,7 +385,6 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
                         system_prompt=None
                     )
 
-                prog_holder.empty()
 
                 if res.get("success"):
                     report_md = res.get("report_markdown")
@@ -443,14 +399,14 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
                         report_markdown=report_md,
                         engine_name=res.get("engine")
                     )
-                    st.success("비교분석 보고서를 만들어 서재에 저장했습니다.")
+                    show_state("비교한 내용을 정리했어요", "보고서를 서재에 저장했어요. 아래에서 읽거나 내려받을 수 있어요.", "done", "success")
                 else:
-                    st.error(f"비교분석 실패: {res.get('error')}")
+                    show_state("보고서를 만들지 못했어요", str(res.get("error") or "잠시 후 다시 시도해 주세요."), "think", "error")
 
             if "latest_comparison_report" in st.session_state and st.session_state["latest_comparison_report"]:
                 st.markdown("---")
                 st.markdown(f"**분석 엔진**: `{st.session_state.get('latest_comparison_engine')}`")
-                
+
                 with st.container(border=True):
                     st.markdown(st.session_state["latest_comparison_report"], unsafe_allow_html=True)
 
@@ -466,7 +422,7 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
 
         with sub_tab_history:
             if not reports:
-                st.info("저장된 비교분석 보고서가 없습니다.")
+                show_state("비교한 내용도 모아둘게요", "서재의 논문을 골라 비교분석을 시작하면 보고서를 여기에서 다시 볼 수 있어요.", "read", "empty")
             else:
                 for r_meta in reports:
                     r_id = r_meta.get("id")
@@ -495,7 +451,7 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
 def _render_bookshelf_grid(papers: List[Dict[str, Any]], archive_mgr: ArchiveManager, available_topics: List[str], prefix: str = "shelf", sidebar_config: Optional[Dict[str, Any]] = None):
     """Renders a grid of realistic floating digital book covers with live renaming, migration & shelf racks."""
     if not papers:
-        st.caption("표시할 논문이 없습니다.")
+        show_state("표시할 논문이 없어요", "다른 컬렉션을 열거나 검색 조건을 바꿔 보세요.", "rest", "empty")
         return
 
     cols_per_row = 4
@@ -614,16 +570,17 @@ def _open_paper_in_reader(folder_path: str, archive_mgr: ArchiveManager, meta_di
 
     pdf_path = os.path.join(folder_path, "paper.pdf")
     total_pages = PaperPDFParser.get_total_pages(pdf_path) if os.path.exists(pdf_path) else 1
-    
-    # Load 1st page translation
-    page_1_data = PaperPDFParser.get_single_page_data(pdf_path, 1, folder_path)
-    page_1_trans = PaperTranslator.translate_single_page(
-        page_data=page_1_data,
-        paper_title=meta_dict.get("title", ""),
-        engine=st.session_state.get("selected_translation_engine", PaperTranslator.SUPPORTED_ENGINES[0]),
-        custom_api_key=api_key,
-        custom_prompt=st.session_state.get("custom_llm_prompt")
-    )
+
+    with loading("호두가 서재에서 논문을 꺼내고 있어요", "첫 페이지를 읽을 준비를 하고 있어요.", "read"):
+        # Load 1st page translation
+        page_1_data = PaperPDFParser.get_single_page_data(pdf_path, 1, folder_path)
+        page_1_trans = PaperTranslator.translate_single_page(
+            page_data=page_1_data,
+            paper_title=meta_dict.get("title", ""),
+            engine=st.session_state.get("selected_translation_engine", PaperTranslator.SUPPORTED_ENGINES[0]),
+            custom_api_key=api_key,
+            custom_prompt=st.session_state.get("custom_llm_prompt")
+        )
 
     bundle = archive_mgr.load_paper_bundle(folder_path)
     bundle["total_pages"] = total_pages
@@ -632,3 +589,5 @@ def _open_paper_in_reader(folder_path: str, archive_mgr: ArchiveManager, meta_di
     st.session_state.current_paper_bundle = bundle
     st.session_state.current_page_num = 1
     st.session_state.page_translations = {1: page_1_trans}
+    st.session_state._active_translation_engine = st.session_state.get("selected_translation_engine", PaperTranslator.SUPPORTED_ENGINES[0])
+    st.session_state._active_custom_prompt = st.session_state.get("custom_llm_prompt")

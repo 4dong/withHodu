@@ -5,6 +5,7 @@ Main Workspace Coordinator for Essay Archive System.
 from __future__ import annotations
 import json
 import streamlit as st
+from ui.hodu import page_header, section_intro, loading, show_state
 from pathlib import Path
 
 from core.essay.repository import EssayRepository, DEFAULT_ESSAY_ARCHIVE_ROOT
@@ -26,9 +27,7 @@ def get_or_create_essay_repo() -> EssayRepository:
 def render_essay_workspace():
     repo = get_or_create_essay_repo()
 
-    st.markdown('<div class="ap-page-header"><h1>자기소개서 작업실</h1>'
-                '<p>자료를 모으고 검수한 뒤, 내 경험에 맞게 글을 다듬으세요.</p></div>',
-                unsafe_allow_html=True)
+    page_header("자기소개서 작업실", "사진 속 글부터 나의 초안까지, 호두와 차근차근 모으고 다듬어요.", "organize", "호두랑 · 나답게 쓰기")
 
     tab_lib, tab_import, tab_review, tab_search, tab_style, tab_settings = st.tabs([
         "보관함", "자료 추가", "전사 검수", "근거 검색", "문체 편집", "설정·백업"
@@ -50,7 +49,7 @@ def render_essay_workspace():
         render_style_view(repo)
 
     with tab_settings:
-        st.markdown("### 설정·백업")
+        section_intro("설정·백업", "모아 둔 글과 원본을 안전하게 챙겨두세요.", "작업실 관리")
 
         col_s1, col_s2 = st.columns(2)
         with col_s1:
@@ -58,9 +57,9 @@ def render_essay_workspace():
             st.caption("보관함의 글과 원본 이미지를 ZIP 파일 하나로 저장합니다.")
             if st.button("백업 만들기", use_container_width=True):
                 backup_dest = repo.exports_dir / "essay_archive_backup.zip"
-                with st.spinner("백업 생성 중..."):
+                with loading("호두가 자료를 챙기고 있어요", "원본과 글을 한 묶음으로 백업해요.", "organize"):
                     res = EssayBackupService.create_backup(repo, backup_dest)
-                st.success(f"백업 생성 완료! (원본 {res['sources_count']}개, {res['total_bytes'] / 1024:.1f} KB)")
+                show_state("자료를 모두 챙겼어요", f"원본 {res['sources_count']}개 · {res['total_bytes'] / 1024:.1f} KB. 아래에서 백업을 내려받으세요.", "done", "success")
                 with open(backup_dest, "rb") as bf:
                     st.download_button(
                         "백업 파일 다운로드",

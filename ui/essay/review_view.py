@@ -4,6 +4,7 @@ Review View: Transcription inspection, original photo comparison, and review app
 
 from __future__ import annotations
 import streamlit as st
+from ui.hodu import section_intro, show_state, loading, state_html
 from PIL import Image, ImageOps
 from typing import Optional, List, Dict, Any
 
@@ -16,8 +17,7 @@ from core.essay.transcription import get_active_ocr_provider
 
 
 def render_review_view(repo: EssayRepository):
-    st.markdown("### 전사 검수")
-    st.caption("사진에서 옮긴 글을 원본과 비교하고, 흐릿한 단어와 수치를 확인한 뒤 승인합니다.")
+    section_intro('전사 검수', '사진에서 옮긴 글을 원본과 비교하고, 흐릿한 단어와 수치를 확인한 뒤 승인합니다.', '02 · 원본 확인하기')
 
     # Check for pending OCR jobs in the background queue
     with repo.get_connection() as conn:
@@ -34,7 +34,7 @@ def render_review_view(repo: EssayRepository):
             if st.button("지금 실행", type="primary", key="run_pending_jobs_btn"):
                 job_mgr = JobManager(repo)
                 provider = get_active_ocr_provider()
-                with st.status("전사 작업을 실행하는 중…", expanded=True) as status_box:
+                with loading("호두가 사진 속 글을 옮기고 있어요", "아래에서 실제 작업 결과를 확인할 수 있어요.", "read"), st.status("전사 진행", expanded=True) as status_box:
                     done = 0
                     while True:
                         job = job_mgr.claim_next_job()
@@ -81,9 +81,9 @@ def render_review_view(repo: EssayRepository):
 
     if not filtered_meta:
         if view_mode == "unreviewed":
-            st.success("검수할 문항이 없습니다. 승인된 문서는 '전체'를 선택해 확인하세요.")
+            show_state("지금 확인할 문항은 없어요", "승인된 문서는 전체를 선택해 확인할 수 있어요.", "rest", "empty")
         else:
-            st.info("보관 중인 지원서 문서가 없습니다.")
+            show_state("아직 검수할 글이 없어요", "자료 추가에서 사진이나 문서를 먼저 올려 주세요.", "rest", "empty")
         return
 
     doc_options = {}

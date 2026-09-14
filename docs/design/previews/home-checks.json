@@ -1,0 +1,25 @@
+{
+  "keyboardFocus": {
+    "tag": "BUTTON",
+    "label": "논문 찾으러 가기 →",
+    "outline": "solid"
+  },
+  "desktop": {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "buttons": [
+      "논문 찾으러 가기 →",
+      "서재 들어가기 →",
+      "글 정리하러 가기 →"
+    ],
+    "imageLoaded": true
+  },
+  "mobile": {
+    "width": 390,
+    "scrollWidth": 390,
+    "overflows": []
+  },
+  "reducedMotion": "none",
+  "searchNavigation": true,
+  "homeReturn": true
+}

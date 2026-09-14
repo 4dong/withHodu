@@ -8,6 +8,8 @@ from typing import Dict, Any, Optional
 from core.downloader import ArchiveManager, DEFAULT_ARCHIVE_ROOT
 from core.key_manager import KeyManager
 from core.translator import PaperTranslator, DEFAULT_ACADEMIC_PROMPT
+from ui.home import go_home, enter_workspace, SEARCH_MODE, LIBRARY_MODE
+from ui.hodu import sidebar_brand, motion_toggle
 
 def engine_label(engine: str) -> str:
     """Display name for an engine value without its leading emoji."""
@@ -34,31 +36,33 @@ def render_sidebar(
 ) -> Dict[str, Any]:
     """Renders comprehensive sidebar with Prompt Customization, Multi-Engine Selection, and Workspace Switcher."""
     
-    st.sidebar.title("호두랑")
+    with st.sidebar:
+        sidebar_brand()
 
-    # 🌐 Top-Level Workspace Switcher (Paper vs Essay)
     current_ws = st.session_state.get("current_workspace", "paper")
-    chosen_ws = st.sidebar.radio(
-        "작업공간 선택",
-        ["학술 논문", "자기소개서"],
-        index=0 if current_ws == "paper" else 1,
-        horizontal=True,
-        key="app_workspace_radio"
-    )
-    is_essay = (chosen_ws == "자기소개서")
-    st.session_state["current_workspace"] = "essay" if is_essay else "paper"
+    mode = st.session_state.get("paper_navigation", SEARCH_MODE)
+    active = "essay" if current_ws == "essay" else ("library" if mode == LIBRARY_MODE else "search")
+    with st.sidebar.container(key="main_navigation"):
+        for destination, label, icon in (
+            ("search", "논문검색", ":material/search:"),
+            ("library", "나의서재", ":material/book_2:"),
+            ("essay", "자소서", ":material/edit_document:"),
+        ):
+            st.button(
+                label,
+                icon=icon,
+                key=f"sidebar_nav_{destination}",
+                type="primary" if active == destination else "secondary",
+                use_container_width=True,
+                on_click=enter_workspace,
+                args=(destination,),
+            )
 
-    # If in Essay workspace, render dedicated essay sidebar controls
-    if is_essay:
+    st.sidebar.button("← 호두랑 시작 화면", key="sidebar_home", type="tertiary", on_click=go_home, use_container_width=True)
+    st.sidebar.divider()
+
+    if current_ws == "essay":
         return _render_essay_sidebar()
-
-    # 5. Search vs Visual Library Mode
-    mode = st.sidebar.radio(
-        "탐색",
-        ["🔍 논문 검색", "📚 나의 서재 (Visual Library & AI 분석)"],
-        format_func=lambda value: "논문 검색" if "검색" in value else "나의 서재",
-        index=0
-    )
 
     if "selected_translation_engine" not in st.session_state:
         st.session_state["selected_translation_engine"] = PaperTranslator.SUPPORTED_ENGINES[0]
@@ -336,6 +340,8 @@ def _render_essay_sidebar() -> Dict[str, Any]:
 
 
 def _render_maintenance_settings():
+    with st.sidebar.expander("화면 설정", expanded=False):
+        motion_toggle()
     with st.sidebar.expander("고급 설정", expanded=False):
         if st.button("캐시 초기화 및 새로고침", use_container_width=True, help="세션에 캐시된 이전 번역, BBox, 메모리 모듈을 완전 초기화하고 최신 코드로 즉시 다시 로드합니다."):
             st.session_state.page_translations = {}
@@ -348,4 +354,3 @@ def _render_maintenance_settings():
             except Exception:
                 pass
             st.rerun()
-

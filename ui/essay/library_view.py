@@ -4,6 +4,7 @@ Library View: Document cards, answer exploration, export (MD/TXT/ZIP), and soft 
 
 from __future__ import annotations
 import streamlit as st
+from ui.hodu import section_intro, show_state, loading, state_html
 import html
 from typing import Optional
 
@@ -11,8 +12,7 @@ from core.essay.repository import EssayRepository
 
 
 def render_essay_library_view(repo: EssayRepository):
-    st.markdown("### 보관함")
-    st.caption("모아 둔 자기소개서를 기업·직무·자료 구분별로 찾아봅니다.")
+    section_intro('보관함', '모아 둔 자기소개서를 기업·직무·자료 구분별로 찾아봅니다.', '모아 둔 글')
 
     # Filter Bar
     col_f1, col_f2, col_f3 = st.columns(3)
@@ -46,7 +46,7 @@ def render_essay_library_view(repo: EssayRepository):
     )
 
     if not filtered_docs:
-        st.info("조건에 맞는 문서가 없습니다. 필터를 바꾸거나 자료 추가 탭에서 문서를 등록하세요.")
+        show_state("아직 이곳에 담긴 글이 없어요", "필터를 바꾸거나 자료 추가에서 첫 문서를 등록해 주세요.", "organize", "empty")
         return
 
     # Calculate overall approval statistics

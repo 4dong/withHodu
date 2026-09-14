@@ -4,6 +4,7 @@ Search View: Hybrid keyword/vector retrieval and grounded RAG question answering
 
 from __future__ import annotations
 import streamlit as st
+from ui.hodu import section_intro, show_state, loading, state_html
 from typing import Optional, Dict, Any
 
 from core.essay.repository import EssayRepository
@@ -14,8 +15,7 @@ from core.key_manager import KeyManager
 
 
 def render_essay_search_view(repo: EssayRepository):
-    st.markdown("### 근거 검색")
-    st.caption("키워드나 질문으로 자기소개서를 찾고, 출처가 표시된 답변을 확인합니다.")
+    section_intro('근거 검색', '키워드나 질문으로 자기소개서를 찾고, 출처가 표시된 답변을 확인합니다.', '03 · 내 경험 찾아보기')
 
     # Unified Active Embedding Provider & RAG Generator (F06)
     embed_provider = get_active_embedding_provider()
@@ -62,25 +62,30 @@ def render_essay_search_view(repo: EssayRepository):
             )
 
     q = user_query.strip()
+    if run_search and not q:
+        st.info("찾고 싶은 경험이나 질문을 입력해 주세요.")
     cache_key = f"{q}:{comp_filter}:{col_filter}"
 
     # F10: Avoid duplicate search on widget reruns by caching results in session_state
-    if q and (run_search or ("search_results" not in st.session_state and "last_search_query" in st.session_state)):
-        st.session_state["last_search_query"] = q
+    if q and (run_search or ("essay_search_results" not in st.session_state and "essay_last_search_query" in st.session_state)):
+        st.session_state["essay_last_search_query"] = q
         filters: Dict[str, Any] = {}
         if comp_filter != "전체":
             filters["company"] = comp_filter
         if col_filter != "전체":
             filters["collection"] = col_filter
 
-        with st.spinner("관련 자료를 찾고 답변을 만드는 중…"):
+        with loading("호두가 근거를 찾고 있어요", "보관한 자료를 확인하고 출처와 함께 답변을 준비해요.", "search"):
             grounded_answer = rag_svc.answer_question(q, filters=filters, max_evidence=5)
             search_response = search_engine.search(q, filters=filters, limit=5)
-            st.session_state["search_results"] = (grounded_answer, search_response)
-            st.session_state["current_cache_key"] = cache_key
+            st.session_state["essay_search_results"] = (grounded_answer, search_response)
+            st.session_state["essay_current_cache_key"] = cache_key
 
-    if "search_results" in st.session_state and st.session_state.get("last_search_query"):
-        grounded_answer, search_response = st.session_state["search_results"]
+    if "essay_search_results" not in st.session_state:
+        show_state("어떤 경험을 찾아볼까요?", "승인한 자료에서 관련 문단과 출처를 함께 찾아드려요.", "search", "empty")
+
+    if "essay_search_results" in st.session_state and st.session_state.get("essay_last_search_query"):
+        grounded_answer, search_response = st.session_state["essay_search_results"]
 
         # 1. Grounded RAG Answer Box
         with st.container(border=True):
@@ -89,7 +94,7 @@ def render_essay_search_view(repo: EssayRepository):
                 st.markdown("#### 답변")
             with col_h2:
                 mode_badge = "Gemini 답변" if has_key else "오프라인 답변"
-                st.caption(f"<div style='text-align:right;'>{mode_badge}</div>", unsafe_allow_html=True)
+                st.caption(mode_badge)
 
             if grounded_answer.status == "answered":
                 st.markdown(grounded_answer.answer)

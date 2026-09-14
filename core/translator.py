@@ -63,12 +63,17 @@ class PaperTranslator:
         page_num = page_data.get("page_num", 1)
         stitched_prefix = page_data.get("stitched_prefix", "").strip()
 
+        # Display formulas are shown as the original rendering, never translated; they rejoin the pairs in page order.
+        page_blocks = blocks
+        blocks = [b for b in page_blocks if b.get("kind") != "equation"]
         if not blocks:
-            return {
+            return cls._with_formulas({
                 "page_num": page_num,
-                "engine": "Empty Page",
+                "engine": "원본 수식" if page_blocks else "Empty Page",
+                "is_fallback": False,
+                "target_engine": engine,
                 "pairs": []
-            }
+            }, page_blocks)
 
         # Seamless cross-page sentence stitching
         extracted_texts = [b["text"] for b in blocks]
@@ -124,81 +129,111 @@ class PaperTranslator:
             result = cls._translate_with_google(extracted_texts, blocks, page_num)
             result["is_fallback"] = False
 
-        # Post-processing: Normalize all math formulas in Korean translation pairs into clean LaTeX
+        # Post-processing: an LLM already writes LaTeX, so its output only gets delimiter and formula
+        # cleanup; Google output needs the heuristics that rebuild math from transliterated symbols.
         if result and "pairs" in result:
             result["target_engine"] = engine
             result["page_num"] = page_num
+            normalize = (AcademicMathFormatter.normalize_llm_math if result.get("model_used")
+                         else AcademicMathFormatter.format_math_in_text)
             for p in result["pairs"]:
-                if "ko" in p and p["ko"]:
+                if p.get("ko"):
                     try:
-                        if hasattr(AcademicMathFormatter, "format_math_in_text"):
-                            p["ko"] = AcademicMathFormatter.format_math_in_text(p["ko"])
+                        p["ko"] = normalize(p["ko"])
                     except Exception as e:
                         print(f"Math post-processing defensive catch: {e}")
 
+        return cls._with_formulas(result, page_blocks)
+
+    @staticmethod
+    def _with_formulas(result: Dict[str, Any], page_blocks: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Places formula pairs (original renderings) between the translated pairs in page order, renumbered."""
+        if not result or "pairs" not in result or not any(b.get("kind") == "equation" for b in page_blocks):
+            return result
+        translated = iter(result["pairs"])
+        pairs = []
+        for block in page_blocks:
+            if block.get("kind") == "equation":
+                pairs.append({"en": "", "ko": "", "kind": "equation", "bbox": block.get("bbox"),
+                              "image_path": block.get("image_path"), "image_width_pt": block.get("image_width_pt"),
+                              "source_text": block.get("text", "")})
+            else:
+                pair = next(translated, None)
+                if pair is not None:
+                    pairs.append(pair)
+        pairs.extend(translated)
+        for index, pair in enumerate(pairs, 1):
+            pair["id"] = index
+        result["pairs"] = pairs
         return result
+
+    # JSON escapes that really start a LaTeX command (\\text, \\frac, \\beta, \\nabla, \\rho, \\odot, \\{).
+    # Kept as JSON: escaped backslashes, unicode escapes, quotes, and \\b \\f \\n \\r \\t not followed by a letter.
+    _JSON_ESCAPE = re.compile(r'\\\\|\\u[0-9a-fA-F]{4}|\\["/]|\\[bfnrt](?![A-Za-z])|\\')
+
+    @classmethod
+    def _repair_latex_backslashes(cls, raw: str) -> str:
+        """Doubles lone backslashes so LaTeX written with single backslashes survives json.loads."""
+        return cls._JSON_ESCAPE.sub(lambda m: m.group(0) if len(m.group(0)) > 1 else "\\\\", raw)
+
+    @staticmethod
+    def _translation_list(candidate: str) -> Optional[List[str]]:
+        """The translation strings of a JSON object or array, or None when nothing decodes."""
+        for pattern in (None, r'\{[\s\S]*\}', r'\[[\s\S]*\]'):
+            match = re.search(pattern, candidate) if pattern else None
+            if pattern and not match:
+                continue
+            try:
+                parsed = json.loads(match.group(0) if match else candidate)
+            except ValueError:
+                continue
+            if isinstance(parsed, dict):
+                for key in ("translations", "korean_translations", "results", "data", "paragraphs"):
+                    if isinstance(parsed.get(key), list):
+                        return [str(item).strip() for item in parsed[key]]
+                if parsed and all(str(k).isdigit() for k in parsed):
+                    return [str(parsed[str(i)]).strip() for i in range(1, len(parsed) + 1) if str(i) in parsed]
+            elif isinstance(parsed, list):
+                return [str(item).strip() for item in parsed]
+        return None
 
     @classmethod
     def _parse_json_translations(cls, text_out: str, expected_count: int) -> List[str]:
         """
-        Robustly parses JSON translation responses with multiple defensive fallback strategies.
-        Handles Markdown code blocks, nested JSONs, raw arrays, and string fallbacks.
+        Parses the model's translation list.
+        LaTeX with single backslashes is repaired before decoding (otherwise \\text turns into a tab and
+        \\odot makes the JSON invalid), and a response cut off by the output limit keeps its complete
+        items. Undecodable JSON is a failed attempt, never shown as a translation.
         """
         cleaned = text_out.strip()
-
-        # 1. Strip Markdown ```json and ``` code block wrappers
         if "```" in cleaned:
             code_block_match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', cleaned, re.IGNORECASE)
             if code_block_match:
                 cleaned = code_block_match.group(1).strip()
+        repaired = cls._repair_latex_backslashes(cleaned)
 
-        # 2. Try direct JSON parsing
-        try:
-            parsed = json.loads(cleaned)
-            if isinstance(parsed, dict):
-                for k in ["translations", "korean_translations", "results", "data", "paragraphs"]:
-                    if k in parsed and isinstance(parsed[k], list):
-                        return [str(item).strip() for item in parsed[k]]
-                if all(str(k).isdigit() for k in parsed.keys()):
-                    sorted_vals = [parsed[str(i)] for i in range(1, len(parsed) + 1) if str(i) in parsed]
-                    if sorted_vals:
-                        return [str(v).strip() for v in sorted_vals]
-            elif isinstance(parsed, list):
-                return [str(item).strip() for item in parsed]
-        except Exception:
-            pass
+        for candidate in dict.fromkeys((repaired, cleaned)):
+            found = cls._translation_list(candidate)
+            if found is not None:
+                return found
 
-        # 3. Regex JSON Object or Array Extraction
-        obj_match = re.search(r'\{[\s\S]*\}', cleaned)
-        if obj_match:
-            try:
-                parsed = json.loads(obj_match.group(0))
-                if isinstance(parsed, dict) and "translations" in parsed and isinstance(parsed["translations"], list):
-                    return [str(item).strip() for item in parsed["translations"]]
-            except Exception:
-                pass
+        start = re.search(r'"translations"\s*:\s*\[', repaired)
+        if start:
+            items = []
+            for literal in re.finditer(r'"(?:[^"\\]|\\.)*"', repaired[start.end():]):
+                try:
+                    items.append(str(json.loads(literal.group(0))).strip())
+                except ValueError:
+                    break
+            if items:
+                return items
 
-        arr_match = re.search(r'\[[\s\S]*\]', cleaned)
-        if arr_match:
-            try:
-                parsed = json.loads(arr_match.group(0))
-                if isinstance(parsed, list):
-                    return [str(item).strip() for item in parsed]
-            except Exception:
-                pass
+        if cleaned.startswith(("{", "[")):
+            return []
 
-        # 4. Line-by-line fallback (Numbered lines like '1. ...' or split by newlines)
-        lines = [line.strip() for line in cleaned.splitlines() if line.strip()]
-        cleaned_lines = []
-        for line in lines:
-            sub_line = re.sub(r'^(?:\[\d+\]|\d+[\.\)]|\-\s*)\s*', '', line).strip()
-            if sub_line:
-                cleaned_lines.append(sub_line)
-
-        if cleaned_lines:
-            return cleaned_lines
-
-        return []
+        # Plain-text answer: numbered lines or one paragraph per line.
+        lines = [re.sub(r'^(?:\[\d+\]|\d+[\.\)]|\-\s*)\s*', '', line.strip()).strip() for line in cleaned.splitlines()]
+        return [line for line in lines if line]
 
     @classmethod
     def _translate_with_gemini(
@@ -234,7 +269,7 @@ class PaperTranslator:
             "generationConfig": {
                 "responseMimeType": "application/json",
                 "temperature": 0.15,
-                "maxOutputTokens": 4096
+                "maxOutputTokens": 16384
             }
         }
         headers = {"Content-Type": "application/json"}
