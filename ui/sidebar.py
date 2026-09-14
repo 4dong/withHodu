@@ -58,6 +58,16 @@ def render_sidebar(
                 args=(destination,),
             )
 
+    if current_ws == "essay":
+        # Essay sections sit under the 자소서 entry instead of as tabs across the page.
+        from ui.essay.workspace import ESSAY_SECTIONS, current_essay_section, select_essay_section
+        section = current_essay_section()
+        with st.sidebar.container(key="essay_section_nav"):
+            for name, label, icon in ESSAY_SECTIONS:
+                st.button(label, icon=icon, key=f"essay_section_{name}",
+                          type="primary" if name == section else "tertiary",
+                          use_container_width=True, on_click=select_essay_section, args=(name,))
+
     st.sidebar.button("← 호두랑 시작 화면", key="sidebar_home", type="tertiary", on_click=go_home, use_container_width=True)
     st.sidebar.divider()
 
