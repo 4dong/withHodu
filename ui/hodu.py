@@ -10,6 +10,7 @@ import streamlit as st
 from ui.hodu_animations import animation_css, animation_html, BUSY_ANIMATIONS
 
 ASSET = Path(__file__).resolve().parents[1] / "assets/hodu/hodu-pixel-transparent-v1.png"
+SPINE_TEXTURE = Path(__file__).resolve().parents[1] / "assets/essay/book-spine.png"
 POSES = {"front", "fetch", "read", "organize", "search", "think", "done", "rest", "side"}
 
 
@@ -37,6 +38,9 @@ def apply_theme():
     if ASSET.is_file():
         st.html('<style>.hodu-pose{background-image:url("data:image/png;base64,'
                 + reference_data() + '")}</style>')
+    if SPINE_TEXTURE.is_file():
+        st.html('<style>.stApp{--spine-texture:url("data:image/png;base64,'
+                + _asset_data(str(SPINE_TEXTURE), SPINE_TEXTURE.stat().st_mtime_ns) + '")}</style>')
     if st.session_state.get("hodu_motion_preference", False):
         st.html('<style>.stApp *, .stApp *::before, .stApp *::after '
                 '{animation:none!important;transition:none!important;scroll-behavior:auto!important}</style>')
@@ -66,10 +70,15 @@ def page_header(title, description, pose="read", eyebrow="호두랑 · 나의 �
                 + '</p></div>' + portrait(pose, "large") + '</header>', unsafe_allow_html=True)
 
 
-def section_intro(title, description, step=None):
+def section_intro(title, description, step=None, pose=None):
     label = f'<span class="h-step">{html.escape(step)}</span>' if step else ''
-    st.markdown(f'<div class="h-section-intro">{label}<h2>{html.escape(title)}</h2>'
-                f'<p>{html.escape(description)}</p></div>', unsafe_allow_html=True)
+    copy = f'{label}<h2>{html.escape(title)}</h2><p>{html.escape(description)}</p>'
+    if pose:
+        # A section that opens the page carries Hodu beside its heading.
+        st.markdown(f'<div class="h-section-intro h-section-intro-hodu"><div>{copy}</div>'
+                    + portrait(pose, "large") + '</div>', unsafe_allow_html=True)
+    else:
+        st.markdown(f'<div class="h-section-intro">{copy}</div>', unsafe_allow_html=True)
 
 
 def state_html(title, detail="", pose="think", busy=False, tone="neutral"):

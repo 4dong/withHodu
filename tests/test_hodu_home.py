@@ -49,6 +49,24 @@ class HoduHomeTests(unittest.TestCase):
                 self.assertIn("나의 서재" if destination == "library" else "논문 검색",
                               self.at.session_state["paper_navigation"])
 
+    def test_essay_sections_live_in_the_sidebar(self):
+        self.at.button(key="hodu_enter_essay").click().run()
+        self.assertFalse(self.at.exception)
+        self.assertEqual(len(self.at.tabs), 0)
+        self.assertFalse(any("자기소개서 작업실" in m.value for m in self.at.markdown))
+        self.assertEqual(self.at.button(key="essay_section_library").proto.type, "primary")
+
+        self.at.button(key="essay_section_review").click().run()
+        self.assertFalse(self.at.exception)
+        self.assertEqual(self.at.button(key="essay_section_review").proto.type, "primary")
+        intros = [m.value for m in self.at.markdown if "h-section-intro" in m.value]
+        self.assertEqual(len(intros), 1)
+        self.assertIn("<h2>전사 검수</h2>", intros[0])
+        self.assertIn("hodu-read", intros[0])
+
+        self.at.button(key="sidebar_nav_search").click().run()
+        self.assertFalse(any(b.key == "essay_section_library" for b in self.at.button))
+
     def test_motion_preference_survives_round_trip(self):
         self.at.toggle(key="_hodu_reduce_motion").set_value(True).run()
         self.at.button(key="hodu_enter_search").click().run()

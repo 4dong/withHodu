@@ -15,7 +15,7 @@ from core.key_manager import KeyManager
 
 
 def render_essay_search_view(repo: EssayRepository):
-    section_intro('근거 검색', '키워드나 질문으로 자기소개서를 찾고, 출처가 표시된 답변을 확인합니다.', '03 · 내 경험 찾아보기')
+    section_intro('근거 검색', '키워드나 질문으로 자기소개서를 찾고, 출처가 표시된 답변을 확인합니다.', '03 · 내 경험 찾아보기', pose='search')
 
     # Unified Active Embedding Provider & RAG Generator (F06)
     embed_provider = get_active_embedding_provider()

@@ -111,6 +111,9 @@
 .stApp .h-section-intro h2 {font-size:22px;padding:0;margin:4px 0 10px;}
 .h-section-intro p {font-size:14px;color:#65736d;margin:0;line-height:1.8;}
 .h-step {font-size:11px;letter-spacing:1px;color:#7b8066;}
+/* A section that opens the page (essay workspace) carries Hodu beside its heading. */
+.h-section-intro-hodu {display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:24px;}
+.stApp .h-section-intro-hodu h2 {font-size:30px;margin:6px 0 10px;line-height:1.3;}
 .hodu-pose {background-color:transparent;background-repeat:no-repeat;image-rendering:pixelated;flex-shrink:0;}
 .hodu-front {width:250px;height:275px;background-size:1448px 1086px;background-position:-67px -104px;}
 .hodu-fetch {width:165px;height:128px;background-size:724px 543px;background-position:-552px -211px;}
@@ -160,7 +163,7 @@
 .apple-dark-featured-card {background:#edf0e3!important;border-color:#dce1ce!important;}
 .apple-product-card {background:#ffffff!important;box-shadow:none!important;}
 .apple-dark-pill-badge,.ap-badge {background:#e6ebdc!important;color:#526146!important;}
-.stApp [data-testid="stMain"]:has(.h-page-header) .block-container {max-width:1260px!important;}
+.stApp [data-testid="stMain"]:has(.h-page-header, .st-key-essay_workspace) .block-container {max-width:1260px!important;}
 @keyframes h-track {0%{transform:translateX(-100%)}100%{transform:translateX(390%)}}
 @media (prefers-reduced-motion:reduce) {.stApp *, .stApp *::before,.stApp *::after {animation:none!important;transition:none!important;scroll-behavior:auto!important;}}
 @media(max-width:640px) {
@@ -171,6 +174,10 @@
  .h-page-header .h-portrait-large {width:78px;height:88px;}
  .h-page-header .h-portrait-large .hodu-pose {scale:.48;}
  .h-page-header .h-portrait-large .hodu-front {scale:.27;}
+ .h-section-intro-hodu {gap:10px;}
+ .stApp .h-section-intro-hodu h2 {font-size:24px;}
+ .h-section-intro-hodu .h-portrait-large {width:78px;height:88px;}
+ .h-section-intro-hodu .h-portrait-large .hodu-pose {scale:.48;}
  .h-state {padding:14px 12px;gap:8px;}
  .h-state-copy strong {font-size:14px;}
  .h-state .h-portrait {width:68px;}
@@ -189,6 +196,14 @@
 .stApp [data-testid="stSidebar"] .st-key-main_navigation button[kind="secondary"] {background:transparent!important;border-color:transparent!important;box-shadow:none!important;}
 .stApp [data-testid="stSidebar"] .st-key-main_navigation button[kind="secondary"]:hover {background:#e4ece6!important;}
 .stApp [data-testid="stSidebar"] .st-key-sidebar_home button {justify-content:flex-start;font-size:13px!important;}
+/* Essay sections: a quiet sub-menu under the 자소서 entry. */
+.stApp [data-testid="stSidebar"] .st-key-essay_section_nav {gap:2px!important;margin:-4px 0 10px;padding-left:34px;background:linear-gradient(#dfe7e2,#dfe7e2) 22px 4px/2px calc(100% - 8px) no-repeat;}
+.stApp [data-testid="stSidebar"] .st-key-essay_section_nav button[kind] {min-height:40px;padding:8px 12px!important;justify-content:flex-start;border-radius:12px!important;border-color:transparent!important;box-shadow:none!important;}
+.stApp [data-testid="stSidebar"] .st-key-essay_section_nav button[kind] > div {justify-content:flex-start!important;}
+.stApp [data-testid="stSidebar"] .st-key-essay_section_nav button p {font-size:14px!important;font-weight:600;color:#4d5b55;}
+.stApp [data-testid="stSidebar"] .st-key-essay_section_nav button[kind="tertiary"]:hover {background:#e4ece6!important;}
+.stApp [data-testid="stSidebar"] .st-key-essay_section_nav button[kind="primary"] {background:#dfeae3!important;color:#244937!important;}
+.stApp [data-testid="stSidebar"] .st-key-essay_section_nav button[kind="primary"] p {color:#244937!important;}
 .stApp [data-testid="stSidebar"] .st-key-sidebar_home button p {font-size:13px;font-weight:500;}
 .stApp [data-testid="stSidebar"] [data-testid="stExpander"] {background:transparent;border-color:#dfe7e1!important;}
 .stApp [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {font-size:12px;}
@@ -322,6 +337,85 @@
 .doc-formula-frame {overflow-x:auto;background:#ffffff;border:1px solid #e4eae6;border-radius:12px;padding:10px 12px;text-align:center;}
 .doc-formula-image {max-width:none!important;height:auto;display:inline-block;vertical-align:middle;}
 .doc-formula-missing {font-size:13px;color:#65736d;}
+
+/* Essay bookshelf: one fixed-height shelf per collection that scrolls sideways; spines are real buttons
+   whose key carries the company tone (t0-t5) review state (_wait_ = needs review) and size (h0-h3, w0-w2). */
+.stApp .st-key-essay_bookshelf {background:#f4efe4;border:1px solid #e6dccb;border-radius:22px;padding:10px 20px 18px;gap:6px!important;}
+.stApp [class*="st-key-essay_shelf_row_"] {align-items:flex-end;gap:16px!important;border-bottom:8px solid #d8c8a8;border-radius:0 0 4px 4px;}
+.stApp .essay-shelf-label {width:76px;margin:0;padding:0 0 12px;font-size:13px;font-weight:700;line-height:1.4;color:#6e5b3a;word-break:keep-all;}
+.stApp [class*="st-key-essay_shelf_rail_"] {
+ flex:1 1 auto;min-width:0;flex-wrap:nowrap!important;overflow-x:auto;overflow-y:hidden;
+ align-items:flex-end;gap:6px!important;padding:24px 4px 0;scrollbar-width:thin;
+}
+.stApp [class*="st-key-essay_shelf_rail_"] > * {flex-shrink:0!important;}
+.stApp .essay-bookend {
+ writing-mode:vertical-rl;text-orientation:mixed;display:flex;align-items:center;justify-content:center;box-sizing:border-box;
+ width:30px;height:112px;margin:0 2px 0 10px;padding:10px 0;background:#fffaf1;border:1px solid #e1d4ba;border-radius:8px 8px 2px 2px;
+ font-size:12px;font-weight:700;letter-spacing:.08em;color:#6e5b3a;white-space:nowrap;overflow:hidden;
+}
+/* Book-cloth colours. Green is left out so the open book's green only ever means "open". */
+.stApp [class*="st-key-essay_spine_t0_"] {--spine:#8a5a44;}
+.stApp [class*="st-key-essay_spine_t1_"] {--spine:#3f5a7a;}
+.stApp [class*="st-key-essay_spine_t2_"] {--spine:#7b3f4a;}
+.stApp [class*="st-key-essay_spine_t3_"] {--spine:#7a5e28;}
+.stApp [class*="st-key-essay_spine_t4_"] {--spine:#6d5a8a;}
+.stApp [class*="st-key-essay_spine_t5_"] {--spine:#4f5660;}
+/* --spine-texture (assets/essay/book-spine.png) is neutral grey, so overlay blending keeps each
+   spine's colour and adds only the light and shade of a rounded cloth spine. */
+.stApp .st-key-essay_bookshelf [class*="st-key-essay_spine_"] button[kind] {
+ position:relative;writing-mode:vertical-rl;text-orientation:mixed;justify-content:flex-start;
+ width:48px;min-width:48px;height:164px;min-height:164px;padding:16px 0 30px!important;
+ background-color:var(--spine)!important;background-image:var(--spine-texture)!important;
+ background-size:100% 100%!important;background-blend-mode:overlay;
+ color:#f3e6c4!important;border:1px solid #00000038!important;border-radius:3px 3px 2px 2px!important;
+ box-shadow:1px 0 0 #0000001f,0 2px 3px #2a1f1026!important;
+ transition:transform 180ms ease,box-shadow 180ms ease!important;
+}
+.stApp .st-key-essay_bookshelf [class*="st-key-essay_spine_"][class*="_h0_"] button[kind] {height:150px;min-height:150px;}
+.stApp .st-key-essay_bookshelf [class*="st-key-essay_spine_"][class*="_h1_"] button[kind] {height:158px;min-height:158px;}
+.stApp .st-key-essay_bookshelf [class*="st-key-essay_spine_"][class*="_h2_"] button[kind] {height:166px;min-height:166px;}
+.stApp .st-key-essay_bookshelf [class*="st-key-essay_spine_"][class*="_h3_"] button[kind] {height:174px;min-height:174px;}
+.stApp .st-key-essay_bookshelf [class*="st-key-essay_spine_"][class*="_w0_"] button[kind] {width:42px;min-width:42px;}
+.stApp .st-key-essay_bookshelf [class*="st-key-essay_spine_"][class*="_w2_"] button[kind] {width:54px;min-width:54px;}
+.stApp .st-key-essay_bookshelf [class*="st-key-essay_spine_"] button[kind] p {
+ font-size:14px!important;font-weight:700;letter-spacing:.06em;color:#f3e6c4;text-shadow:0 1px 0 #00000066;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-inline-size:100%;
+}
+.stApp .st-key-essay_bookshelf [class*="st-key-essay_spine_"] button[kind]:hover {
+ transform:translateY(-5px);box-shadow:1px 0 0 #0000001f,0 8px 14px #2a1f1033!important;
+}
+/* The open essay's spine turns Hodu green with gold lettering, pulled out, ringed and bookmarked. */
+.stApp .st-key-essay_bookshelf [class*="st-key-essay_spine_"] button[kind="primary"],
+.stApp .st-key-essay_bookshelf [class*="st-key-essay_spine_"] button[kind="primary"]:hover {
+ --spine:#315c49;transform:translateY(-14px);
+ box-shadow:0 0 0 2px #f4efe4,0 0 0 4px #315c49,0 14px 22px #1e3a2e47!important;
+}
+.stApp .st-key-essay_bookshelf [class*="st-key-essay_spine_"] button[kind="primary"] p {color:#f1d58a;}
+.stApp .st-key-essay_bookshelf [class*="st-key-essay_spine_"] button[kind="primary"]::before {
+ content:"";position:absolute;top:-1px;right:5px;width:9px;height:26px;background:#d9644a;clip-path:polygon(0 0,100% 0,100% 100%,50% 76%,0 100%);
+}
+.stApp .st-key-essay_bookshelf [class*="st-key-essay_spine_"][class*="_wait_"] button[kind]::after {
+ content:"";position:absolute;bottom:11px;left:50%;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:#f2b544;box-shadow:0 0 0 2px #00000026;
+}
+.stApp .st-key-essay_open_book {
+ margin-top:24px;padding:34px 40px 26px;background:#fff;border:1px solid var(--ap-border);
+ border-radius:var(--ap-panel-radius);box-shadow:var(--h-shadow);gap:0!important;
+}
+.stApp .st-key-essay_open_book_head {gap:16px!important;padding-bottom:18px;}
+.stApp .essay-book-eyebrow {margin:0 0 6px;font-size:13px;font-weight:650;color:#7b6a4c;}
+.stApp h3.essay-book-title {margin:0 0 8px;padding:0;font-size:26px;line-height:1.35;word-break:keep-all;}
+.stApp .essay-book-meta {margin:0;font-size:14px;color:var(--ap-muted);}
+.stApp .essay-book-notes {margin:14px 0 0;padding:12px 16px;border-radius:14px;background:#f7f4ec;font-size:13px;line-height:1.75;color:#6b6556;word-break:keep-all;}.stApp .essay-answer {padding:26px 0 18px;border-top:1px solid #edf1ee;}
+.stApp .essay-answer-q {margin:0 0 14px;font-size:17px;font-weight:700;line-height:1.6;color:var(--ap-text);word-break:keep-all;}
+.stApp .essay-answer-no {display:inline-block;margin-right:10px;padding:2px 10px;border-radius:999px;background:#eaf2ed;color:#244937;font-size:13px;vertical-align:2px;}
+.stApp .essay-answer-body {font-size:16px;line-height:1.95;color:#2c3833;word-break:keep-all;overflow-wrap:break-word;}
+.stApp .essay-answer-foot {margin:14px 0 0;font-size:13px;color:#8a9690;}
+@media(max-width:640px){
+ .stApp .st-key-essay_bookshelf {padding:8px 12px 14px;}
+ .stApp .essay-shelf-label {width:52px;font-size:12px;}
+ .stApp .st-key-essay_open_book {padding:24px 20px 18px;}
+ .stApp h3.essay-book-title {font-size:22px;}
+}
 
 /* Transparent sprite sheets: timing is generated from manifest.durationsMs. */
 .h-animation {width:104px;height:104px;flex-shrink:0;background-repeat:no-repeat;background-position:0 0;image-rendering:pixelated;pointer-events:none;}

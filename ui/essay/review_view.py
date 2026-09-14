@@ -17,7 +17,7 @@ from core.essay.transcription import get_active_ocr_provider
 
 
 def render_review_view(repo: EssayRepository):
-    section_intro('전사 검수', '사진에서 옮긴 글을 원본과 비교하고, 흐릿한 단어와 수치를 확인한 뒤 승인합니다.', '02 · 원본 확인하기')
+    section_intro('전사 검수', '사진에서 옮긴 글을 원본과 비교하고, 흐릿한 단어와 수치를 확인한 뒤 승인합니다.', '02 · 원본 확인하기', pose='read')
 
     # Check for pending OCR jobs in the background queue
     with repo.get_connection() as conn:
