@@ -44,3 +44,6 @@ EssayArchive/
 
 # Local agent skills (not part of the app)
 .agents/
+
+# Animation delivery bundle: duplicates assets/hodu/animations, docs and scripts
+assets/hodu/hodu-animation-v1.zip

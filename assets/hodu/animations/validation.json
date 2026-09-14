@@ -1,0 +1,42 @@
+{
+  "loading-walk-01": {
+    "frames": 12,
+    "uniqueFrames": 12,
+    "alpha": true,
+    "clearCanvasEdges": true,
+    "apngFrames": 12,
+    "cycleMs": 960
+  },
+  "loading-fetch-02": {
+    "frames": 12,
+    "uniqueFrames": 12,
+    "alpha": true,
+    "clearCanvasEdges": true,
+    "apngFrames": 12,
+    "cycleMs": 1080
+  },
+  "reading-01": {
+    "frames": 12,
+    "uniqueFrames": 12,
+    "alpha": true,
+    "clearCanvasEdges": true,
+    "apngFrames": 12,
+    "cycleMs": 2580
+  },
+  "home-shake-01": {
+    "frames": 12,
+    "uniqueFrames": 12,
+    "alpha": true,
+    "clearCanvasEdges": true,
+    "apngFrames": 12,
+    "cycleMs": 2520
+  },
+  "home-idle-01": {
+    "frames": 12,
+    "uniqueFrames": 12,
+    "alpha": true,
+    "clearCanvasEdges": true,
+    "apngFrames": 12,
+    "cycleMs": 3460
+  }
+}
