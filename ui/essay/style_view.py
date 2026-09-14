@@ -17,7 +17,7 @@ from core.key_manager import KeyManager
 
 
 def render_style_view(repo: EssayRepository):
-    section_intro('문체 편집', '내 초안을 원하는 문체로 다듬고, 사실과 수치가 그대로인지 확인한 뒤 새 버전으로 저장합니다.', '04 · 나답게 다듬기')
+    section_intro('문체 편집', '내 초안을 원하는 문체로 다듬고, 사실과 수치가 그대로인지 확인한 뒤 새 버전으로 저장합니다.', '04 · 나답게 다듬기', pose='think')
 
     style_svc = EssayStyleService(repo)
 

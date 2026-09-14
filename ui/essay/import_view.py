@@ -15,7 +15,7 @@ from core.essay.transcription import get_active_ocr_provider, GeminiVisionOCRPro
 
 
 def render_import_view(repo: EssayRepository):
-    section_intro('자료 추가', '자기소개서 사진, PDF, 텍스트 파일을 올려 지원서 하나로 묶어 등록합니다.', '01 · 자료 모으기')
+    section_intro('자료 추가', '자기소개서 사진, PDF, 텍스트 파일을 올려 지원서 하나로 묶어 등록합니다.', '01 · 자료 모으기', pose='fetch')
 
     ingest_svc = EssayIngestService(repo)
 
