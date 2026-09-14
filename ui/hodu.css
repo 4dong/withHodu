@@ -331,6 +331,11 @@
 .h-home-idle {opacity:1;}
 .h-home-shake {opacity:0;}
 .h-animation-home {width:300px;height:300px;}
+/* Match the shake artwork to the idle body's height and center at the feet. */
+.h-home-shake .h-animation-home {
+ transform-origin:50% 88.043478%;
+ transform:translateX(-2.99%) scale(1.062);
+}
 @media(max-width:640px){.h-animation-portrait {width:76px;height:76px;}}
 @media(prefers-reduced-motion:reduce){
  .h-animation,.h-home-idle,.h-home-shake,.h-walk-dog {animation:none!important;}
