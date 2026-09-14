@@ -83,3 +83,7 @@
 - 재현 스크립트: `scripts/refine_hodu_idle.py`. 투명 시트: `assets/hodu/animations/sheets/home-idle-02.png`.
 - 내장 image_gen으로 꼬리 전용 12자세를 생성하고 로컬 추출·합성했다. 프롬프트 요지: 원본 황금색 도트 털을 유지한 투명 4×3 꼬리 전용 시트, 고정된 뿌리, 왼쪽 기울임→중앙→오른쪽 기울임의 세밀한 중간 자세, 몸·얼굴·모션선 제외.
 - 검증 결과: 현재 UI 테스트 7개 통과, Chrome에서 v2 시트 로드 및 모바일 가로 넘침 없음, OS/앱 움직임 감소 및 로딩 정리 확인. `scratch/hodu-runtime-verification/report.json`, `scratch/hodu-idle-v2-tests.log` 참조.
+
+### 대기→물기 털기 표시 크기 보정
+
+두 원화는 동일한 368px 캔버스지만 물기 털기 캐릭터 높이가 약 6% 작았다. `ui/hodu.css`에서 발 접지점(높이 88.043478%)을 기준으로 물기 털기 레이어만 1.062배, 가로 -2.99% 보정했다. 원본 이미지와 프레임 재생은 유지한다. Chrome 데스크톱/모바일 전환 화면 및 움직임 감소 동작 확인.
