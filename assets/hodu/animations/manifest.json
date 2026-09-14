@@ -1,0 +1,1083 @@
+{
+  "version": 1,
+  "reference": "../hodu-pixel-reference-v1.png",
+  "animations": [
+    {
+      "id": "loading-walk-01",
+      "title": "걷기 로딩 1",
+      "frameCount": 12,
+      "frameWidth": 368,
+      "frameHeight": 368,
+      "columns": 4,
+      "rows": 3,
+      "order": "row-major",
+      "anchor": [
+        184,
+        324
+      ],
+      "durationsMs": [
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80
+      ],
+      "loop": true,
+      "source": "source/loading-walk-01.png",
+      "sheet": "sheets/loading-walk-01.png",
+      "preview": "previews/loading-walk-01.apng",
+      "frames": [
+        "frames/loading-walk-01/loading-walk-01-01.png",
+        "frames/loading-walk-01/loading-walk-01-02.png",
+        "frames/loading-walk-01/loading-walk-01-03.png",
+        "frames/loading-walk-01/loading-walk-01-04.png",
+        "frames/loading-walk-01/loading-walk-01-05.png",
+        "frames/loading-walk-01/loading-walk-01-06.png",
+        "frames/loading-walk-01/loading-walk-01-07.png",
+        "frames/loading-walk-01/loading-walk-01-08.png",
+        "frames/loading-walk-01/loading-walk-01-09.png",
+        "frames/loading-walk-01/loading-walk-01-10.png",
+        "frames/loading-walk-01/loading-walk-01-11.png",
+        "frames/loading-walk-01/loading-walk-01-12.png"
+      ],
+      "applicationTarget": "ui/hodu.py::walking_html / .h-walk-dog",
+      "alignmentOffsets": [
+        [
+          -4,
+          -24
+        ],
+        [
+          -3,
+          -25
+        ],
+        [
+          0,
+          -24
+        ],
+        [
+          6,
+          -25
+        ],
+        [
+          -4,
+          19
+        ],
+        [
+          -4,
+          18
+        ],
+        [
+          0,
+          18
+        ],
+        [
+          6,
+          18
+        ],
+        [
+          -4,
+          53
+        ],
+        [
+          -2,
+          54
+        ],
+        [
+          4,
+          53
+        ],
+        [
+          4,
+          53
+        ]
+      ],
+      "sourceMainComponentBounds": [
+        [
+          40,
+          93,
+          337,
+          348
+        ],
+        [
+          39,
+          93,
+          335,
+          349
+        ],
+        [
+          34,
+          93,
+          335,
+          348
+        ],
+        [
+          31,
+          93,
+          324,
+          349
+        ],
+        [
+          40,
+          52,
+          337,
+          305
+        ],
+        [
+          40,
+          53,
+          335,
+          306
+        ],
+        [
+          35,
+          53,
+          334,
+          306
+        ],
+        [
+          31,
+          53,
+          326,
+          306
+        ],
+        [
+          38,
+          13,
+          337,
+          271
+        ],
+        [
+          39,
+          17,
+          333,
+          270
+        ],
+        [
+          32,
+          16,
+          329,
+          271
+        ],
+        [
+          31,
+          16,
+          328,
+          271
+        ]
+      ],
+      "notes": "Generated key poses; alpha removal and translation-only anchor alignment. No per-frame scale interpolation.",
+      "previewLoops": true,
+      "suggestedIdleDelayMs": null
+    },
+    {
+      "id": "loading-fetch-02",
+      "title": "논문 가져오기 로딩 2",
+      "frameCount": 12,
+      "frameWidth": 368,
+      "frameHeight": 368,
+      "columns": 4,
+      "rows": 3,
+      "order": "row-major",
+      "anchor": [
+        184,
+        324
+      ],
+      "durationsMs": [
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90
+      ],
+      "loop": true,
+      "source": "source/loading-fetch-02.png",
+      "sheet": "sheets/loading-fetch-02.png",
+      "preview": "previews/loading-fetch-02.apng",
+      "frames": [
+        "frames/loading-fetch-02/loading-fetch-02-01.png",
+        "frames/loading-fetch-02/loading-fetch-02-02.png",
+        "frames/loading-fetch-02/loading-fetch-02-03.png",
+        "frames/loading-fetch-02/loading-fetch-02-04.png",
+        "frames/loading-fetch-02/loading-fetch-02-05.png",
+        "frames/loading-fetch-02/loading-fetch-02-06.png",
+        "frames/loading-fetch-02/loading-fetch-02-07.png",
+        "frames/loading-fetch-02/loading-fetch-02-08.png",
+        "frames/loading-fetch-02/loading-fetch-02-09.png",
+        "frames/loading-fetch-02/loading-fetch-02-10.png",
+        "frames/loading-fetch-02/loading-fetch-02-11.png",
+        "frames/loading-fetch-02/loading-fetch-02-12.png"
+      ],
+      "applicationTarget": "app.py::process_paper_and_load / loading(pose=\"fetch\")",
+      "alignmentOffsets": [
+        [
+          -15,
+          -21
+        ],
+        [
+          -10,
+          -21
+        ],
+        [
+          -5,
+          -21
+        ],
+        [
+          -4,
+          -18
+        ],
+        [
+          -14,
+          18
+        ],
+        [
+          -11,
+          16
+        ],
+        [
+          -6,
+          15
+        ],
+        [
+          -4,
+          15
+        ],
+        [
+          -12,
+          50
+        ],
+        [
+          -10,
+          54
+        ],
+        [
+          -5,
+          47
+        ],
+        [
+          -6,
+          49
+        ]
+      ],
+      "sourceMainComponentBounds": [
+        [
+          47,
+          91,
+          351,
+          345
+        ],
+        [
+          40,
+          92,
+          349,
+          345
+        ],
+        [
+          34,
+          92,
+          344,
+          345
+        ],
+        [
+          34,
+          90,
+          343,
+          342
+        ],
+        [
+          44,
+          53,
+          353,
+          306
+        ],
+        [
+          40,
+          52,
+          350,
+          308
+        ],
+        [
+          35,
+          53,
+          344,
+          309
+        ],
+        [
+          34,
+          53,
+          343,
+          309
+        ],
+        [
+          42,
+          19,
+          349,
+          274
+        ],
+        [
+          39,
+          17,
+          349,
+          270
+        ],
+        [
+          34,
+          18,
+          344,
+          277
+        ],
+        [
+          36,
+          19,
+          343,
+          275
+        ]
+      ],
+      "notes": "Generated key poses; alpha removal and translation-only anchor alignment. No per-frame scale interpolation.",
+      "previewLoops": true,
+      "suggestedIdleDelayMs": null
+    },
+    {
+      "id": "reading-01",
+      "title": "책 넘기기 1",
+      "frameCount": 12,
+      "frameWidth": 368,
+      "frameHeight": 368,
+      "columns": 4,
+      "rows": 3,
+      "order": "row-major",
+      "anchor": [
+        184,
+        324
+      ],
+      "durationsMs": [
+        700,
+        140,
+        120,
+        110,
+        90,
+        100,
+        120,
+        120,
+        120,
+        100,
+        160,
+        700
+      ],
+      "loop": true,
+      "source": "source/reading-01.png",
+      "sheet": "sheets/reading-01.png",
+      "preview": "previews/reading-01.apng",
+      "frames": [
+        "frames/reading-01/reading-01-01.png",
+        "frames/reading-01/reading-01-02.png",
+        "frames/reading-01/reading-01-03.png",
+        "frames/reading-01/reading-01-04.png",
+        "frames/reading-01/reading-01-05.png",
+        "frames/reading-01/reading-01-06.png",
+        "frames/reading-01/reading-01-07.png",
+        "frames/reading-01/reading-01-08.png",
+        "frames/reading-01/reading-01-09.png",
+        "frames/reading-01/reading-01-10.png",
+        "frames/reading-01/reading-01-11.png",
+        "frames/reading-01/reading-01-12.png"
+      ],
+      "applicationTarget": "loading(pose=\"read\") / 번역·전사",
+      "alignmentOffsets": [
+        [
+          -6,
+          -31
+        ],
+        [
+          4,
+          -31
+        ],
+        [
+          12,
+          -31
+        ],
+        [
+          12,
+          -31
+        ],
+        [
+          -11,
+          -6
+        ],
+        [
+          2,
+          -6
+        ],
+        [
+          10,
+          -6
+        ],
+        [
+          11,
+          -6
+        ],
+        [
+          -10,
+          22
+        ],
+        [
+          3,
+          21
+        ],
+        [
+          12,
+          21
+        ],
+        [
+          12,
+          21
+        ]
+      ],
+      "sourceMainComponentBounds": [
+        [
+          37,
+          52,
+          344,
+          355
+        ],
+        [
+          26,
+          55,
+          333,
+          355
+        ],
+        [
+          17,
+          52,
+          326,
+          355
+        ],
+        [
+          18,
+          55,
+          326,
+          355
+        ],
+        [
+          37,
+          27,
+          353,
+          330
+        ],
+        [
+          26,
+          28,
+          337,
+          330
+        ],
+        [
+          18,
+          27,
+          330,
+          330
+        ],
+        [
+          18,
+          28,
+          328,
+          330
+        ],
+        [
+          37,
+          1,
+          350,
+          302
+        ],
+        [
+          26,
+          0,
+          336,
+          303
+        ],
+        [
+          18,
+          3,
+          327,
+          303
+        ],
+        [
+          18,
+          1,
+          326,
+          303
+        ]
+      ],
+      "notes": "Generated key poses; alpha removal and translation-only anchor alignment. No per-frame scale interpolation.",
+      "previewLoops": true,
+      "suggestedIdleDelayMs": null
+    },
+    {
+      "id": "home-shake-01",
+      "title": "물기 털기 1",
+      "frameCount": 12,
+      "frameWidth": 368,
+      "frameHeight": 368,
+      "columns": 4,
+      "rows": 3,
+      "order": "row-major",
+      "anchor": [
+        184,
+        324
+      ],
+      "durationsMs": [
+        500,
+        100,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        90,
+        110,
+        160,
+        1200
+      ],
+      "loop": false,
+      "source": "source/home-shake-01.png",
+      "sheet": "sheets/home-shake-01.png",
+      "preview": "previews/home-shake-01.apng",
+      "frames": [
+        "frames/home-shake-01/home-shake-01-01.png",
+        "frames/home-shake-01/home-shake-01-02.png",
+        "frames/home-shake-01/home-shake-01-03.png",
+        "frames/home-shake-01/home-shake-01-04.png",
+        "frames/home-shake-01/home-shake-01-05.png",
+        "frames/home-shake-01/home-shake-01-06.png",
+        "frames/home-shake-01/home-shake-01-07.png",
+        "frames/home-shake-01/home-shake-01-08.png",
+        "frames/home-shake-01/home-shake-01-09.png",
+        "frames/home-shake-01/home-shake-01-10.png",
+        "frames/home-shake-01/home-shake-01-11.png",
+        "frames/home-shake-01/home-shake-01-12.png"
+      ],
+      "applicationTarget": "ui/home.py::.hodu-hero-dog",
+      "alignmentOffsets": [
+        [
+          -12,
+          -10
+        ],
+        [
+          -7,
+          -10
+        ],
+        [
+          -12,
+          -10
+        ],
+        [
+          -6,
+          -10
+        ],
+        [
+          5,
+          11
+        ],
+        [
+          14,
+          11
+        ],
+        [
+          2,
+          11
+        ],
+        [
+          -6,
+          11
+        ],
+        [
+          16,
+          42
+        ],
+        [
+          -11,
+          41
+        ],
+        [
+          -9,
+          41
+        ],
+        [
+          -10,
+          41
+        ]
+      ],
+      "sourceMainComponentBounds": [
+        [
+          73,
+          57,
+          319,
+          334
+        ],
+        [
+          56,
+          84,
+          326,
+          334
+        ],
+        [
+          64,
+          57,
+          328,
+          334
+        ],
+        [
+          50,
+          63,
+          331,
+          334
+        ],
+        [
+          45,
+          33,
+          313,
+          313
+        ],
+        [
+          41,
+          40,
+          298,
+          313
+        ],
+        [
+          65,
+          45,
+          300,
+          313
+        ],
+        [
+          65,
+          48,
+          315,
+          313
+        ],
+        [
+          40,
+          11,
+          296,
+          282
+        ],
+        [
+          55,
+          9,
+          335,
+          283
+        ],
+        [
+          63,
+          9,
+          323,
+          283
+        ],
+        [
+          68,
+          9,
+          321,
+          283
+        ]
+      ],
+      "notes": "Generated key poses; alpha removal and translation-only anchor alignment. No per-frame scale interpolation.",
+      "previewLoops": true,
+      "suggestedIdleDelayMs": [
+        12000,
+        20000
+      ]
+    },
+    {
+      "id": "home-idle-01",
+      "title": "눈 깜박임과 꼬리 1",
+      "frameCount": 12,
+      "frameWidth": 368,
+      "frameHeight": 368,
+      "columns": 4,
+      "rows": 3,
+      "order": "row-major",
+      "anchor": [
+        184,
+        324
+      ],
+      "durationsMs": [
+        1000,
+        120,
+        120,
+        70,
+        80,
+        90,
+        180,
+        180,
+        120,
+        120,
+        180,
+        1200
+      ],
+      "loop": true,
+      "source": "source/home-idle-01.png",
+      "sheet": "sheets/home-idle-01.png",
+      "preview": "previews/home-idle-01.apng",
+      "frames": [
+        "frames/home-idle-01/home-idle-01-01.png",
+        "frames/home-idle-01/home-idle-01-02.png",
+        "frames/home-idle-01/home-idle-01-03.png",
+        "frames/home-idle-01/home-idle-01-04.png",
+        "frames/home-idle-01/home-idle-01-05.png",
+        "frames/home-idle-01/home-idle-01-06.png",
+        "frames/home-idle-01/home-idle-01-07.png",
+        "frames/home-idle-01/home-idle-01-08.png",
+        "frames/home-idle-01/home-idle-01-09.png",
+        "frames/home-idle-01/home-idle-01-10.png",
+        "frames/home-idle-01/home-idle-01-11.png",
+        "frames/home-idle-01/home-idle-01-12.png"
+      ],
+      "applicationTarget": "ui/home.py::.hodu-hero-dog",
+      "alignmentOffsets": [
+        [
+          -11,
+          -24
+        ],
+        [
+          -11,
+          -24
+        ],
+        [
+          -12,
+          -24
+        ],
+        [
+          -10,
+          -23
+        ],
+        [
+          -11,
+          -13
+        ],
+        [
+          -12,
+          -13
+        ],
+        [
+          -11,
+          -13
+        ],
+        [
+          -12,
+          -13
+        ],
+        [
+          19,
+          9
+        ],
+        [
+          -12,
+          9
+        ],
+        [
+          -11,
+          9
+        ],
+        [
+          -10,
+          9
+        ]
+      ],
+      "sourceMainComponentBounds": [
+        [
+          54,
+          55,
+          336,
+          348
+        ],
+        [
+          54,
+          55,
+          336,
+          348
+        ],
+        [
+          54,
+          55,
+          337,
+          348
+        ],
+        [
+          54,
+          55,
+          334,
+          347
+        ],
+        [
+          54,
+          44,
+          336,
+          337
+        ],
+        [
+          54,
+          43,
+          337,
+          337
+        ],
+        [
+          54,
+          44,
+          336,
+          337
+        ],
+        [
+          58,
+          26,
+          334,
+          337
+        ],
+        [
+          28,
+          25,
+          302,
+          315
+        ],
+        [
+          54,
+          25,
+          338,
+          315
+        ],
+        [
+          54,
+          25,
+          336,
+          315
+        ],
+        [
+          54,
+          25,
+          334,
+          315
+        ]
+      ],
+      "notes": "Generated key poses; alpha removal and translation-only anchor alignment. No per-frame scale interpolation.",
+      "previewLoops": true,
+      "suggestedIdleDelayMs": null
+    },
+    {
+      "id": "home-idle-02",
+      "title": "몸통 고정 · 눈 깜박임과 꼬리 2",
+      "frameCount": 27,
+      "frameWidth": 368,
+      "frameHeight": 368,
+      "columns": 6,
+      "rows": 5,
+      "order": "row-major",
+      "anchor": [
+        184,
+        324
+      ],
+      "durationsMs": [
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        900,
+        70,
+        100,
+        70,
+        900
+      ],
+      "loop": true,
+      "source": "source/home-idle-tail-v2.png",
+      "sheet": "sheets/home-idle-02.png",
+      "preview": "previews/home-idle-02.apng",
+      "frames": [
+        "frames/home-idle-02/home-idle-02-01.png",
+        "frames/home-idle-02/home-idle-02-02.png",
+        "frames/home-idle-02/home-idle-02-03.png",
+        "frames/home-idle-02/home-idle-02-04.png",
+        "frames/home-idle-02/home-idle-02-05.png",
+        "frames/home-idle-02/home-idle-02-06.png",
+        "frames/home-idle-02/home-idle-02-07.png",
+        "frames/home-idle-02/home-idle-02-08.png",
+        "frames/home-idle-02/home-idle-02-09.png",
+        "frames/home-idle-02/home-idle-02-10.png",
+        "frames/home-idle-02/home-idle-02-11.png",
+        "frames/home-idle-02/home-idle-02-12.png",
+        "frames/home-idle-02/home-idle-02-13.png",
+        "frames/home-idle-02/home-idle-02-14.png",
+        "frames/home-idle-02/home-idle-02-15.png",
+        "frames/home-idle-02/home-idle-02-16.png",
+        "frames/home-idle-02/home-idle-02-17.png",
+        "frames/home-idle-02/home-idle-02-18.png",
+        "frames/home-idle-02/home-idle-02-19.png",
+        "frames/home-idle-02/home-idle-02-20.png",
+        "frames/home-idle-02/home-idle-02-21.png",
+        "frames/home-idle-02/home-idle-02-22.png",
+        "frames/home-idle-02/home-idle-02-23.png",
+        "frames/home-idle-02/home-idle-02-24.png",
+        "frames/home-idle-02/home-idle-02-25.png",
+        "frames/home-idle-02/home-idle-02-26.png",
+        "frames/home-idle-02/home-idle-02-27.png"
+      ],
+      "applicationTarget": "ui/home.py::.hodu-hero-dog",
+      "alignmentOffsets": [
+        [
+          -11,
+          -24
+        ],
+        [
+          -11,
+          -24
+        ],
+        [
+          -12,
+          -24
+        ],
+        [
+          -10,
+          -23
+        ],
+        [
+          -11,
+          -13
+        ],
+        [
+          -12,
+          -13
+        ],
+        [
+          -11,
+          -13
+        ],
+        [
+          -12,
+          -13
+        ],
+        [
+          19,
+          9
+        ],
+        [
+          -12,
+          9
+        ],
+        [
+          -11,
+          9
+        ],
+        [
+          -10,
+          9
+        ]
+      ],
+      "sourceMainComponentBounds": [
+        [
+          54,
+          55,
+          336,
+          348
+        ],
+        [
+          54,
+          55,
+          336,
+          348
+        ],
+        [
+          54,
+          55,
+          337,
+          348
+        ],
+        [
+          54,
+          55,
+          334,
+          347
+        ],
+        [
+          54,
+          44,
+          336,
+          337
+        ],
+        [
+          54,
+          43,
+          337,
+          337
+        ],
+        [
+          54,
+          44,
+          336,
+          337
+        ],
+        [
+          58,
+          26,
+          334,
+          337
+        ],
+        [
+          28,
+          25,
+          302,
+          315
+        ],
+        [
+          54,
+          25,
+          338,
+          315
+        ],
+        [
+          54,
+          25,
+          336,
+          315
+        ],
+        [
+          54,
+          25,
+          334,
+          315
+        ]
+      ],
+      "notes": "Immutable reference body; generated tail in-betweens composited behind body; eye-only blink.",
+      "previewLoops": true,
+      "suggestedIdleDelayMs": null
+    }
+  ]
+}
