@@ -35,6 +35,8 @@ import core.visual_highlighter
 import ui.library_view
 import ui.components
 import ui.sidebar
+import ui.hodu
+import ui.home
 import ui.styles
 
 importlib.reload(core.math_formatter)
@@ -51,6 +53,8 @@ importlib.reload(core.intent_copilot)
 importlib.reload(core.visual_highlighter)
 importlib.reload(ui.library_view)
 importlib.reload(ui.components)
+importlib.reload(ui.hodu)
+importlib.reload(ui.home)
 importlib.reload(ui.sidebar)
 importlib.reload(ui.styles)
 
@@ -61,14 +65,18 @@ from core.parser import PaperPDFParser
 from core.translator import PaperTranslator
 from core.recommender import IntentRecommender
 from core.intent_copilot import IntentCopilotAgent
+from core.key_manager import KeyManager
 
 # UI imports
 from ui.styles import CUSTOM_CSS
 from ui.sidebar import render_sidebar
 from ui.components import render_moonlight_split_page_reader
 from ui.library_view import render_library_view
+from ui.home import render_home
+from ui.hodu import apply_theme, page_header, show_state, loading, state_html, walking
 
-st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+st.html(CUSTOM_CSS)
+apply_theme()
 
 # Global Client Enforcer: Disables macOS Autocorrect/Autocomplete (Prevents 'qwen' -> 'Owen' replacement) & Fixes Cmd+C
 CLIENT_GLOBAL_ENFORCER = """
@@ -128,7 +136,7 @@ CLIENT_GLOBAL_ENFORCER = """
 
         targets.forEach(function(t) {
             if (!t) return;
-            
+
             // Immediate pass
             disableAutocorrectAndSpellcheck(t);
             enforceSidebarState(t);
@@ -175,7 +183,7 @@ else:
 # -------------------------------------------------------------
 # 0. Session State Initialization & Auto-Cache Invalidation
 # -------------------------------------------------------------
-HIGHLIGHTER_ENGINE_VERSION = "2026_08_25_v8_self_contained_hover_sync_guaranteed"
+HIGHLIGHTER_ENGINE_VERSION = "2026_08_25_v8_self_contained_hover_sync_guaranteed+scope-1+formula-1"  # translation scope and reading order changed: drop cached pages
 
 if st.session_state.get("_highlighter_engine_version") != HIGHLIGHTER_ENGINE_VERSION:
     st.session_state._highlighter_engine_version = HIGHLIGHTER_ENGINE_VERSION
@@ -209,43 +217,33 @@ if "auto_translate_mode" not in st.session_state:
 
 def trigger_search_flow(search_query: str, sidebar_config: Dict[str, Any]):
     """Executes clean Google Scholar & arXiv search and intent analysis with in-canvas visual progress."""
-    search_placeholder = st.empty()
-    with search_placeholder.container(border=True):
-        st.markdown(f"#### '{search_query}' 검색 중")
-        st.markdown('<div class="shimmer-loader-bar"></div>', unsafe_allow_html=True)
-        st.caption("Google Scholar와 arXiv에서 논문을 찾고 있습니다…")
-
+    st.session_state["hodu_search_error"] = None
+    try:
+        with loading("호두가 논문을 찾고 있어요", search_query, "search"):
+            searcher = AcademicSearcher()
+            raw_papers = searcher.search(query=search_query, max_results=sidebar_config.get("max_results", 5))
+            intent_data = None
+            if raw_papers:
+                intent_data = IntentRecommender.analyze_and_recommend(
+                    query=search_query, retrieved_papers=raw_papers, api_key=sidebar_config.get("api_key"))
+    except Exception:
+        st.session_state["hodu_search_error"] = "입력한 검색어로 다시 시도해 주세요. 기존 결과는 유지됩니다."
+        return
     st.session_state.current_topic = search_query
-    searcher = AcademicSearcher()
-    raw_papers = searcher.search(
-        query=search_query,
-        max_results=sidebar_config.get("max_results", 5)
-    )
-    
+    st.session_state.search_results = raw_papers or []
+    st.session_state.intent_recommendations = intent_data
     if raw_papers:
-        st.session_state.search_results = raw_papers
         st.session_state.current_paper_bundle = None
         st.session_state.page_translations = {}
         st.session_state.current_page_num = 1
-        
-        # Analyze intent recommendations
-        intent_data = IntentRecommender.analyze_and_recommend(
-            query=search_query,
-            retrieved_papers=raw_papers,
-            api_key=sidebar_config.get("api_key")
-        )
-        st.session_state.intent_recommendations = intent_data
-    else:
-        st.session_state.search_results = []
-        st.session_state.intent_recommendations = None
-        st.warning(f"'{search_query}'에 대한 검색 결과가 없습니다.")
-
-    search_placeholder.empty()
 
 from ui.library_view import render_library_view
 from ui.essay.workspace import render_essay_workspace
 
 def main():
+    if st.session_state.get("hodu_home", True):
+        render_home()
+        return
     archive_mgr = ArchiveManager()
     bundle = st.session_state.get("current_paper_bundle")
     active_pdf = bundle.get("pdf_path") if bundle else None
@@ -270,7 +268,18 @@ def main():
 
     # Mode 1: Active Split Reader View (Pure reading interface with zero top header clutter)
     if st.session_state.current_paper_bundle:
-        render_active_paper_view(archive_mgr, sidebar_config)
+        try:
+            render_active_paper_view(archive_mgr, sidebar_config)
+        except Exception:
+            show_state("페이지를 준비하지 못했어요", "연결 상태를 확인한 뒤 다시 읽어 주세요. 다른 논문을 선택할 수도 있어요.", "think", "error")
+            retry, back = st.columns(2)
+            with retry:
+                if st.button("다시 읽기", key="hodu_retry_reader", type="primary"):
+                    st.rerun()
+            with back:
+                if st.button("목록으로 돌아가기", key="hodu_reader_error_back"):
+                    st.session_state.current_paper_bundle = None
+                    st.rerun()
         return
 
     # Mode 2: Visual Library & Multi-Paper AI Comparison Lab View
@@ -279,22 +288,27 @@ def main():
         return
 
     # Header (Only shown during search / initial state)
-    st.title("논문 검색")
-    st.caption("관심 있는 연구를 찾고, 원문과 번역을 함께 읽으세요.")
+    page_header("논문 검색", "궁금한 연구를 알려주세요. 호두와 원문부터 번역까지 함께 읽어요.", "search", "호두랑 · 논문 찾기")
 
     with st.form("main_paper_search"):
-        query = st.text_input("연구 주제 또는 키워드", placeholder="예: 음성 합성, 검색 증강 생성")
-        submitted = st.form_submit_button("논문 찾기", type="primary")
+        st.markdown("**어떤 연구가 궁금하세요?**")
+        query = st.text_input("연구 주제 또는 키워드", placeholder="예: 음성 합성, 검색 증강 생성", key="hodu_paper_query")
+        submitted = st.form_submit_button("논문 찾기", type="primary", use_container_width=True, icon=":material/search:")
     if submitted:
         if query.strip():
             trigger_search_flow(query.strip(), sidebar_config)
             st.rerun()
         else:
             st.info("찾고 싶은 연구 주제를 입력해 주세요.")
+    if st.session_state.get("hodu_search_error"):
+        show_state("논문을 찾는 도중 연결이 끊겼어요", st.session_state["hodu_search_error"], "think", "error")
     if st.session_state.search_results:
         render_search_results_view(archive_mgr, sidebar_config)
-    else:
-        st.caption("보관한 논문은 사이드바의 ‘나의 서재’에서 이어 읽을 수 있어요.")
+    elif not st.session_state.get("hodu_search_error"):
+        if st.session_state.get("current_topic"):
+            show_state("찾은 논문이 없어요", "검색어를 조금 바꿔 다시 찾아보세요. 입력한 검색어는 그대로 두었어요.", "think", "empty")
+        else:
+            show_state("첫 논문을 함께 찾아볼까요?", "연구 주제나 논문 제목을 입력해 주세요. 읽은 논문은 나의 서재에 모아둘게요.", "fetch", "empty")
 
 
 def render_search_results_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, Any]):
@@ -308,8 +322,8 @@ def render_search_results_view(archive_mgr: ArchiveManager, sidebar_config: Dict
         with col_c_title:
             st.markdown(
                 """
-                <span class="apple-store-eyebrow" style="color: #2563EB; margin-bottom: 0.15rem;">연구 주제 구체화</span>
-                <div style="font-size: 1.25rem; font-weight: 800; color: #1D1D1F; letter-spacing: -0.02em;">
+                <span class="apple-store-eyebrow" style="color: #3F5947; margin-bottom: 0.15rem;">연구 주제 구체화</span>
+                <div style="font-size: 1.25rem; font-weight: 800; color: #39392E; letter-spacing: -0.02em;">
                     어떤 연구를 더 찾고 싶으세요?
                 </div>
                 """,
@@ -319,7 +333,7 @@ def render_search_results_view(archive_mgr: ArchiveManager, sidebar_config: Dict
             st.markdown(
                 """
                 <div style="text-align: right; margin-top: 0.3rem;">
-                    <span style="background: #EFF4FF; color: #2563EB; font-weight: 700; font-size: 0.82rem; padding: 0.35rem 0.85rem; border-radius: 9999px; display: inline-flex; align-items: center; gap: 0.3rem;">
+                    <span style="background: #EDF1E3; color: #3F5947; font-weight: 700; font-size: 0.82rem; padding: 0.35rem 0.85rem; border-radius: 9999px; display: inline-flex; align-items: center; gap: 0.3rem;">
                         Gemini 3.5 Flash
                     </span>
                 </div>
@@ -339,7 +353,7 @@ def render_search_results_view(archive_mgr: ArchiveManager, sidebar_config: Dict
         with col_send:
             if st.button("다시 검색", key="btn_run_copilot", type="primary", use_container_width=True):
                 if copilot_query_input.strip():
-                    with st.spinner("찾으려는 연구에 맞춰 검색어를 다듬는 중…"):
+                    with loading("호두가 관심사를 정리하고 있어요", "찾고 싶은 연구에 맞춰 검색어를 다듬어요.", "think"):
                         analysis_res = IntentCopilotAgent.analyze_intent_and_suggest_queries(
                             current_query=topic,
                             user_message=copilot_query_input.strip(),
@@ -395,87 +409,47 @@ def render_search_results_view(archive_mgr: ArchiveManager, sidebar_config: Dict
 
 def process_paper_and_load(paper: Paper, topic: str, archive_mgr: ArchiveManager, api_key: Optional[str], engine: str = "⚡️ Google Neural (무료 · 무제한)", custom_prompt: Optional[str] = None):
     """Downloads PDF with clean animated banner and prepares Page 1."""
-    
+
     # Secure API key fallback if not provided directly
     effective_api_key = api_key
     if not effective_api_key or len(str(effective_api_key).strip()) < 15:
         active_k, _ = KeyManager.get_active_key()
         effective_api_key = active_k or os.environ.get("GEMINI_API_KEY", "")
 
-    prog_container = st.empty()
-    with prog_container.container():
-        st.markdown(
-            f"""
-            <div class="translation-loading-card">
-                <div class="translation-loading-header">
-                    <div class="translation-spin-icon-box">
-                        <div class="translation-spin-icon-inner">
-                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="2" y1="12" x2="22" y2="12"></line>
-                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="translation-loading-text-col">
-                        <div class="translation-loading-title">
-                            <span>원문을 불러와 1페이지를 번역하는 중</span>
-                            <span class="loading-dots"><span></span><span></span><span></span></span>
-                            <span class="translation-loading-engine-badge">{engine.split(' ')[1]}</span>
-                        </div>
-                        <div class="translation-loading-desc">
-                            <b>'{html.escape(paper.title[:38])}...'</b>의 문단과 수식을 원문과 짝지어 번역하고 있습니다.
-                        </div>
-                    </div>
-                </div>
-                <div class="shimmer-loader-bar"></div>
-                <div class="translation-skeleton-wrap">
-                    <div class="translation-skeleton-line" style="width: 92%;"></div>
-                    <div class="translation-skeleton-line" style="width: 78%;"></div>
-                    <div class="translation-skeleton-line" style="width: 85%;"></div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-        
-        # 1. Download PDF
-        pdf_path = archive_mgr.download_pdf(paper, topic)
+    try:
+        with loading("호두가 논문을 가져오고 있어요", paper.title, "fetch"):
+            pdf_path = archive_mgr.download_pdf(paper, topic)
         if not pdf_path or not os.path.exists(pdf_path):
-            prog_container.empty()
-            st.error(f"**'{paper.title}'**의 PDF를 가져오지 못했습니다.\n\n유료 구독이 필요하거나 공개되지 않은 논문일 수 있습니다. **[원문 링크]** 버튼으로 출판사 페이지를 확인해 주세요.")
+            show_state("논문 원문을 가져오지 못했어요", "공개되지 않은 논문일 수 있어요. 원문 링크에서 출판사 페이지를 확인해 주세요.", "think", "error")
             return
-
-        # 2. Auto-crop & 180 DPI high-res page snapshot
         paper_dir = archive_mgr.get_paper_dir(topic, paper)
-        total_pages = PaperPDFParser.get_total_pages(pdf_path) if pdf_path else 1
-        page_1_data = PaperPDFParser.get_single_page_data(pdf_path, 1, paper_dir)
-
-        # 3. Batch Translate Page 1 (< 0.8s)
-        page_1_trans = PaperTranslator.translate_single_page(
-            page_data=page_1_data,
-            paper_title=paper.title,
-            engine=engine,
-            custom_api_key=effective_api_key,
-            custom_prompt=custom_prompt
-        )
-
-        # 4. Save bundle
-        archive_mgr.save_archive_bundle(topic=topic, paper=paper, pdf_path=pdf_path)
-
-        # Update Session
-        bundle = archive_mgr.load_paper_bundle(paper_dir)
-        bundle["total_pages"] = total_pages
+        with loading("호두가 첫 페이지를 읽고 있어요", "원문과 번역을 나란히 준비하고 있어요.", "read"):
+            total_pages = PaperPDFParser.get_total_pages(pdf_path)
+            page_1_data = PaperPDFParser.get_single_page_data(pdf_path, 1, paper_dir)
+            page_1_trans = PaperTranslator.translate_single_page(
+                page_data=page_1_data, paper_title=paper.title, engine=engine,
+                custom_api_key=effective_api_key, custom_prompt=custom_prompt)
+        with loading("호두가 서재에 정리하고 있어요", "다음에도 이 논문을 꺼내 읽을 수 있게 보관해요.", "organize"):
+            archive_mgr.save_archive_bundle(topic=topic, paper=paper, pdf_path=pdf_path)
+            bundle = archive_mgr.load_paper_bundle(paper_dir)
+            bundle["total_pages"] = total_pages
         st.session_state.current_paper_bundle = bundle
         st.session_state.current_page_num = 1
         st.session_state.page_translations = {1: page_1_trans}
-
-    prog_container.empty()
+        st.session_state._active_translation_engine = engine
+        st.session_state._active_custom_prompt = custom_prompt
+    except Exception:
+        show_state("논문을 여는 중 문제가 생겼어요", "검색 결과에서 다시 열어 주세요. 이미 보관된 자료는 서재에서 확인할 수 있어요.", "think", "error")
+        return
     st.rerun()
 
 
 def render_active_paper_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, Any]):
     """Renders the clean Moonlight 3:1 split reader with background pre-fetching."""
+    # Streamlit matches elements by position across reruns. The page-turn wait and the fallback
+    # notice appear only on some pages, so they share one slot that exists on every run; otherwise
+    # the previous page's panes stay on screen beside the new ones while the next page is prefetched.
+    status_slot = st.empty()
     bundle = st.session_state.current_paper_bundle
     meta_dict = bundle.get("metadata", {})
     paper = Paper(**{k: v for k, v in meta_dict.items() if k in Paper.__annotations__})
@@ -505,14 +479,15 @@ def render_active_paper_view(archive_mgr: ArchiveManager, sidebar_config: Dict[s
 
     # 1. Fetch current page translation if not in cache or if cached under different engine or empty bbox / raw english
     cached_trans = st.session_state.get("page_translations", {}).get(current_page)
+    # Formula pairs carry no text, and a page may hold only formulas or nothing translatable (references).
+    cached_text_pairs = [p for p in cached_trans.get("pairs", []) if p.get("kind") != "equation"] if isinstance(cached_trans, dict) else []
     is_valid_cache = (
-        cached_trans is not None
-        and isinstance(cached_trans, dict)
+        isinstance(cached_trans, dict)
         and "pairs" in cached_trans
-        and len(cached_trans["pairs"]) > 0
         and cached_trans.get("target_engine") == selected_engine
-        and any(p.get("bbox", {}).get("height") not in ["0%", "0.0%", "0.00%"] for p in cached_trans["pairs"])
-        and not all(p.get("ko", "").strip() == p.get("en", "").strip() for p in cached_trans["pairs"])
+        and (not cached_text_pairs or (
+            any(p.get("bbox", {}).get("height") not in ["0%", "0.0%", "0.00%"] for p in cached_text_pairs)
+            and not all(p.get("ko", "").strip() == p.get("en", "").strip() for p in cached_text_pairs)))
     )
 
     if not is_valid_cache:
@@ -520,43 +495,7 @@ def render_active_paper_view(archive_mgr: ArchiveManager, sidebar_config: Dict[s
         if current_page in st.session_state.page_translations:
             del st.session_state.page_translations[current_page]
 
-        page_prog_holder = st.empty()
-        with page_prog_holder.container():
-            engine_label = selected_engine.split(' ')[1] if len(selected_engine.split(' ')) > 1 else selected_engine
-            st.markdown(
-                f"""
-                <div class="translation-loading-card">
-                    <div class="translation-loading-header">
-                        <div class="translation-spin-icon-box">
-                            <div class="translation-spin-icon-inner">
-                                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="2" y1="12" x2="22" y2="12"></line>
-                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="translation-loading-text-col">
-                            <div class="translation-loading-title">
-                                <span>{current_page}페이지 번역 중</span>
-                                <span class="loading-dots"><span></span><span></span><span></span></span>
-                                <span class="translation-loading-engine-badge">{engine_label}</span>
-                            </div>
-                            <div class="translation-loading-desc">
-                                LaTeX 수식 보존 및 전문 학술 한국어 1:1 대역 처리를 진행하고 있습니다.
-                            </div>
-                        </div>
-                    </div>
-                    <div class="shimmer-loader-bar"></div>
-                    <div class="translation-skeleton-wrap">
-                        <div class="translation-skeleton-line" style="width: 90%;"></div>
-                        <div class="translation-skeleton-line" style="width: 75%;"></div>
-                        <div class="translation-skeleton-line" style="width: 82%;"></div>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+        with walking(f"호두가 {current_page}페이지를 읽고 있어요", placeholder=status_slot):
             page_data = PaperPDFParser.get_single_page_data(pdf_path, current_page, paper_dir)
             page_trans = PaperTranslator.translate_single_page(
                 page_data=page_data,
@@ -568,36 +507,13 @@ def render_active_paper_view(archive_mgr: ArchiveManager, sidebar_config: Dict[s
             # Explicitly overwrite session translation with fresh output
             st.session_state.page_translations[current_page] = page_trans
             st.session_state._active_translation_engine = selected_engine
-        page_prog_holder.empty()
     else:
         page_data = PaperPDFParser.get_single_page_data(pdf_path, current_page, paper_dir)
         page_trans = st.session_state.page_translations[current_page]
 
-    # 2. Background pre-fetch next page if auto mode
-    if st.session_state.get("auto_translate_mode", True) and (current_page + 1 <= total_pages):
-        next_page = current_page + 1
-        cached_next = st.session_state.page_translations.get(next_page)
-        is_next_valid = (
-            cached_next is not None
-            and isinstance(cached_next, dict)
-            and "pairs" in cached_next
-            and len(cached_next["pairs"]) > 0
-            and cached_next.get("target_engine") == selected_engine
-        )
-        if not is_next_valid:
-            next_data = PaperPDFParser.get_single_page_data(pdf_path, next_page, paper_dir)
-            next_trans = PaperTranslator.translate_single_page(
-                page_data=next_data,
-                paper_title=paper.title,
-                engine=selected_engine,
-                custom_api_key=api_key,
-                custom_prompt=custom_prompt
-            )
-            st.session_state.page_translations[next_page] = next_trans
-
     # Transparent Fallback Notice
     if page_trans.get("is_fallback"):
-        st.warning(
+        status_slot.warning(
             f"**Google 번역으로 전환됨**: {page_trans.get('fallback_reason', 'API 키 미등록')}. "
             f"수식까지 정확한 Gemini 번역을 쓰려면 사이드바의 **API 키 관리**에서 키를 등록해 주세요.",
             icon="ℹ️"
@@ -613,6 +529,31 @@ def render_active_paper_view(archive_mgr: ArchiveManager, sidebar_config: Dict[s
         pdf_path=pdf_path,
         api_key=api_key
     )
+
+    try:
+        # Optional next-page cache after the requested page has rendered.
+        if st.session_state.get("auto_translate_mode", True) and (current_page + 1 <= total_pages):
+            next_page = current_page + 1
+            cached_next = st.session_state.page_translations.get(next_page)
+            is_next_valid = (
+                cached_next is not None
+                and isinstance(cached_next, dict)
+                and "pairs" in cached_next
+                and cached_next.get("target_engine") == selected_engine
+            )
+            if not is_next_valid:
+                next_data = PaperPDFParser.get_single_page_data(pdf_path, next_page, paper_dir)
+                next_trans = PaperTranslator.translate_single_page(
+                    page_data=next_data,
+                    paper_title=paper.title,
+                    engine=selected_engine,
+                    custom_api_key=api_key,
+                    custom_prompt=custom_prompt
+                )
+                st.session_state.page_translations[next_page] = next_trans
+
+    except Exception:
+        pass  # The current page remains usable; the next page can retry when opened.
 
 
 if __name__ == "__main__":

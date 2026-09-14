@@ -1,0 +1,61 @@
+/* Welcome layout. Shared controls and mascot rendering belong to hodu.css. */
+.stApp:has(.st-key-hodu_home) [data-testid="stSidebar"],
+.stApp:has(.st-key-hodu_home) [data-testid="stSidebarCollapsedControl"],
+.stApp:has(.st-key-hodu_home) [data-testid="stExpandSidebarButton"] {display:none!important;}
+.stApp:has(.st-key-hodu_home) .block-container {max-width:1160px!important;padding:76px 40px 32px!important;}
+.st-key-hodu_home {gap:0!important;}
+.st-key-hodu_home p {word-break:keep-all;overflow-wrap:break-word;}
+.hodu-brand {display:flex;align-items:center;gap:10px;min-height:44px;}
+.hodu-brand strong {font-size:22px;letter-spacing:-.04em;color:#202b27;}
+.hodu-brand-mark {background:#315c49;color:#fff;width:36px;height:36px;display:grid;place-items:center;font:700 27px Georgia,serif;border-radius:12px;}
+.hodu-wordmark {font-size:12px;letter-spacing:.04em;color:#77847c;margin-left:4px;}
+.hodu-welcome {display:grid;grid-template-columns:1.2fr 1fr;align-items:center;min-height:340px;margin:28px 0 36px;padding:16px 12px;}
+.hodu-eyebrow {font-size:12px;font-weight:650;color:#52745f;letter-spacing:.1em;margin:0 0 18px;}
+.st-key-hodu_home .hodu-welcome h1 {font-size:52px;font-weight:750;color:#202b27;line-height:1.2;letter-spacing:-.055em;padding:0;margin:0 0 22px;}
+.hodu-intro {font-size:16px;line-height:1.85;color:#65736d;margin:0 0 22px;}
+.hodu-greeting {display:inline-flex;align-items:center;gap:8px;font-size:12px;color:#52745f;}
+.hodu-greeting i {height:6px;width:6px;border-radius:50%;background:#649575;}
+.hodu-scene {position:relative;min-height:300px;display:flex;justify-content:center;align-items:center;}
+.hodu-floor {position:absolute;width:280px;height:72px;background:#e6ede7;border-radius:50%;bottom:24px;}
+.hodu-scene-note {position:absolute;top:5px;right:4px;background:#fff;border:1px solid #e4eae6;border-radius:18px 18px 18px 5px;padding:12px 18px;color:#65736d;font-size:13px;box-shadow:0 4px 16px #173e2205;transform:rotate(3deg);}
+.hodu-scene-caption {position:absolute;bottom:-12px;font-size:11px;color:#879289;}
+.hodu-art {display:flex;flex-shrink:0;}
+.hodu-hero-dog {position:relative;}
+.hodu-section-heading {display:flex;justify-content:space-between;align-items:center;margin:0 0 20px;}
+.st-key-hodu_home .hodu-section-heading h2 {font-size:22px;font-weight:700;padding:0;margin:0;letter-spacing:-.04em;}
+.hodu-section-heading > span {font-size:12px;color:#879289;}
+[class*="st-key-hodu_choice_"] {padding:24px;background:#fff;border:1px solid #e4eae6;border-radius:24px;box-shadow:0 2px 4px #173e2203,0 12px 32px #173e2205;gap:0!important;min-height:320px;}
+.st-key-hodu_choice_search {background:#eef4ef;border-color:#dce8df;}
+.hodu-choice-art {position:relative;height:122px;display:flex;justify-content:flex-end;align-items:center;}
+.hodu-choice-art .hodu-art {scale:.84;transform-origin:right center;}
+.hodu-number {position:absolute;top:0;left:0;color:#8a998e;font-size:11px;font-weight:600;letter-spacing:.08em;}
+.st-key-hodu_home h3.hodu-choice-title {font-size:21px;font-weight:700;letter-spacing:-.04em;padding:0;margin:8px 0 10px;}
+.hodu-choice-description {font-size:14px;color:#65736d;line-height:1.7;min-height:48px;margin:0 0 24px;}
+.st-key-hodu_home [class*="st-key-hodu_choice_"] button[kind] {min-height:52px;border-radius:15px!important;}
+.st-key-hodu_home [class*="st-key-hodu_choice_"] button[kind="secondary"] {background:#f3f6f4!important;border-color:transparent!important;}
+.st-key-hodu_home [class*="st-key-hodu_choice_"] button[kind="secondary"]:hover {background:#e7efe9!important;}
+.st-key-hodu_resume {border:1px solid #e4eae6;border-radius:20px;background:#fff;padding:20px 24px;margin-top:24px;}
+.hodu-footer {display:flex!important;justify-content:space-between;margin-top:36px;padding-top:20px;border-top:1px solid #e4eae6;color:#879289;font-size:11px;}
+@media(prefers-reduced-motion:reduce){.st-key-hodu_home *, .st-key-hodu_home *::before,.st-key-hodu_home *::after{animation:none!important;transition:none!important;}}
+@media(max-width:640px){
+ .stApp:has(.st-key-hodu_home) .block-container {padding:72px 20px 28px!important;}
+ .hodu-brand {gap:8px;}.hodu-brand strong {font-size:20px;}.hodu-wordmark {display:none;}
+ .st-key-hodu_home > [data-testid="stHorizontalBlock"]:first-child {flex-wrap:nowrap!important;gap:8px;}
+ .st-key-hodu_home > [data-testid="stHorizontalBlock"]:first-child > [data-testid="stColumn"] {min-width:0!important;width:auto!important;flex:1!important;}
+ .hodu-welcome {grid-template-columns:1fr;min-height:0;margin:30px 0 28px;padding:0;}
+ .st-key-hodu_home .hodu-welcome h1 {font-size:36px;letter-spacing:-.055em;margin-bottom:16px;}
+ .hodu-intro {font-size:14px;line-height:1.8;margin-bottom:14px;}
+ .hodu-eyebrow {font-size:11px;margin-bottom:14px;}
+ .hodu-scene {position:absolute;width:110px;min-height:130px;height:130px;right:14px;margin-top:32px;pointer-events:none;}
+ .hodu-hero-dog {scale:.38;}.hodu-floor {width:108px;height:28px;bottom:8px;}
+ .hodu-scene-note,.hodu-scene-caption {display:none;}
+ .hodu-welcome-copy {position:relative;z-index:1;}
+ .hodu-welcome-copy h1 {max-width:240px;}
+ .hodu-intro {max-width:245px;}
+ .hodu-section-heading {margin-bottom:16px;}.hodu-section-heading > span {display:none;}
+ .st-key-hodu_home .hodu-section-heading h2 {font-size:20px;}
+ [class*="st-key-hodu_choice_"] {padding:22px;min-height:0;margin-bottom:8px;}
+ .hodu-choice-art {height:102px;}.hodu-choice-art .hodu-art {scale:.75;}
+ .hodu-choice-description {min-height:0;margin-bottom:20px;}
+ .hodu-footer {gap:8px;flex-direction:column;margin-top:28px;}
+}

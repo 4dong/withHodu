@@ -118,36 +118,36 @@ class PaperPDFParser:
         pix = page.get_pixmap(clip=crop_rect, dpi=180)
         pix.save(page_img_path)
 
-        # 3. Extract Clean Text Blocks for Translation using VisualHighlighter Engine
+        # 3. Translatable blocks. A references section opened on an earlier page keeps running.
+        references_open = [False]
+        for prev_index in range(idx):
+            references_open.append(VisualHighlighter.references_state_after_page(doc[prev_index], references_open[-1]))
         clean_blocks, raw_paragraphs = VisualHighlighter.extract_aligned_page_blocks(
             doc_or_page=page,
-            crop_rect=crop_rect
+            crop_rect=crop_rect,
+            in_references=references_open[idx]
         )
 
-        # Handle trailing incomplete sentence on current page
-        if clean_blocks:
-            last_text = clean_blocks[-1]["text"].strip()
-            if not re.search(r'[\.\?\!\:\;]$', last_text):
-                comp_part, trail_part = cls._split_trailing_incomplete(last_text)
-                if comp_part and len(comp_part) > 20:
-                    clean_blocks[-1]["text"] = comp_part
-                    raw_paragraphs[-1] = comp_part
+        # The unfinished last sentence moves to the next page.
+        complete_part, _ = cls._carried_fragment(clean_blocks)
+        if complete_part:
+            clean_blocks[-1]["text"] = complete_part
+            raw_paragraphs[-1] = complete_part
 
-        # 4. Extract Trailing Incomplete Sentence from Previous Page to Stitch
+        # Display formulas are shown as the original rendering (see VisualHighlighter._equation_regions).
+        for number, block in enumerate([b for b in clean_blocks if b.get("kind") == "equation"], 1):
+            x0, y0, x1, y1 = block["raw_rect"]
+            clip = fitz.Rect(x0 - 3, y0 - 3, x1 + 3, y1 + 3) & page.rect
+            image_path = os.path.join(output_dir, f"page_{actual_page_num}_formula_{number}.png")
+            page.get_pixmap(clip=clip, matrix=fitz.Matrix(3, 3), alpha=False).save(image_path)
+            block["image_path"] = image_path
+            block["image_width_pt"] = round(clip.width, 1)
+
+        # 4. Stitch the previous page's unfinished sentence, taken from its body text (never a table or caption)
         stitched_prefix = ""
-        if actual_page_num > 1:
-            prev_page = doc[actual_page_num - 2]
-            prev_blocks = prev_page.get_text("blocks")
-            for pb in reversed(prev_blocks):
-                ptxt = pb[4].strip()
-                if len(ptxt) < 25 or VisualHighlighter.is_noise_or_meta(ptxt) or VisualHighlighter.is_figure_table_caption_or_chart(ptxt):
-                    continue
-                clean_prev = VisualHighlighter.clean_academic_text(ptxt)
-                if not re.search(r'[\.\?\!\:\;]$', clean_prev):
-                    _, trail_part = cls._split_trailing_incomplete(clean_prev)
-                    if trail_part:
-                        stitched_prefix = trail_part
-                break
+        if idx > 0:
+            prev_blocks, _ = VisualHighlighter.extract_aligned_page_blocks(doc[idx - 1], in_references=references_open[idx - 1])
+            _, stitched_prefix = cls._carried_fragment(prev_blocks)
 
         doc.close()
 
@@ -161,6 +161,17 @@ class PaperPDFParser:
             "stitched_prefix": stitched_prefix,
             "image_path": page_img_path
         }
+
+    @classmethod
+    def _carried_fragment(cls, blocks):
+        """(complete part, unfinished last sentence) of a page's final body paragraph, or empty strings."""
+        if not blocks or blocks[-1].get("kind") != "text":
+            return "", ""
+        last_text = blocks[-1]["text"].strip()
+        if re.search(r'[\.\?\!\:\;]$', last_text):
+            return "", ""
+        complete_part, trail_part = cls._split_trailing_incomplete(last_text)
+        return (complete_part, trail_part) if complete_part and len(complete_part) > 20 else ("", "")
 
     @classmethod
     def _split_trailing_incomplete(cls, text: str) -> (str, str):

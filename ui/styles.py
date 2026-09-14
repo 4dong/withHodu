@@ -6,12 +6,12 @@ High-Contrast Dark Featured Cards (#000000), Massive SF Pro Typography, and var(
 CUSTOM_CSS = """
 <style>
     :root {
-        --ap-bg: #F6F7F9;
+        --ap-bg: #F8F5ED;
         --ap-surface: #FFFFFF;
-        --ap-text: #20242C;
-        --ap-muted: #606875;
-        --ap-primary: #2563EB;
-        --ap-border: #E1E5EB;
+        --ap-text: #39392E;
+        --ap-muted: #747366;
+        --ap-primary: #3F5947;
+        --ap-border: #E5DFD0;
         --ap-control-radius: 12px;
         --ap-card-radius: 20px;
         --ap-panel-radius: 24px;
@@ -31,7 +31,7 @@ CUSTOM_CSS = """
     .ap-page-header h1 { margin: 0; padding-bottom: .4rem; }
     .ap-page-header p { color: var(--ap-muted); margin: 0; }
     .ap-document-title { font-size: 1.1rem; font-weight: 650; overflow-wrap: anywhere; }
-    .ap-badge { display: inline-block; font-size: .8rem; border-radius: 999px; padding: 4px 10px; background: #EEF1F5; color: var(--ap-muted); }
+    .ap-badge { display: inline-block; font-size: .8rem; border-radius: 999px; padding: 4px 10px; background: #F0F1E7; color: var(--ap-muted); }
     button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex="0"]:focus-visible {
         outline: 3px solid var(--ap-primary) !important; outline-offset: 3px;
     }
@@ -131,7 +131,7 @@ CUSTOM_CSS = """
         display: inline-flex;
         align-items: center;
         gap: 0.4rem;
-        background: #EFF4FF;
+        background: #EDF1E3;
         backdrop-filter: blur(16px);
         padding: 0.45rem 0.9rem;
         border-radius: 9999px;
@@ -193,9 +193,9 @@ CUSTOM_CSS = """
         letter-spacing: -0.01em !important;
     }
     button[kind="primary"]:hover, .stButton > button[kind="primary"]:hover {
-        background-color: #0077ED !important;
+        background-color: #314937 !important;
         transform: none !important;
-        box-shadow: 0 4px 14px rgba(0, 113, 227, 0.3) !important;
+        box-shadow: 0 4px 14px rgba(63, 89, 71, 0.15) !important;
     }
 
     /* Streamlit Secondary Button -> Apple Store White/Gray Pill */
@@ -210,13 +210,13 @@ CUSTOM_CSS = """
         transition: all 0.2s ease !important;
     }
     button[kind="secondary"]:hover, .stButton > button[kind="secondary"]:hover {
-        background-color: #E8E8ED !important;
+        background-color: #E8E4D8 !important;
         color: var(--ap-primary) !important;
     }
 
     /* Apple Store Pill Tabs */
     [data-testid="stTabs"] [role="tablist"] {
-        background-color: #E8E8ED !important;
+        background-color: #E8E4D8 !important;
         padding: 4px !important;
         border-radius: var(--ap-control-radius) !important;
         gap: 4px !important;
@@ -249,7 +249,7 @@ CUSTOM_CSS = """
     /* ------------------------------------------------------------- */
     div[data-testid="stTextInput"] input {
         border-radius: 10px !important;
-        border: 1.5px solid #D2D2D7 !important;
+        border: 1.5px solid #DCD5C6 !important;
         background-color: #FFFFFF !important;
         padding: 0.65rem 1rem !important;
         font-size: 0.96rem !important;
@@ -264,7 +264,7 @@ CUSTOM_CSS = """
 
     div[data-testid="stTextArea"] textarea {
         border-radius: 12px !important;
-        border: 1.5px solid #D2D2D7 !important;
+        border: 1.5px solid #DCD5C6 !important;
         background-color: #FFFFFF !important;
         padding: 0.9rem 1.1rem !important;
         font-size: 1.02rem !important;
@@ -323,7 +323,7 @@ CUSTOM_CSS = """
         background: #FFFFFF;
         border-radius: 6px 12px 12px 6px;
         box-shadow: 
-            -3px 0 0 #D2D2D7,
+            -3px 0 0 #DCD5C6,
             -6px 0 0 #A1A1A6,
             0 12px 28px rgba(0, 0, 0, 0.12);
         overflow: hidden;
@@ -388,7 +388,7 @@ CUSTOM_CSS = """
     .goodnotes-shelf-rack {
         width: 100%;
         height: 6px;
-        background: #E8E8ED;
+        background: #E8E4D8;
         border-radius: 3px;
         margin-top: 0.5rem;
         margin-bottom: 2.2rem;
@@ -398,7 +398,7 @@ CUSTOM_CSS = """
     /* 📄 6. Moonlight Split Reader Viewports                        */
     /* ------------------------------------------------------------- */
     .unified-reader-frame {
-        border: 1px solid #E8E8ED;
+        border: 1px solid #E8E4D8;
         border-radius: 20px;
         background: #FFFFFF;
         height: 88vh;
@@ -417,7 +417,7 @@ CUSTOM_CSS = """
         width: 5px;
     }
     .scrollable-trans-box::-webkit-scrollbar-thumb {
-        background: #D2D2D7;
+        background: #DCD5C6;
         border-radius: 10px;
     }
 
@@ -433,15 +433,15 @@ CUSTOM_CSS = """
         transform: none !important;
     }
     .doc-para:hover, .doc-para.active {
-        background-color: #E8F2FF !important;
+        background-color: #EEF1DF !important;
         border-left: 4px solid var(--ap-primary) !important;
         box-shadow: 0 4px 16px rgba(0, 113, 227, 0.12) !important;
         color: var(--ap-text) !important;
         transform: none !important;
     }
     .doc-para.pinned {
-        background-color: #D2E5FF !important;
-        border-left: 5px solid #0056B3 !important;
+        background-color: #E3EBD4 !important;
+        border-left: 5px solid #476249 !important;
         box-shadow: 0 4px 20px rgba(0, 113, 227, 0.25) !important;
         color: var(--ap-text) !important;
         transform: none !important;
@@ -468,7 +468,7 @@ CUSTOM_CSS = """
         width: 5px;
     }
     .pdf-viewer-wrapper::-webkit-scrollbar-thumb {
-        background: #D2D2D7;
+        background: #DCD5C6;
         border-radius: 10px;
     }
     .pdf-content-canvas {
@@ -572,11 +572,11 @@ CUSTOM_CSS = """
         color: var(--ap-text) !important;
         font-weight: 700 !important;
         padding: 0.75rem 0.95rem !important;
-        border-bottom: 1px solid #E8E8ED !important;
+        border-bottom: 1px solid #E8E4D8 !important;
     }
     td {
         padding: 0.7rem 0.95rem !important;
-        border-bottom: 1px solid #E8E8ED !important;
+        border-bottom: 1px solid #E8E4D8 !important;
         vertical-align: top !important;
         line-height: 1.5 !important;
     }
@@ -659,7 +659,7 @@ CUSTOM_CSS = """
         width: 100% !important;
         height: 4px !important;
         border-radius: 9999px !important;
-        background: linear-gradient(90deg, #E8E8ED 0%, var(--ap-primary) 50%, #E8E8ED 100%) !important;
+        background: linear-gradient(90deg, #E8E4D8 0%, var(--ap-primary) 50%, #E8E4D8 100%) !important;
         background-size: 200% 100% !important;
         animation: shimmerFlow 1.6s infinite linear !important;
         margin: 0.6rem 0 !important;
@@ -689,7 +689,7 @@ CUSTOM_CSS = """
         width: 44px !important;
         height: 44px !important;
         border-radius: 14px !important;
-        background: linear-gradient(135deg, var(--ap-primary) 0%, #47A3FF 100%) !important;
+        background: linear-gradient(135deg, var(--ap-primary) 0%, #87966A 100%) !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -725,7 +725,7 @@ CUSTOM_CSS = """
         font-size: 0.76rem !important;
         font-weight: 700 !important;
         color: var(--ap-primary) !important;
-        background: rgba(0, 113, 227, 0.1) !important;
+        background: rgba(63, 89, 71, 0.1) !important;
         padding: 0.2rem 0.55rem !important;
         border-radius: 9999px !important;
     }
@@ -823,11 +823,12 @@ CUSTOM_CSS = """
     .st-key-reader_edge_prev:hover button, .st-key-reader_edge_next:hover button,
     .st-key-reader_edge_prev button:focus-visible, .st-key-reader_edge_next button:focus-visible { opacity: 1; }
     .st-key-reader_edge_prev button:hover, .st-key-reader_edge_next button:hover {
-        background: #EFF4FF !important; color: var(--ap-primary) !important; border-color: var(--ap-primary) !important;
+        background: #EDF1E3 !important; color: var(--ap-primary) !important; border-color: var(--ap-primary) !important;
     }
     @media (hover: none) {
         .st-key-reader_edge_prev button, .st-key-reader_edge_next button { opacity: 0.75; }
     }
+    .st-key-reader_edge_prev button:disabled, .st-key-reader_edge_next button:disabled { visibility: hidden !important; }
     @media (max-width: 640px) {
         .st-key-reader_edge_nav, [data-testid="stLayoutWrapper"]:has(> .st-key-reader_edge_nav) { display: none; }
     }

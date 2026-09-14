@@ -1,0 +1,339 @@
+/* Hodu UI system: final owner of shared controls, surfaces, and typography. */
+:root, .stApp {
+ --ap-bg:#F7F8FA; --ap-surface:#FFFFFF; --ap-text:#202B27; --ap-muted:#65736D;
+ --ap-primary:#315C49; --ap-border:#E4EAE6; --ap-control-radius:14px;
+ --ap-card-radius:22px; --ap-panel-radius:28px; --primary-color:#315C49;
+ --h-shadow:0 2px 4px #18352a03,0 12px 32px #18352a06;
+ --h-focus:#397a5d;
+}
+.stApp [data-testid="stHeader"] {background:#f7f8faeb!important;}
+.stApp [data-testid="stSidebar"] {background:#f1f4f3!important;border-right:1px solid #e4eae6;}
+.stApp [data-testid="stSidebarContent"] {padding:28px 20px 24px!important;}
+.stApp .block-container {padding:72px 40px 48px!important;}
+.stApp h1,.stApp h2,.stApp h3 {color:var(--ap-text);font-weight:700;letter-spacing:-.04em;}
+.stApp h1 a,.stApp h2 a,.stApp h3 a {display:none!important;}
+.stApp a {color:var(--ap-primary);}
+.stApp [data-testid="stCaptionContainer"] p {color:var(--ap-muted);line-height:1.65;}
+.stApp hr {border-color:var(--ap-border);margin:24px 0;}
+.stApp [data-testid="stForm"] {
+ border:1px solid var(--ap-border)!important;border-radius:22px!important;
+ background:#fff;padding:28px!important;box-shadow:var(--h-shadow);
+}
+.stApp [data-testid="stVerticalBlockBorderWrapper"] {border-radius:22px!important;box-shadow:var(--h-shadow)!important;}
+.stApp [data-testid="stVerticalBlockBorderWrapper"] > div {border-color:var(--ap-border)!important;border-radius:22px!important;}
+/* Stable dimensions; interaction changes color and shadow, never layout. */
+.stApp button[kind]:not([kind^="header"]),.stApp a[kind],.stApp [data-testid="stPopoverButton"] button {
+ min-height:48px;padding:11px 20px!important;border-radius:14px!important;
+ font-size:15px!important;font-weight:600!important;line-height:1.45;
+ transition:background-color 160ms ease,border-color 160ms ease,box-shadow 160ms ease!important;
+}
+.stApp button[kind] p,.stApp a[kind] p {font-size:15px;font-weight:600;}
+.stApp button[kind="primary"],.stApp button[kind="primaryFormSubmit"] {
+ background:#315c49!important;color:#fff!important;border:1px solid #315c49!important;
+ box-shadow:0 2px 3px #173e2210,0 4px 10px #315c4914!important;
+}
+.stApp button[kind="primary"]:hover,.stApp button[kind="primaryFormSubmit"]:hover {
+ background:#244937!important;border-color:#244937!important;box-shadow:0 4px 12px #315c4925!important;
+}
+.stApp button[kind="secondary"],.stApp a[kind="secondary"],.stApp [data-testid="stPopoverButton"] button {
+ background:#fff!important;border:1px solid #dde5df!important;color:#344b3e!important;box-shadow:0 1px 2px #173e2205!important;
+}
+.stApp button[kind="secondary"]:hover,.stApp a[kind="secondary"]:hover,.stApp [data-testid="stPopoverButton"] button:hover {
+ background:#edf3ef!important;border-color:#c9d9cd!important;color:#244937!important;
+}
+.stApp button[kind="tertiary"] {min-height:40px;background:transparent!important;padding:8px 12px!important;color:#65736d!important;}
+.stApp button[kind]:active {box-shadow:inset 0 2px 5px #102b2520!important;}
+.stApp button:disabled {opacity:.45!important;cursor:not-allowed!important;box-shadow:none!important;}
+.stApp button:focus-visible,.stApp a:focus-visible,.stApp input:focus-visible,.stApp textarea:focus-visible,.stApp [tabindex="0"]:focus-visible {
+ outline:3px solid var(--h-focus)!important;outline-offset:3px;
+}
+.stApp [data-testid="stWidgetLabel"] p {font-size:13px;font-weight:600;color:#4b5e53;}
+.stApp [data-testid="stTextInput"] [data-baseweb="input"],
+.stApp [data-testid="stSelectbox"] [data-baseweb="select"] > div,
+.stApp [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
+.stApp [data-testid="stTextArea"] [data-baseweb="textarea"],
+.stApp [data-testid="stNumberInput"] [data-baseweb="input"] {
+ min-height:48px;background:#fff!important;border:1px solid #dce5df!important;border-radius:14px!important;
+ transition:border-color 160ms ease,box-shadow 160ms ease;
+}
+.stApp [data-testid="stTextInput"] input,.stApp [data-testid="stTextArea"] textarea {
+ padding:12px 14px!important;background:transparent!important;font-size:15px!important;color:var(--ap-text)!important;
+}
+.stApp [data-baseweb="input"]:focus-within,.stApp [data-baseweb="textarea"]:focus-within {
+ border-color:#397a5d!important;box-shadow:0 0 0 3px #397a5d14!important;
+}
+.stApp [data-testid="stTabs"] [role="tablist"] {
+ background:transparent!important;border-bottom:1px solid #e4eae6!important;
+ border-radius:0!important;padding:0!important;gap:8px!important;max-width:100%;overflow-x:auto;flex-wrap:nowrap;
+}
+.stApp [data-testid="stTabs"] [role="tab"] {
+ color:#65736d;padding:14px 18px!important;min-height:50px;border-radius:12px 12px 0 0!important;flex-shrink:0;white-space:nowrap;
+}
+.stApp [data-testid="stTabs"] [aria-selected="true"] {background:#eaf2ed!important;color:#244937!important;}
+.stApp [data-testid="stTabs"] [role="tabpanel"] {padding-top:24px;}
+.stApp [data-baseweb="tab-highlight"] {background:#315c49!important;height:3px!important;}
+.stApp [data-testid="stExpander"] {border:1px solid #e4eae6!important;border-radius:16px!important;background:#fff;}
+.stApp [data-testid="stExpander"] summary {min-height:48px;padding:12px 16px;}
+.stApp [data-testid="stFileUploaderDropzone"] {background:#f4f7f5!important;border:1px dashed #bdcfc2!important;border-radius:18px;padding:24px;}
+.stApp [data-testid="stMetric"] {padding:20px;background:#fff;border-radius:18px;border:1px solid #e4eae6;}
+.stApp [data-testid="stMetricValue"] {font-size:1.6rem;color:#315c49;}
+.stApp [data-testid="stAlertContainer"] {border-radius:16px;border:1px solid #dfe8e2;}
+.stApp [data-testid="stAlertContainer"]:has([data-testid="stAlertContentInfo"]) {background:#eef3f7!important;color:#425d70!important;}
+.stApp [data-testid="stAlertContainer"]:has([data-testid="stAlertContentSuccess"]) {background:#edf5ef!important;color:#315c49!important;}
+.stApp [data-testid="stAlertContainer"]:has([data-testid="stAlertContentWarning"]) {background:#fff7e9!important;color:#835f22!important;}
+.stApp [data-testid="stAlertContainer"]:has([data-testid="stAlertContentError"]) {background:#fff2ed!important;color:#974f39!important;}
+.stApp [data-baseweb="tag"] {background:#eaf2ed!important;color:#315c49!important;}
+.stApp [data-testid="stProgress"] [role="progressbar"] > div {background:#397a5d!important;}
+.stApp [data-testid="stChatMessage"] {background:#fff;border:1px solid #e4eae6;border-radius:18px;}
+.stApp [data-testid="stRadio"] label {padding:4px 0;}
+/* Main destinations are native buttons, with a stable full-width hit area. */
+.stApp [data-testid="stSidebar"] .st-key-main_navigation {gap:8px; margin-top:8px;}
+.stApp [data-testid="stSidebar"] .st-key-main_navigation button[kind] {
+ min-height:52px; padding:12px 16px; border-radius:12px!important;
+ justify-content:flex-start; gap:12px; width:100%;
+ transition:background-color .15s ease, border-color .15s ease;
+}
+.stApp [data-testid="stSidebar"] .st-key-main_navigation button p {
+ font-size:16px; font-weight:650; letter-spacing:-.025em;
+}
+.stApp [data-testid="stSidebar"] .st-key-main_navigation button[kind="primary"] {
+ border:1px solid #315c49!important;
+}
+.h-sidebar-brand {display:flex;align-items:center;gap:12px;padding:0 0 12px;}
+.h-sidebar-brand strong {font-size:24px;letter-spacing:-1px;display:block;line-height:1.3;}
+.h-sidebar-brand span {display:block;font-family:Georgia,serif;font-size:13px;color:#65736d;margin-top:2px;}
+.h-page-header {display:flex;justify-content:space-between;align-items:center;gap:24px;padding:0 0 22px;
+ margin:0 0 24px;border-bottom:0; min-height:148px;}
+.h-page-header .h-eyebrow {font-size:11px!important;letter-spacing:1.6px;color:#65736d;margin:0 0 12px;}
+.stApp .h-page-header h1 {font-size:34px;margin:0 0 12px;padding:0;line-height:1.3;}
+.h-page-header .h-description {color:#65736d;font-size:15px!important;line-height:1.75;margin:0;word-break:keep-all;}
+.h-section-intro {margin:0 0 20px;}
+.stApp .h-section-intro h2 {font-size:22px;padding:0;margin:4px 0 10px;}
+.h-section-intro p {font-size:14px;color:#65736d;margin:0;line-height:1.8;}
+.h-step {font-size:11px;letter-spacing:1px;color:#7b8066;}
+.hodu-pose {background-color:transparent;background-repeat:no-repeat;image-rendering:pixelated;flex-shrink:0;}
+.hodu-front {width:250px;height:275px;background-size:1448px 1086px;background-position:-67px -104px;}
+.hodu-fetch {width:165px;height:128px;background-size:724px 543px;background-position:-552px -211px;}
+.hodu-read {width:169px;height:128px;background-size:724px 543px;background-position:-10px -353px;}
+.hodu-organize {width:159px;height:128px;background-size:724px 543px;background-position:-187px -352px;}
+.hodu-search {width:169px;height:131px;background-size:724px 543px;background-position:-360px -207px;}
+.hodu-think {width:143px;height:131px;background-size:724px 543px;background-position:-194px -209px;}
+.hodu-done {width:145px;height:136px;background-size:724px 543px;background-position:-561px -350px;}
+.hodu-rest {width:192px;height:96px;background-size:724px 543px;background-position:-355px -385px;}
+.h-portrait {background:transparent;position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+.h-portrait .hodu-pose {position:absolute;scale:.53;}
+.h-portrait-small {width:96px;height:84px;}
+.h-portrait-large {width:136px;height:112px;}
+.h-portrait-large .hodu-pose {scale:.8;}
+.h-portrait-tiny {width:48px;height:52px;}
+.h-portrait .hodu-front {scale:.28;}
+.h-portrait-large .hodu-front {scale:.4;}
+.h-portrait-tiny .hodu-pose {scale:.28;}
+.h-portrait-tiny .hodu-front {scale:.18;}
+.h-state {display:flex;align-items:center;gap:16px;padding:16px 20px;border:1px solid #e4eae6;
+ background:#f1f4f3;border-radius:16px;margin:12px 0 18px;}
+.h-state-copy {min-width:0; flex:1;}
+.h-state-copy strong {font-size:16px;color:#464d3b;line-height:1.5;}
+.h-state-copy p {font-size:13px!important;color:#65736d;margin:5px 0 0;line-height:1.7;overflow-wrap:anywhere;}
+.h-state-empty {background:transparent;border-style:dashed;min-height:154px;}
+.h-state-success {background:#edf5ef;border-color:#d9e9dd;}
+.h-state-error {background:#fff2ed;border-color:#f0ddd4;}
+.h-state-error strong {color:#914f36;}
+.h-working-track {display:block;width:150px;max-width:100%;height:3px;background:#dedfce;overflow:hidden;margin-top:14px;border-radius:3px;}
+.h-working-track i {display:block;width:35%;height:100%;background:#82916a;animation:h-track 1.8s ease-in-out infinite;}
+.h-reader-heading {display:flex;align-items:center;gap:12px;margin-bottom:12px;border-bottom:1px solid #e4eae6;padding-bottom:10px;}
+.h-reader-heading strong {font-size:15px;font-weight:600;line-height:1.5;}
+.h-reader-heading span {font-size:11px;color:#65736d;display:block;margin-bottom:3px;}
+.st-key-reader_toolbar {background:#f1f4f3;border:1px solid #e4eae6;border-radius:13px;padding:9px 12px;}
+.st-key-reader_options {margin-top:10px;}
+/* Keep previous · page · next together around the page label. */
+.st-key-reader_toolbar [data-testid="stColumn"]:nth-child(2) [data-testid="stElementContainer"] {margin-left:auto;}
+.pdf-viewer-wrapper,.scrollable-trans-box {border:1px solid #e4eae6!important;border-radius:12px!important;box-shadow:none!important;}
+.scrollable-trans-box {background:#ffffff!important;}
+.doc-para.active {background:#eef1df!important;border-left-color:#70865c!important;color:#202b27!important;}
+.doc-para.pinned {background:#e3ebd4!important;border-left-color:#476249!important;color:#202b27!important;}
+.para-idx {color:#607651!important;}
+.goodnotes-fallback-cover {background:#e8eddf!important;color:#41523c!important;}
+.goodnotes-fallback-title,.goodnotes-fallback-badge {color:#41523c!important;}
+.goodnotes-shelf-rack {background:#ded7c5!important;box-shadow:none!important;height:3px!important;}
+.goodnotes-book-cover-frame {border-radius:8px!important;box-shadow:0 4px 10px #59442112!important;}
+.apple-dark-featured-card {background:#edf0e3!important;border-color:#dce1ce!important;}
+.apple-product-card {background:#ffffff!important;box-shadow:none!important;}
+.apple-dark-pill-badge,.ap-badge {background:#e6ebdc!important;color:#526146!important;}
+.stApp [data-testid="stMain"]:has(.h-page-header) .block-container {max-width:1260px!important;}
+@keyframes h-track {0%{transform:translateX(-100%)}100%{transform:translateX(390%)}}
+@media (prefers-reduced-motion:reduce) {.stApp *, .stApp *::before,.stApp *::after {animation:none!important;transition:none!important;scroll-behavior:auto!important;}}
+@media(max-width:640px) {
+ .stApp .block-container {padding:70px 20px 32px!important;}
+ .h-page-header {gap:10px;min-height:120px;padding-bottom:18px;margin-bottom:18px;}
+ .stApp .h-page-header h1 {font-size:28px;}
+ .h-page-header .h-description {font-size:13px!important;}
+ .h-page-header .h-portrait-large {width:78px;height:88px;}
+ .h-page-header .h-portrait-large .hodu-pose {scale:.48;}
+ .h-page-header .h-portrait-large .hodu-front {scale:.27;}
+ .h-state {padding:14px 12px;gap:8px;}
+ .h-state-copy strong {font-size:14px;}
+ .h-state .h-portrait {width:68px;}
+ .h-state .hodu-pose {scale:.4;}
+ .h-state .hodu-front {scale:.23;}
+ .stApp [data-testid="stTabs"] [role="tab"] {padding:9px 12px!important;}
+ .stApp [data-testid="stMain"] button[kind]:not([kind^="header"]) {min-height:48px;}
+ .h-reader-heading strong {font-size:13px;}
+ .h-reader-heading .h-portrait {display:none;}
+}
+
+
+/* Navigation has one strong selected action and quiet secondary destinations. */
+.stApp [data-testid="stSidebar"] .st-key-main_navigation {gap:8px;margin:16px 0 8px;}
+.stApp [data-testid="stSidebar"] .st-key-main_navigation button[kind] {min-height:54px;border-radius:16px!important;padding:14px 18px!important;}
+.stApp [data-testid="stSidebar"] .st-key-main_navigation button[kind="secondary"] {background:transparent!important;border-color:transparent!important;box-shadow:none!important;}
+.stApp [data-testid="stSidebar"] .st-key-main_navigation button[kind="secondary"]:hover {background:#e4ece6!important;}
+.stApp [data-testid="stSidebar"] .st-key-sidebar_home button {justify-content:flex-start;font-size:13px!important;}
+.stApp [data-testid="stSidebar"] .st-key-sidebar_home button p {font-size:13px;font-weight:500;}
+.stApp [data-testid="stSidebar"] [data-testid="stExpander"] {background:transparent;border-color:#dfe7e1!important;}
+.stApp [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {font-size:12px;}
+.h-sidebar-brand {padding:4px 6px 16px;gap:10px;}
+.h-sidebar-brand strong {font-size:23px;}
+.h-sidebar-brand span {font-family:inherit;font-size:11px;letter-spacing:.04em;}
+
+/* Workflow surfaces: header → tools → content, with actions inside their section. */
+.st-key-library_toolbar {padding:0 0 24px;margin-bottom:4px;}
+.h-library-summary {font-size:14px;color:#65736d;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;}
+.h-library-summary strong {font-size:28px;color:#202b27;font-weight:700;letter-spacing:-.04em;}
+.h-library-summary span {margin-left:12px;font-size:12px;color:#7b887f;}
+.st-key-library_reports_card {background:#eaf2ed;border:1px solid #dce8df;border-radius:22px;padding:24px;gap:24px;}
+.stApp .h-report-intro h3 {font-size:22px;line-height:1.5;padding:0;margin:12px 0;letter-spacing:-.04em;}
+.h-report-intro p {font-size:13px;line-height:1.8;color:#65736d;margin-bottom:20px;}
+.stApp [class*="st-key-library_collection_"] {border:1px solid #e4eae6!important;border-radius:22px!important;background:#fff;padding:20px;}
+.stApp [class*="st-key-library_collection_"] .apple-product-topic-name {font-size:20px;font-weight:650;line-height:1.4;min-height:56px;}
+.stApp [class*="st-key-library_collection_"] .apple-product-price-tag {font-size:13px;margin:4px 0 16px;}
+.st-key-reader_toolbar {background:#fff;border:1px solid #e4eae6;border-radius:18px;padding:12px;box-shadow:var(--h-shadow);}
+.stApp .st-key-reader_toolbar button[kind] {min-height:44px;padding:8px 14px!important;}
+.stApp [data-testid="stForm"]:has(.st-key-hodu_paper_query) {padding:28px!important;margin-bottom:12px;}
+.stApp [data-testid="stForm"]:has(.st-key-hodu_paper_query) button {min-height:52px;}
+.stApp [data-testid="stForm"]:has(.st-key-hodu_paper_query) input {font-size:16px!important;min-height:52px;}
+.h-state {padding:24px;border-radius:22px;gap:20px;border-color:#e4eae6;}
+.h-state-empty {border-style:solid;background:#fff;min-height:160px;}
+.h-state-copy strong {font-size:17px;color:#344b3e;}
+.h-state-copy p {font-size:14px!important;line-height:1.8;}
+@media(max-width:640px){
+ .stApp [data-testid="stForm"] {padding:20px!important;}
+ .stApp [data-testid="stForm"]:has(.st-key-hodu_paper_query) {padding:20px!important;}
+ .h-page-header {align-items:flex-start;min-height:0;padding:0;margin-bottom:28px;}
+ .h-page-header .h-description {font-size:14px!important;}
+ .h-state {padding:18px 14px;gap:12px;}
+ .h-state-copy strong {font-size:15px;}
+ .h-state-copy p {font-size:13px!important;}
+ .h-library-summary span {margin-left:4px;}
+ .stApp button[kind="tertiary"] {min-height:44px;}
+ .st-key-library_reports_card {padding:22px;}
+}
+
+/* Streamlit 1.62 uses React Aria controls; keep the native DOM and focus model. */
+.stApp [data-testid="stTextInputRootElement"],
+.stApp [data-testid="stSelectbox"] .react-aria-ComboBox > [role="group"],
+.stApp [data-testid="stMultiSelect"] .react-aria-ComboBox > [role="group"] {
+ min-height:48px;border:1px solid #dce5df!important;border-radius:14px!important;background:#fff!important;
+ transition:border-color 160ms ease,box-shadow 160ms ease;
+}
+.stApp [data-testid="stTextInputRootElement"]:focus-within,
+.stApp [data-testid="stSelectbox"] .react-aria-ComboBox > [role="group"]:focus-within {
+ border-color:#397a5d!important;box-shadow:0 0 0 3px #397a5d14!important;
+}
+.stApp [data-testid="stTextInputField"],
+.stApp [data-testid="stSelectbox"] input[role="combobox"] {
+ min-height:46px;height:auto!important;font-size:15px!important;padding:12px 14px!important;color:#202b27!important;
+}
+.stApp [data-testid="stTextArea"] textarea {
+ border:1px solid #dce5df!important;border-radius:14px!important;background:#fff!important;padding:14px!important;
+}
+.stApp [data-testid="stSidebar"] .st-key-main_navigation button > div {width:100%;display:flex;justify-content:flex-start;}
+.stApp [data-testid="stSidebar"] .st-key-main_navigation button [data-has-shortcut] {justify-content:flex-start;gap:12px;}
+.stApp [data-testid="stSidebarHeader"] {padding:0!important;margin:0!important;min-height:36px;}
+.stApp [data-testid="stSidebarUserContent"] {padding-top:12px!important;}
+.stApp [data-testid="stSidebar"] button[kind^="header"] {min-height:36px;padding:6px!important;}
+/* Collection heading and delete action stay on one row at narrow widths. */
+.stApp [class*="st-key-library_collection_"] [data-testid="stHorizontalBlock"] {flex-wrap:nowrap!important;gap:12px!important;}
+.stApp [class*="st-key-library_collection_"] [data-testid="stColumn"]:first-child {min-width:0!important;flex:1 1 0!important;}
+.stApp [class*="st-key-library_collection_"] [data-testid="stColumn"]:last-child {min-width:74px!important;flex:0 0 74px!important;}
+.stApp [class*="st-key-library_collection_"] button[kind="tertiary"] {padding:8px!important;white-space:nowrap;}
+/* The wide resting pose scales down so its frame does not clip the tail. */
+.h-portrait .hodu-rest {scale:.48;}
+.h-portrait-large .hodu-rest {scale:.68;}
+.h-portrait-tiny .hodu-rest {scale:.24;}
+/* Streamlit draws a second frame on the details element; the expander wrapper keeps the only outline. */
+.stApp [data-testid="stExpander"] details {border:0!important;border-radius:inherit!important;}
+.stApp [data-testid="stExpanderDetails"] {border-color:#e4eae6!important;}
+/* Long collection names stay two lines so cards in a row keep one height; the full name is the title tooltip. */
+.stApp [class*="st-key-library_collection_"] .apple-product-topic-name {
+ display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;word-break:keep-all;overflow-wrap:anywhere;max-height:56px;
+}
+@media(max-width:640px){
+ .h-state .hodu-rest {scale:.34;}
+ .h-page-header .h-portrait-large .hodu-rest {scale:.38;}
+}
+/* Translation paragraphs are Markdown inside the pane: inherit the reader's size and keep formulas in the palette. */
+.doc-para p {margin:0 0 .5em!important;font-size:inherit!important;line-height:inherit!important;color:inherit;}
+.doc-para p:last-child {margin-bottom:0!important;}
+.doc-para .katex-display {margin:.5rem 0!important;background:#f4f7f5!important;border-color:#e4eae6!important;}
+/* Side view (facing right) for the page-turn walk. */
+.hodu-side {width:162px;height:138px;background-size:724px 543px;background-position:-370px -54px;}
+
+/* Page-turn wait: outer translation and the inner 12-frame walk run independently. */
+.h-walk {position:fixed;top:0;left:0;width:100vw;height:60px;z-index:999994;pointer-events:none;overflow:hidden;}
+.h-walk-label {position:absolute;top:18px;left:50%;translate:-50% 0;font-size:12px;font-weight:600;color:#315c49;
+ background:#ffffffeb;border:1px solid #e4eae6;border-radius:999px;padding:3px 12px;white-space:nowrap;}
+.h-walk-dog {position:absolute;left:0;top:5px;width:56px;height:48px;animation:h-walk-across 6s linear infinite;}
+@keyframes h-walk-across {from{transform:translateX(-64px)} to{transform:translateX(100vw)}}
+
+/* Reader controls: pinned to the window's top-right corner and hidden until the pointer reaches the
+   corner or keyboard focus enters; an open popover (rendered outside the panel) keeps it open. At rest only
+   the corner receives the pointer, so clicks elsewhere reach the page; the content stays focusable. */
+.stApp [data-testid="stLayoutWrapper"]:has(> .st-key-reader_controls) {display:contents;}
+.stApp .st-key-reader_controls {
+ position:fixed!important;top:0;right:0;z-index:999995;width:min(620px,calc(100vw - 24px))!important;max-width:none!important;
+ padding:16px 18px 18px!important;gap:10px!important;background:transparent;border:1px solid transparent;border-radius:0 0 0 22px;
+ clip-path:inset(0 0 calc(100% - 60px) calc(100% - 72px));
+ transition:clip-path 0s linear 260ms,background-color 160ms ease 160ms,border-color 160ms ease 160ms,box-shadow 160ms ease 160ms;
+}
+.stApp .st-key-reader_controls > * {opacity:0;transition:opacity 140ms ease 120ms;}
+.stApp .st-key-reader_controls::after {
+ content:"•••";position:absolute;top:14px;right:16px;padding:6px 10px;font-size:9px;letter-spacing:2px;line-height:1;color:#65736d;
+ background:#ffffffe6;border:1px solid #e4eae6;border-radius:999px;pointer-events:none;transition:opacity 140ms ease;
+}
+.stApp .st-key-reader_controls:hover,
+.stApp .st-key-reader_controls:has(:focus-visible),
+.stApp .st-key-reader_controls:has([aria-expanded="true"]) {
+ clip-path:inset(0);background:#ffffff;border-color:#e4eae6;box-shadow:0 18px 48px #18352a1f;
+ transition:clip-path 0s,background-color 160ms ease,border-color 160ms ease,box-shadow 160ms ease;
+}
+.stApp .st-key-reader_controls:hover > *,
+.stApp .st-key-reader_controls:has(:focus-visible) > *,
+.stApp .st-key-reader_controls:has([aria-expanded="true"]) > * {opacity:1;transition:opacity 140ms ease;}
+.stApp .st-key-reader_controls:hover::after,
+.stApp .st-key-reader_controls:has(:focus-visible)::after,
+.stApp .st-key-reader_controls:has([aria-expanded="true"])::after {opacity:0;}
+@media (hover:none) {
+ .stApp .st-key-reader_controls {position:static!important;width:auto!important;clip-path:none;padding:0!important;border:0;box-shadow:none;}
+ .stApp .st-key-reader_controls > * {opacity:1;}
+ .stApp .st-key-reader_controls::after {display:none;}
+}
+/* Display formulas are the PDF's own rendering: natural size, scrolling when wider than the pane. */
+.doc-formula-frame {overflow-x:auto;background:#ffffff;border:1px solid #e4eae6;border-radius:12px;padding:10px 12px;text-align:center;}
+.doc-formula-image {max-width:none!important;height:auto;display:inline-block;vertical-align:middle;}
+.doc-formula-missing {font-size:13px;color:#65736d;}
+
+/* Transparent sprite sheets: timing is generated from manifest.durationsMs. */
+.h-animation {width:104px;height:104px;flex-shrink:0;background-repeat:no-repeat;background-position:0 0;image-rendering:pixelated;pointer-events:none;}
+.h-animation-walk {width:64px;height:64px;position:absolute;left:-4px;top:-8px;}
+.h-home-animation {position:relative;width:300px;height:300px;}
+.h-home-idle,.h-home-shake {position:absolute;inset:0;}
+.h-home-idle {opacity:1;}
+.h-home-shake {opacity:0;}
+.h-animation-home {width:300px;height:300px;}
+@media(max-width:640px){.h-animation-portrait {width:76px;height:76px;}}
+@media(prefers-reduced-motion:reduce){
+ .h-animation,.h-home-idle,.h-home-shake,.h-walk-dog {animation:none!important;}
+ .h-animation {background-position:0 0!important;}
+ .h-home-idle {opacity:1!important;}.h-home-shake {display:none!important;}
+}
