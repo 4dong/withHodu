@@ -1,0 +1,12 @@
+{
+  "source": "assets/hodu/hodu-pixel-reference-v1.png",
+  "output": "assets/hodu/hodu-pixel-transparent-v1.png",
+  "size": [
+    1448,
+    1086
+  ],
+  "mode": "RGBA",
+  "rgb_preserved": true,
+  "transparent_pixels": 899948,
+  "transparent_fraction": 0.5722937842760193
+}
