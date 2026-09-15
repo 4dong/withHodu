@@ -11,7 +11,7 @@ from typing import Dict, Any, Optional
 from core.searcher import Paper
 from core.math_formatter import AcademicMathFormatter
 from core.visual_highlighter import VisualHighlighter
-from ui.hodu import portrait, loading, show_state
+from ui.hodu import loading
 
 # ==============================================================================
 # Pure JavaScript Controller Engine (Main DOM Native Execution)
@@ -226,69 +226,56 @@ def render_moonlight_split_page_reader(
     api_key: Optional[str] = None
 ):
     """
-    Renders Moonlight split reading experience:
-    - Left (6.2): Maximized Full-Height Native Vector SVG PDF Viewer (88vh)
-    - Right (3.8): Full-Height Scrollable Korean Translation Pane (88vh) with Flawless KaTeX Math Rendering
-    - Pixel-Perfect Soft Highlighter: Bound 1:1 to SVG Canvas dimensions with soft amber tint.
-    - Native page navigation, single-pane viewing, and a keyboard-accessible question popover.
+    Renders the split reader:
+    - Toolbar, always visible: back to the list, title, previous · page · next, view mode, question.
+    - Left: the page as vector SVG (or image) with one highlight box per paragraph.
+    - Right: the Korean translation, one paragraph per box, formulas in KaTeX.
+    Hovering or clicking either side highlights its pair on the other.
     """
+    pairs = page_translation.get("pairs", [])
+    svg_content = page_data.get("svg_content", "")
+    img_path = page_data.get("image_path")
 
-    # Reader controls float in the window's top-right corner and stay hidden until the pointer reaches it
-    # or keyboard focus enters (.st-key-reader_controls in ui/hodu.css), so the page keeps the full
-    # reading height. The edge arrows below keep paging one step away.
-    with st.container(key="reader_controls"):
-        st.markdown('<div class="h-reader-heading">' + portrait("read", "tiny")
-                    + '<div><span>호두랑 · 함께 읽는 중</span><strong>' + html.escape(paper.title)
-                    + '</strong></div></div>', unsafe_allow_html=True)
-
-        toolbar = st.container(key="reader_toolbar").columns([1, 1, 1.2, 1], vertical_alignment="center")
-        with toolbar[0]:
-            if st.button("← 목록", key="reader_back", help="이전 논문 목록으로 돌아갑니다."):
-                st.session_state.current_paper_bundle = None
-                st.session_state.page_translations = {}
-                st.session_state.current_page_num = 1
-                st.rerun()
-        with toolbar[1]:
-            if st.button("이전", key="reader_prev", help="이전 페이지", disabled=current_page <= 1):
-                st.session_state.current_page_num = current_page - 1
-                st.rerun()
-        with toolbar[2]:
-            st.caption(f"{current_page} / {total_pages} 페이지")
-        with toolbar[3]:
-            if st.button("다음", key="reader_next", help="다음 페이지", disabled=current_page >= total_pages):
-                st.session_state.current_page_num = current_page + 1
-                st.rerun()
-
-        reading_controls = st.container(key="reader_options").columns([3, 1], vertical_alignment="bottom")
-        with reading_controls[0]:
-            view_mode = st.radio("읽기 방식", ["대역 보기", "원문", "번역"], horizontal=True, key="reader_view_mode")
-        pairs = page_translation.get("pairs", [])
-        svg_content = page_data.get("svg_content", "")
-        img_path = page_data.get("image_path")
+    with st.container(key="reader_toolbar", horizontal=True, vertical_alignment="center", gap="small"):
+        if st.button("← 목록", key="reader_back", help="논문 목록으로 돌아갑니다."):
+            st.session_state.current_paper_bundle = None
+            st.session_state.page_translations = {}
+            st.session_state.current_page_num = 1
+            st.rerun()
+        safe_title = html.escape(paper.title or "")
+        st.markdown(f'<p class="h-reader-title" title="{safe_title}">{safe_title}</p>',
+                    unsafe_allow_html=True, width="stretch")
+        if st.button("이전", key="reader_prev", help="이전 페이지", disabled=current_page <= 1):
+            st.session_state.current_page_num = current_page - 1
+            st.rerun()
+        st.markdown(f'<p class="h-reader-page">{current_page} / {total_pages}</p>',
+                    unsafe_allow_html=True, width="content")
+        if st.button("다음", key="reader_next", help="다음 페이지", disabled=current_page >= total_pages):
+            st.session_state.current_page_num = current_page + 1
+            st.rerun()
+        view_mode = st.segmented_control("읽기 방식", ["대역", "원문", "번역"], default="대역", required=True,
+                                         key="reader_view", label_visibility="collapsed", width="content")
 
         # Native popover preserves keyboard, touch and rerun behavior without DOM-bound chat controls.
         from core.qa_agent import PaperChatAgent
-        with reading_controls[1], st.popover("논문에 질문", use_container_width=True):
-            st.markdown("#### 논문 질문")
-            st.caption(f"{current_page}페이지의 내용과 논문 정보를 바탕으로 답변합니다.")
+        with st.popover("질문", icon=":material/forum:", width="content"):
+            st.caption(f"{current_page}페이지 내용과 논문 정보를 바탕으로 답해요.")
             history_key = f"paper_chat_{paper.id}"
             history = st.session_state.setdefault(history_key, [])
-            with st.container(height=180, border=False):
-                if not history:
-                    st.caption("핵심 내용이나 이해하기 어려운 수식을 질문해 보세요.")
+            with st.container(height=220 if history else "content", border=False):
                 for message in history:
                     with st.chat_message(message["role"]):
                         st.markdown(message["content"])
             with st.form(f"paper_chat_form_{paper.id}", clear_on_submit=True):
                 question = st.text_input("질문", placeholder="이 페이지의 핵심은 무엇인가요?")
-                send = st.form_submit_button("질문 보내기", type="primary")
+                send = st.form_submit_button("보내기", type="primary")
             if send:
                 if not question.strip():
                     st.info("질문을 입력해 주세요.")
                 elif not api_key:
-                    st.info("질문에 답변하려면 사이드바에서 API 키를 설정해 주세요.")
+                    st.info("질문에 답하려면 사이드바의 API 키 관리에서 키를 등록해 주세요.")
                 else:
-                    with loading("호두가 논문을 살펴보고 있어요", f"{current_page}페이지에서 질문의 근거를 확인해요.", "think"):
+                    with loading("답을 찾고 있어요", f"{current_page}페이지", "think"):
                         try:
                             result = PaperChatAgent.answer_query(
                                 user_query=question, paper=paper, current_page=current_page,
@@ -302,7 +289,6 @@ def render_moonlight_split_page_reader(
                         st.rerun()
                     else:
                         st.error("답변을 가져오지 못했습니다. 연결 상태를 확인하고 다시 시도해 주세요.")
-        st.caption("원문 문단을 짚으면 번역과 연결돼요")
 
     # Edge arrows: a sticky zero-height bar whose ends reveal ‹ › on hover, so paging stays
     # reachable after scrolling or with the sidebar hidden. Plain buttons keep keyboard access.
@@ -318,8 +304,8 @@ def render_moonlight_split_page_reader(
                 st.session_state.current_page_num = current_page + 1
                 st.rerun()
 
-    if view_mode == "대역 보기":
-        col_pdf, col_trans = st.columns([6.2, 3.8])
+    if view_mode == "대역":
+        col_pdf, col_trans = st.columns(2, gap="small")
     else:
         col_pdf = col_trans = st.container()
 

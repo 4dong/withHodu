@@ -4,23 +4,35 @@
  --ap-primary:#315C49; --ap-border:#E4EAE6; --ap-control-radius:14px;
  --ap-card-radius:22px; --ap-panel-radius:28px; --primary-color:#315C49;
  --h-shadow:0 2px 4px #18352a03,0 12px 32px #18352a06;
- --h-focus:#397a5d;
+ --h-focus:#397a5d; --ap-page-gutter:40px;
 }
-.stApp [data-testid="stHeader"] {background:#f7f8faeb!important;}
+/* The Streamlit header draws no band over the page; only its own controls take the pointer. */
+.stApp [data-testid="stHeader"] {background:transparent!important;pointer-events:none;}
+.stApp [data-testid="stHeader"] button,.stApp [data-testid="stHeader"] a {pointer-events:auto;}
 .stApp [data-testid="stSidebar"] {background:#f1f4f3!important;border-right:1px solid #e4eae6;}
-.stApp [data-testid="stSidebarContent"] {padding:28px 20px 24px!important;}
-.stApp .block-container {padding:72px 40px 48px!important;}
+.stApp [data-testid="stSidebarContent"] {padding:24px 20px 24px!important;}
+/* The collapse button floats in the corner, so the brand lines up with the page title. */
+.stApp [data-testid="stSidebarHeader"] {position:absolute;top:8px;right:8px;z-index:2;}
+.stApp .block-container {padding:32px var(--ap-page-gutter) 40px!important;max-width:none;}
+/* st.html blocks holding only style or script tags (theme, cursor, scroll reset) take no row gap above the title;
+   their styles still apply and their scripts have already run. */
+.stApp [data-testid="stElementContainer"]:has(> [data-testid="stHtml"]):not(:has(> [data-testid="stHtml"] > :not(style, script))),
+.stApp [data-testid="stElementContainer"]:empty {display:none;}
+/* With the sidebar collapsed its expand button sits in the top-left corner; the page starts below it. */
+.stApp:has([data-testid="stExpandSidebarButton"], [data-testid="stSidebarCollapsedControl"]) .block-container {padding-top:64px!important;}
 .stApp h1,.stApp h2,.stApp h3 {color:var(--ap-text);font-weight:700;letter-spacing:-.04em;}
+.stApp h1 {font-size:2rem;} .stApp h2 {font-size:1.5rem;} .stApp h3 {font-size:1.25rem;} .stApp h4 {font-size:1.1rem;}
 .stApp h1 a,.stApp h2 a,.stApp h3 a {display:none!important;}
 .stApp a {color:var(--ap-primary);}
+.stApp [data-testid="stCaptionContainer"] {opacity:1;}
 .stApp [data-testid="stCaptionContainer"] p {color:var(--ap-muted);line-height:1.65;}
 .stApp hr {border-color:var(--ap-border);margin:24px 0;}
 .stApp [data-testid="stForm"] {
  border:1px solid var(--ap-border)!important;border-radius:22px!important;
  background:#fff;padding:28px!important;box-shadow:var(--h-shadow);
 }
-.stApp [data-testid="stVerticalBlockBorderWrapper"] {border-radius:22px!important;box-shadow:var(--h-shadow)!important;}
-.stApp [data-testid="stVerticalBlockBorderWrapper"] > div {border-color:var(--ap-border)!important;border-radius:22px!important;}
+/* Bordered cards are keyed card_*: one border, radius and shadow for every card. */
+.stApp [class*="st-key-card_"] {background:#fff;border:1px solid var(--ap-border)!important;border-radius:var(--ap-card-radius)!important;box-shadow:var(--h-shadow);}
 /* Stable dimensions; interaction changes color and shadow, never layout. */
 .stApp button[kind]:not([kind^="header"]),.stApp a[kind],.stApp [data-testid="stPopoverButton"] button {
  min-height:48px;padding:11px 20px!important;border-radius:14px!important;
@@ -102,18 +114,10 @@
 .h-sidebar-brand {display:flex;align-items:center;gap:12px;padding:0 0 12px;}
 .h-sidebar-brand strong {font-size:24px;letter-spacing:-1px;display:block;line-height:1.3;}
 .h-sidebar-brand span {display:block;font-family:Georgia,serif;font-size:13px;color:#65736d;margin-top:2px;}
-.h-page-header {display:flex;justify-content:space-between;align-items:center;gap:24px;padding:0 0 22px;
- margin:0 0 24px;border-bottom:0; min-height:148px;}
-.h-page-header .h-eyebrow {font-size:11px!important;letter-spacing:1.6px;color:#65736d;margin:0 0 12px;}
-.stApp .h-page-header h1 {font-size:34px;margin:0 0 12px;padding:0;line-height:1.3;}
-.h-page-header .h-description {color:#65736d;font-size:15px!important;line-height:1.75;margin:0;word-break:keep-all;}
-.h-section-intro {margin:0 0 20px;}
-.stApp .h-section-intro h2 {font-size:22px;padding:0;margin:4px 0 10px;}
-.h-section-intro p {font-size:14px;color:#65736d;margin:0;line-height:1.8;}
-.h-step {font-size:11px;letter-spacing:1px;color:#7b8066;}
-/* A section that opens the page (essay workspace) carries Hodu beside its heading. */
-.h-section-intro-hodu {display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:24px;}
-.stApp .h-section-intro-hodu h2 {font-size:30px;margin:6px 0 10px;line-height:1.3;}
+/* Page heading: a title and, where it helps, one line of description. Hodu stays in empty and busy states. */
+.h-page-header {margin:0 0 24px;}
+.stApp .h-page-header h1 {font-size:30px;margin:0;padding:0;line-height:1.3;}
+.h-page-header .h-description {color:#65736d;font-size:15px!important;line-height:1.7;margin:6px 0 0;word-break:keep-all;}
 .hodu-pose {background-color:transparent;background-repeat:no-repeat;image-rendering:pixelated;flex-shrink:0;}
 .hodu-front {width:250px;height:275px;background-size:1448px 1086px;background-position:-67px -104px;}
 .hodu-fetch {width:165px;height:128px;background-size:724px 543px;background-position:-552px -211px;}
@@ -144,51 +148,20 @@
 .h-state-error strong {color:#914f36;}
 .h-working-track {display:block;width:150px;max-width:100%;height:3px;background:#dedfce;overflow:hidden;margin-top:14px;border-radius:3px;}
 .h-working-track i {display:block;width:35%;height:100%;background:#82916a;animation:h-track 1.8s ease-in-out infinite;}
-.h-reader-heading {display:flex;align-items:center;gap:12px;margin-bottom:12px;border-bottom:1px solid #e4eae6;padding-bottom:10px;}
-.h-reader-heading strong {font-size:15px;font-weight:600;line-height:1.5;}
-.h-reader-heading span {font-size:11px;color:#65736d;display:block;margin-bottom:3px;}
-.st-key-reader_toolbar {background:#f1f4f3;border:1px solid #e4eae6;border-radius:13px;padding:9px 12px;}
-.st-key-reader_options {margin-top:10px;}
-/* Keep previous · page · next together around the page label. */
-.st-key-reader_toolbar [data-testid="stColumn"]:nth-child(2) [data-testid="stElementContainer"] {margin-left:auto;}
-.pdf-viewer-wrapper,.scrollable-trans-box {border:1px solid #e4eae6!important;border-radius:12px!important;box-shadow:none!important;}
-.scrollable-trans-box {background:#ffffff!important;}
-.doc-para.active {background:#eef1df!important;border-left-color:#70865c!important;color:#202b27!important;}
-.doc-para.pinned {background:#e3ebd4!important;border-left-color:#476249!important;color:#202b27!important;}
-.para-idx {color:#607651!important;}
-.goodnotes-fallback-cover {background:#e8eddf!important;color:#41523c!important;}
-.goodnotes-fallback-title,.goodnotes-fallback-badge {color:#41523c!important;}
-.goodnotes-shelf-rack {background:#ded7c5!important;box-shadow:none!important;height:3px!important;}
-.goodnotes-book-cover-frame {border-radius:8px!important;box-shadow:0 4px 10px #59442112!important;}
-.apple-dark-featured-card {background:#edf0e3!important;border-color:#dce1ce!important;}
-.apple-product-card {background:#ffffff!important;box-shadow:none!important;}
-.apple-dark-pill-badge,.ap-badge {background:#e6ebdc!important;color:#526146!important;}
 .stApp [data-testid="stMain"]:has(.h-page-header, .st-key-essay_workspace) .block-container {max-width:1260px!important;}
 @keyframes h-track {0%{transform:translateX(-100%)}100%{transform:translateX(390%)}}
 @media (prefers-reduced-motion:reduce) {.stApp *, .stApp *::before,.stApp *::after {animation:none!important;transition:none!important;scroll-behavior:auto!important;}}
 @media(max-width:640px) {
- .stApp .block-container {padding:70px 20px 32px!important;}
- .h-page-header {gap:10px;min-height:120px;padding-bottom:18px;margin-bottom:18px;}
- .stApp .h-page-header h1 {font-size:28px;}
- .h-page-header .h-description {font-size:13px!important;}
- .h-page-header .h-portrait-large {width:78px;height:88px;}
- .h-page-header .h-portrait-large .hodu-pose {scale:.48;}
- .h-page-header .h-portrait-large .hodu-front {scale:.27;}
- .h-section-intro-hodu {gap:10px;}
- .stApp .h-section-intro-hodu h2 {font-size:24px;}
- .h-section-intro-hodu .h-portrait-large {width:78px;height:88px;}
- .h-section-intro-hodu .h-portrait-large .hodu-pose {scale:.48;}
- .h-state {padding:14px 12px;gap:8px;}
- .h-state-copy strong {font-size:14px;}
+ :root, .stApp {--ap-page-gutter:20px;}
+ .stApp .block-container {padding:20px var(--ap-page-gutter) 32px!important;}
+ .stApp .h-page-header h1 {font-size:26px;}
+ .h-page-header .h-description {font-size:14px!important;}
  .h-state .h-portrait {width:68px;}
  .h-state .hodu-pose {scale:.4;}
  .h-state .hodu-front {scale:.23;}
  .stApp [data-testid="stTabs"] [role="tab"] {padding:9px 12px!important;}
  .stApp [data-testid="stMain"] button[kind]:not([kind^="header"]) {min-height:48px;}
- .h-reader-heading strong {font-size:13px;}
- .h-reader-heading .h-portrait {display:none;}
 }
-
 
 /* Navigation has one strong selected action and quiet secondary destinations. */
 .stApp [data-testid="stSidebar"] .st-key-main_navigation {gap:8px;margin:16px 0 8px;}
@@ -210,38 +183,75 @@
 .h-sidebar-brand {padding:4px 6px 16px;gap:10px;}
 .h-sidebar-brand strong {font-size:23px;}
 .h-sidebar-brand span {font-family:inherit;font-size:11px;letter-spacing:.04em;}
+.stApp [data-testid="stSidebar"] .st-key-sidebar_home button > div,
+.stApp [data-testid="stSidebar"] .st-key-sidebar_home button [data-has-shortcut] {width:100%;display:flex;justify-content:flex-start;}
 
 /* Workflow surfaces: header → tools → content, with actions inside their section. */
-.st-key-library_toolbar {padding:0 0 24px;margin-bottom:4px;}
-.h-library-summary {font-size:14px;color:#65736d;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;}
+.stApp .st-key-library_toolbar {gap:12px!important;padding:0 0 16px;}
+/* Toolbar popovers keep their whole label: the label box otherwise shrinks a few px under the theme's
+   bolder text and ends in an ellipsis ("새 컬...", "질.."). */
+.stApp .st-key-library_toolbar [data-testid="stPopoverButton"] [data-testid="stMarkdownContainer"],
+.stApp .st-key-library_folder_actions [data-testid="stPopoverButton"] [data-testid="stMarkdownContainer"],
+.stApp .st-key-reader_toolbar [data-testid="stPopoverButton"] [data-testid="stMarkdownContainer"] {flex:0 0 auto!important;min-width:max-content!important;max-width:none!important;}
+.h-library-summary {font-size:14px;color:#65736d;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin:0;}
 .h-library-summary strong {font-size:28px;color:#202b27;font-weight:700;letter-spacing:-.04em;}
-.h-library-summary span {margin-left:12px;font-size:12px;color:#7b887f;}
-.st-key-library_reports_card {background:#eaf2ed;border:1px solid #dce8df;border-radius:22px;padding:24px;gap:24px;}
-.stApp .h-report-intro h3 {font-size:22px;line-height:1.5;padding:0;margin:12px 0;letter-spacing:-.04em;}
-.h-report-intro p {font-size:13px;line-height:1.8;color:#65736d;margin-bottom:20px;}
-.stApp [class*="st-key-library_collection_"] {border:1px solid #e4eae6!important;border-radius:22px!important;background:#fff;padding:20px;}
-.stApp [class*="st-key-library_collection_"] .apple-product-topic-name {font-size:20px;font-weight:650;line-height:1.4;min-height:56px;}
-.stApp [class*="st-key-library_collection_"] .apple-product-price-tag {font-size:13px;margin:4px 0 16px;}
-.st-key-reader_toolbar {background:#fff;border:1px solid #e4eae6;border-radius:18px;padding:12px;box-shadow:var(--h-shadow);}
-.stApp .st-key-reader_toolbar button[kind] {min-height:44px;padding:8px 14px!important;}
-.stApp [data-testid="stForm"]:has(.st-key-hodu_paper_query) {padding:28px!important;margin-bottom:12px;}
+.h-library-summary span {margin-left:12px;font-size:13px;color:#7b887f;}
+.stApp p.h-section-title {margin:28px 0 12px;font-size:18px;font-weight:700;color:var(--ap-text);letter-spacing:-.03em;}
+.stApp .st-key-library_reports_card {background:#eaf2ed;border:1px solid #dce8df;border-radius:var(--ap-card-radius);padding:20px;gap:12px!important;}
+.stApp p.h-report-title {margin:0;font-size:16px;font-weight:700;color:var(--ap-text);}
+.stApp p.h-report-count {margin:2px 0 0;font-size:13px;color:#65736d;}
+.stApp [class*="st-key-card_collection_"] {padding:18px 20px;gap:12px!important;}
+.stApp p.h-collection-name {margin:0;font-size:19px;font-weight:650;line-height:1.4;color:var(--ap-text);
+ display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;word-break:keep-all;overflow-wrap:anywhere;}
+.stApp p.h-collection-count {margin:2px 0 0;font-size:13px;color:#65736d;}
+/* Open fills the row; delete stays a quiet text button beside it. */
+.stApp [class*="st-key-card_collection_"] [data-testid="stHorizontalBlock"] {flex-wrap:nowrap!important;gap:8px!important;}
+.stApp [class*="st-key-card_collection_"] [data-testid="stColumn"]:first-child {min-width:0!important;flex:1 1 0!important;}
+.stApp [class*="st-key-card_collection_"] [data-testid="stColumn"]:last-child {min-width:0!important;width:auto!important;flex:0 0 auto!important;}
+.stApp [class*="st-key-card_collection_"] button[kind="tertiary"] {padding:8px 10px!important;white-space:nowrap;}
+.stApp p.h-card-label {margin:0 0 4px;font-size:13px;font-weight:600;color:#4b5e53;}
+.stApp [data-testid="stForm"]:has(.st-key-hodu_paper_query) {padding:24px!important;margin-bottom:12px;}
 .stApp [data-testid="stForm"]:has(.st-key-hodu_paper_query) button {min-height:52px;}
 .stApp [data-testid="stForm"]:has(.st-key-hodu_paper_query) input {font-size:16px!important;min-height:52px;}
 .h-state {padding:24px;border-radius:22px;gap:20px;border-color:#e4eae6;}
-.h-state-empty {border-style:solid;background:#fff;min-height:160px;}
+.h-state-empty {border-style:solid;background:#fff;min-height:0;}
 .h-state-copy strong {font-size:17px;color:#344b3e;}
 .h-state-copy p {font-size:14px!important;line-height:1.8;}
+.h-state-copy p:empty {display:none;}
+/* Paper tiles: the cover is the open button and the title its label; selection and 더보기 frame it. */
+.stApp [class*="st-key-card_paper_"] {padding:10px 12px 12px;gap:8px!important;}
+.stApp [class*="st-key-card_paper_"] [data-testid="stHorizontalBlock"] {flex-wrap:nowrap!important;align-items:center;gap:6px!important;}
+.stApp [class*="st-key-card_paper_"] [data-testid="stColumn"] {min-width:0!important;width:auto!important;}
+.stApp [class*="st-key-card_paper_"] [data-testid="stColumn"]:first-child {flex:0 0 auto!important;}
+.stApp [class*="st-key-card_paper_"] [data-testid="stColumn"]:last-child {flex:1 1 0!important;}
+.stApp p.h-paper-topic {margin:0;font-size:12px;color:#65736d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stApp p.h-paper-year {margin:-4px 0 0;font-size:12px;color:#7b887f;text-align:center;}
+.stApp [class*="st-key-paper_open_"] button[kind],
+.stApp [class*="st-key-paper_open_"] button[kind]:hover {
+ position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;width:100%;
+ height:300px;min-height:300px;padding:246px 2px 0!important;background:transparent!important;border:0!important;
+ box-shadow:none!important;border-radius:10px!important;color:var(--ap-text)!important;
+}
+.stApp [class*="st-key-paper_open_"] button[kind]::before {
+ content:"";position:absolute;top:0;left:50%;width:170px;height:235px;translate:-50% 0;border-radius:6px;
+ border:1px solid #e1e7e3;box-shadow:0 4px 10px #18352a14;background:#e8eddf var(--cover,none) center top/cover no-repeat;
+ transition:translate 160ms ease,box-shadow 160ms ease;
+}
+.stApp [class*="st-key-paper_open_"] button[kind]:hover::before {translate:-50% -3px;box-shadow:0 10px 20px #18352a1f;}
+.stApp [class*="st-key-paper_open_"] button[kind] p {
+ font-size:14px!important;font-weight:600!important;line-height:1.4;text-align:center;
+ display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;word-break:keep-all;overflow-wrap:anywhere;
+}
+.stApp [class*="st-key-paper_open_"] button[kind]:hover p {color:var(--ap-primary);}
 @media(max-width:640px){
  .stApp [data-testid="stForm"] {padding:20px!important;}
  .stApp [data-testid="stForm"]:has(.st-key-hodu_paper_query) {padding:20px!important;}
- .h-page-header {align-items:flex-start;min-height:0;padding:0;margin-bottom:28px;}
- .h-page-header .h-description {font-size:14px!important;}
  .h-state {padding:18px 14px;gap:12px;}
  .h-state-copy strong {font-size:15px;}
  .h-state-copy p {font-size:13px!important;}
  .h-library-summary span {margin-left:4px;}
  .stApp button[kind="tertiary"] {min-height:44px;}
- .st-key-library_reports_card {padding:22px;}
+ .stApp .st-key-library_reports_card {padding:18px;}
 }
 
 /* Streamlit 1.62 uses React Aria controls; keep the native DOM and focus model. */
@@ -265,13 +275,8 @@
 .stApp [data-testid="stSidebar"] .st-key-main_navigation button > div {width:100%;display:flex;justify-content:flex-start;}
 .stApp [data-testid="stSidebar"] .st-key-main_navigation button [data-has-shortcut] {justify-content:flex-start;gap:12px;}
 .stApp [data-testid="stSidebarHeader"] {padding:0!important;margin:0!important;min-height:36px;}
-.stApp [data-testid="stSidebarUserContent"] {padding-top:12px!important;}
+.stApp [data-testid="stSidebarUserContent"] {padding-top:0!important;}
 .stApp [data-testid="stSidebar"] button[kind^="header"] {min-height:36px;padding:6px!important;}
-/* Collection heading and delete action stay on one row at narrow widths. */
-.stApp [class*="st-key-library_collection_"] [data-testid="stHorizontalBlock"] {flex-wrap:nowrap!important;gap:12px!important;}
-.stApp [class*="st-key-library_collection_"] [data-testid="stColumn"]:first-child {min-width:0!important;flex:1 1 0!important;}
-.stApp [class*="st-key-library_collection_"] [data-testid="stColumn"]:last-child {min-width:74px!important;flex:0 0 74px!important;}
-.stApp [class*="st-key-library_collection_"] button[kind="tertiary"] {padding:8px!important;white-space:nowrap;}
 /* The wide resting pose scales down so its frame does not clip the tail. */
 .h-portrait .hodu-rest {scale:.48;}
 .h-portrait-large .hodu-rest {scale:.68;}
@@ -279,18 +284,9 @@
 /* Streamlit draws a second frame on the details element; the expander wrapper keeps the only outline. */
 .stApp [data-testid="stExpander"] details {border:0!important;border-radius:inherit!important;}
 .stApp [data-testid="stExpanderDetails"] {border-color:#e4eae6!important;}
-/* Long collection names stay two lines so cards in a row keep one height; the full name is the title tooltip. */
-.stApp [class*="st-key-library_collection_"] .apple-product-topic-name {
- display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;word-break:keep-all;overflow-wrap:anywhere;max-height:56px;
-}
 @media(max-width:640px){
  .h-state .hodu-rest {scale:.34;}
- .h-page-header .h-portrait-large .hodu-rest {scale:.38;}
 }
-/* Translation paragraphs are Markdown inside the pane: inherit the reader's size and keep formulas in the palette. */
-.doc-para p {margin:0 0 .5em!important;font-size:inherit!important;line-height:inherit!important;color:inherit;}
-.doc-para p:last-child {margin-bottom:0!important;}
-.doc-para .katex-display {margin:.5rem 0!important;background:#f4f7f5!important;border-color:#e4eae6!important;}
 /* Side view (facing right) for the page-turn walk. */
 .hodu-side {width:162px;height:138px;background-size:724px 543px;background-position:-370px -54px;}
 
@@ -300,43 +296,6 @@
  background:#ffffffeb;border:1px solid #e4eae6;border-radius:999px;padding:3px 12px;white-space:nowrap;}
 .h-walk-dog {position:absolute;left:0;top:5px;width:56px;height:48px;animation:h-walk-across 6s linear infinite;}
 @keyframes h-walk-across {from{transform:translateX(-64px)} to{transform:translateX(100vw)}}
-
-/* Reader controls: pinned to the window's top-right corner and hidden until the pointer reaches the
-   corner or keyboard focus enters; an open popover (rendered outside the panel) keeps it open. At rest only
-   the corner receives the pointer, so clicks elsewhere reach the page; the content stays focusable. */
-.stApp [data-testid="stLayoutWrapper"]:has(> .st-key-reader_controls) {display:contents;}
-.stApp .st-key-reader_controls {
- position:fixed!important;top:0;right:0;z-index:999995;width:min(620px,calc(100vw - 24px))!important;max-width:none!important;
- padding:16px 18px 18px!important;gap:10px!important;background:transparent;border:1px solid transparent;border-radius:0 0 0 22px;
- clip-path:inset(0 0 calc(100% - 60px) calc(100% - 72px));
- transition:clip-path 0s linear 260ms,background-color 160ms ease 160ms,border-color 160ms ease 160ms,box-shadow 160ms ease 160ms;
-}
-.stApp .st-key-reader_controls > * {opacity:0;transition:opacity 140ms ease 120ms;}
-.stApp .st-key-reader_controls::after {
- content:"•••";position:absolute;top:14px;right:16px;padding:6px 10px;font-size:9px;letter-spacing:2px;line-height:1;color:#65736d;
- background:#ffffffe6;border:1px solid #e4eae6;border-radius:999px;pointer-events:none;transition:opacity 140ms ease;
-}
-.stApp .st-key-reader_controls:hover,
-.stApp .st-key-reader_controls:has(:focus-visible),
-.stApp .st-key-reader_controls:has([aria-expanded="true"]) {
- clip-path:inset(0);background:#ffffff;border-color:#e4eae6;box-shadow:0 18px 48px #18352a1f;
- transition:clip-path 0s,background-color 160ms ease,border-color 160ms ease,box-shadow 160ms ease;
-}
-.stApp .st-key-reader_controls:hover > *,
-.stApp .st-key-reader_controls:has(:focus-visible) > *,
-.stApp .st-key-reader_controls:has([aria-expanded="true"]) > * {opacity:1;transition:opacity 140ms ease;}
-.stApp .st-key-reader_controls:hover::after,
-.stApp .st-key-reader_controls:has(:focus-visible)::after,
-.stApp .st-key-reader_controls:has([aria-expanded="true"])::after {opacity:0;}
-@media (hover:none) {
- .stApp .st-key-reader_controls {position:static!important;width:auto!important;clip-path:none;padding:0!important;border:0;box-shadow:none;}
- .stApp .st-key-reader_controls > * {opacity:1;}
- .stApp .st-key-reader_controls::after {display:none;}
-}
-/* Display formulas are the PDF's own rendering: natural size, scrolling when wider than the pane. */
-.doc-formula-frame {overflow-x:auto;background:#ffffff;border:1px solid #e4eae6;border-radius:12px;padding:10px 12px;text-align:center;}
-.doc-formula-image {max-width:none!important;height:auto;display:inline-block;vertical-align:middle;}
-.doc-formula-missing {font-size:13px;color:#65736d;}
 
 /* Essay bookshelf: one fixed-height shelf per collection that scrolls sideways; spines are real buttons
    whose key carries the company tone (t0-t5) review state (_wait_ = needs review) and size (h0-h3, w0-w2). */

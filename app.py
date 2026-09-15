@@ -219,7 +219,7 @@ def trigger_search_flow(search_query: str, sidebar_config: Dict[str, Any]):
     """Executes clean Google Scholar & arXiv search and intent analysis with in-canvas visual progress."""
     st.session_state["hodu_search_error"] = None
     try:
-        with loading("호두가 논문을 찾고 있어요", search_query, "search"):
+        with loading("논문을 찾고 있어요", search_query, "search"):
             searcher = AcademicSearcher()
             raw_papers = searcher.search(query=search_query, max_results=sidebar_config.get("max_results", 5))
             intent_data = None
@@ -227,7 +227,7 @@ def trigger_search_flow(search_query: str, sidebar_config: Dict[str, Any]):
                 intent_data = IntentRecommender.analyze_and_recommend(
                     query=search_query, retrieved_papers=raw_papers, api_key=sidebar_config.get("api_key"))
     except Exception:
-        st.session_state["hodu_search_error"] = "입력한 검색어로 다시 시도해 주세요. 기존 결과는 유지됩니다."
+        st.session_state["hodu_search_error"] = "잠시 후 다시 검색해 주세요. 이전 결과는 그대로 있어요."
         return
     st.session_state.current_topic = search_query
     st.session_state.search_results = raw_papers or []
@@ -271,13 +271,13 @@ def main():
         try:
             render_active_paper_view(archive_mgr, sidebar_config)
         except Exception:
-            show_state("페이지를 준비하지 못했어요", "연결 상태를 확인한 뒤 다시 읽어 주세요. 다른 논문을 선택할 수도 있어요.", "think", "error")
+            show_state("페이지를 준비하지 못했어요", "연결 상태를 확인하고 다시 시도해 주세요.", "think", "error")
             retry, back = st.columns(2)
             with retry:
-                if st.button("다시 읽기", key="hodu_retry_reader", type="primary"):
+                if st.button("다시 시도", key="hodu_retry_reader", type="primary"):
                     st.rerun()
             with back:
-                if st.button("목록으로 돌아가기", key="hodu_reader_error_back"):
+                if st.button("목록으로", key="hodu_reader_error_back"):
                     st.session_state.current_paper_bundle = None
                     st.rerun()
         return
@@ -287,28 +287,29 @@ def main():
         render_library_view(archive_mgr, sidebar_config)
         return
 
-    # Header (Only shown during search / initial state)
-    page_header("논문 검색", "궁금한 연구를 알려주세요. 호두와 원문부터 번역까지 함께 읽어요.", "search", "호두랑 · 논문 찾기")
+    page_header("논문 검색")
 
     with st.form("main_paper_search"):
-        st.markdown("**어떤 연구가 궁금하세요?**")
-        query = st.text_input("연구 주제 또는 키워드", placeholder="예: 음성 합성, 검색 증강 생성", key="hodu_paper_query")
-        submitted = st.form_submit_button("논문 찾기", type="primary", use_container_width=True, icon=":material/search:")
+        col_query, col_submit = st.columns([5, 1], vertical_alignment="bottom")
+        with col_query:
+            query = st.text_input("주제, 키워드 또는 논문 제목", placeholder="예: 음성 합성, 검색 증강 생성", key="hodu_paper_query")
+        with col_submit:
+            submitted = st.form_submit_button("검색", type="primary", use_container_width=True, icon=":material/search:")
     if submitted:
         if query.strip():
             trigger_search_flow(query.strip(), sidebar_config)
             st.rerun()
         else:
-            st.info("찾고 싶은 연구 주제를 입력해 주세요.")
+            st.info("검색어를 입력해 주세요.")
     if st.session_state.get("hodu_search_error"):
         show_state("논문을 찾는 도중 연결이 끊겼어요", st.session_state["hodu_search_error"], "think", "error")
     if st.session_state.search_results:
         render_search_results_view(archive_mgr, sidebar_config)
     elif not st.session_state.get("hodu_search_error"):
         if st.session_state.get("current_topic"):
-            show_state("찾은 논문이 없어요", "검색어를 조금 바꿔 다시 찾아보세요. 입력한 검색어는 그대로 두었어요.", "think", "empty")
+            show_state("찾은 논문이 없어요", "다른 검색어로 찾아보세요.", "think", "empty")
         else:
-            show_state("첫 논문을 함께 찾아볼까요?", "연구 주제나 논문 제목을 입력해 주세요. 읽은 논문은 나의 서재에 모아둘게요.", "fetch", "empty")
+            show_state("열어 본 논문은 나의 서재에 자동으로 보관돼요", "", "fetch", "empty")
 
 
 def render_search_results_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, Any]):
@@ -316,30 +317,8 @@ def render_search_results_view(archive_mgr: ArchiveManager, sidebar_config: Dict
     topic = st.session_state.current_topic
     papers = st.session_state.search_results
 
-    # 1. 🤖 Ultra-Minimalist Apple Spotlight AI Re-search Bar (Gemini 3.5 Flash)
-    with st.container(border=True):
-        col_c_title, col_c_model = st.columns([3.5, 1.5])
-        with col_c_title:
-            st.markdown(
-                """
-                <span class="apple-store-eyebrow" style="color: #3F5947; margin-bottom: 0.15rem;">연구 주제 구체화</span>
-                <div style="font-size: 1.25rem; font-weight: 800; color: #39392E; letter-spacing: -0.02em;">
-                    어떤 연구를 더 찾고 싶으세요?
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-        with col_c_model:
-            st.markdown(
-                """
-                <div style="text-align: right; margin-top: 0.3rem;">
-                    <span style="background: #EDF1E3; color: #3F5947; font-weight: 700; font-size: 0.82rem; padding: 0.35rem 0.85rem; border-radius: 9999px; display: inline-flex; align-items: center; gap: 0.3rem;">
-                        Gemini 3.5 Flash
-                    </span>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+    with st.container(border=True, key="card_refine"):
+        st.markdown('<p class="h-card-label">Gemini로 검색어 다듬기</p>', unsafe_allow_html=True)
 
         # Single Clean Apple Spotlight Input Capsule
         col_inp, col_send = st.columns([3.8, 1.2])
@@ -353,7 +332,7 @@ def render_search_results_view(archive_mgr: ArchiveManager, sidebar_config: Dict
         with col_send:
             if st.button("다시 검색", key="btn_run_copilot", type="primary", use_container_width=True):
                 if copilot_query_input.strip():
-                    with loading("호두가 관심사를 정리하고 있어요", "찾고 싶은 연구에 맞춰 검색어를 다듬어요.", "think"):
+                    with loading("검색어를 다듬고 있어요", "", "think"):
                         analysis_res = IntentCopilotAgent.analyze_intent_and_suggest_queries(
                             current_query=topic,
                             user_message=copilot_query_input.strip(),
@@ -371,7 +350,6 @@ def render_search_results_view(archive_mgr: ArchiveManager, sidebar_config: Dict
         # Optional Clean Single-Row Alternate Keyword Quick-Pills
         latest_suggs = st.session_state.get("copilot_latest_suggestions", [])
         if latest_suggs:
-            st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
             q_cols = st.columns(min(len(latest_suggs), 4))
             for s_idx, sugg in enumerate(latest_suggs[:4]):
                 with q_cols[s_idx]:
@@ -386,7 +364,7 @@ def render_search_results_view(archive_mgr: ArchiveManager, sidebar_config: Dict
     st.subheader(f"'{topic}' 검색 결과 ({len(papers)}건)")
 
     for idx, paper in enumerate(papers):
-        with st.container(border=True):
+        with st.container(border=True, key=f"card_result_{idx}"):
             col_info, col_btn = st.columns([4, 1.4])
             with col_info:
                 cite_str = f"인용 {paper.citation_count}회" if paper.citation_count and paper.citation_count > 0 else "최신 논문"
@@ -417,19 +395,19 @@ def process_paper_and_load(paper: Paper, topic: str, archive_mgr: ArchiveManager
         effective_api_key = active_k or os.environ.get("GEMINI_API_KEY", "")
 
     try:
-        with loading("호두가 논문을 가져오고 있어요", paper.title, "fetch"):
+        with loading("PDF를 내려받고 있어요", paper.title, "fetch"):
             pdf_path = archive_mgr.download_pdf(paper, topic)
         if not pdf_path or not os.path.exists(pdf_path):
             show_state("논문 원문을 가져오지 못했어요", "공개되지 않은 논문일 수 있어요. 원문 링크에서 출판사 페이지를 확인해 주세요.", "think", "error")
             return
         paper_dir = archive_mgr.get_paper_dir(topic, paper)
-        with loading("호두가 첫 페이지를 읽고 있어요", "원문과 번역을 나란히 준비하고 있어요.", "read"):
+        with loading("첫 페이지를 번역하고 있어요", paper.title, "read"):
             total_pages = PaperPDFParser.get_total_pages(pdf_path)
             page_1_data = PaperPDFParser.get_single_page_data(pdf_path, 1, paper_dir)
             page_1_trans = PaperTranslator.translate_single_page(
                 page_data=page_1_data, paper_title=paper.title, engine=engine,
                 custom_api_key=effective_api_key, custom_prompt=custom_prompt)
-        with loading("호두가 서재에 정리하고 있어요", "다음에도 이 논문을 꺼내 읽을 수 있게 보관해요.", "organize"):
+        with loading("서재에 저장하고 있어요", paper.title, "organize"):
             archive_mgr.save_archive_bundle(topic=topic, paper=paper, pdf_path=pdf_path)
             bundle = archive_mgr.load_paper_bundle(paper_dir)
             bundle["total_pages"] = total_pages
@@ -439,7 +417,7 @@ def process_paper_and_load(paper: Paper, topic: str, archive_mgr: ArchiveManager
         st.session_state._active_translation_engine = engine
         st.session_state._active_custom_prompt = custom_prompt
     except Exception:
-        show_state("논문을 여는 중 문제가 생겼어요", "검색 결과에서 다시 열어 주세요. 이미 보관된 자료는 서재에서 확인할 수 있어요.", "think", "error")
+        show_state("논문을 여는 중 문제가 생겼어요", "검색 결과에서 다시 열어 주세요.", "think", "error")
         return
     st.rerun()
 
@@ -495,7 +473,7 @@ def render_active_paper_view(archive_mgr: ArchiveManager, sidebar_config: Dict[s
         if current_page in st.session_state.page_translations:
             del st.session_state.page_translations[current_page]
 
-        with walking(f"호두가 {current_page}페이지를 읽고 있어요", placeholder=status_slot):
+        with walking(f"{current_page}페이지 번역 중", placeholder=status_slot):
             page_data = PaperPDFParser.get_single_page_data(pdf_path, current_page, paper_dir)
             page_trans = PaperTranslator.translate_single_page(
                 page_data=page_data,
