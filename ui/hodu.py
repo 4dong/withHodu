@@ -63,22 +63,11 @@ def portrait(pose="front", size="small"):
             f'<div class="hodu-pose hodu-{pose}"></div></div>')
 
 
-def page_header(title, description, pose="read", eyebrow="호두랑 · 나의 작은 작업실"):
-    st.markdown('<header class="h-page-header"><div><p class="h-eyebrow">'
-                + html.escape(eyebrow) + '</p><h1>' + html.escape(title)
-                + '</h1><p class="h-description">' + html.escape(description)
-                + '</p></div>' + portrait(pose, "large") + '</header>', unsafe_allow_html=True)
-
-
-def section_intro(title, description, step=None, pose=None):
-    label = f'<span class="h-step">{html.escape(step)}</span>' if step else ''
-    copy = f'{label}<h2>{html.escape(title)}</h2><p>{html.escape(description)}</p>'
-    if pose:
-        # A section that opens the page carries Hodu beside its heading.
-        st.markdown(f'<div class="h-section-intro h-section-intro-hodu"><div>{copy}</div>'
-                    + portrait(pose, "large") + '</div>', unsafe_allow_html=True)
-    else:
-        st.markdown(f'<div class="h-section-intro">{copy}</div>', unsafe_allow_html=True)
+def page_header(title, description=""):
+    """Page title with an optional one-line description; Hodu appears only in empty and busy states."""
+    detail = f'<p class="h-description">{html.escape(description)}</p>' if description else ''
+    st.markdown(f'<header class="h-page-header"><h1>{html.escape(title)}</h1>{detail}</header>',
+                unsafe_allow_html=True)
 
 
 def state_html(title, detail="", pose="think", busy=False, tone="neutral"):

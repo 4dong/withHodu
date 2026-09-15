@@ -44,8 +44,8 @@ def render_sidebar(
     active = "essay" if current_ws == "essay" else ("library" if mode == LIBRARY_MODE else "search")
     with st.sidebar.container(key="main_navigation"):
         for destination, label, icon in (
-            ("search", "논문검색", ":material/search:"),
-            ("library", "나의서재", ":material/book_2:"),
+            ("search", "논문 검색", ":material/search:"),
+            ("library", "나의 서재", ":material/book_2:"),
             ("essay", "자소서", ":material/edit_document:"),
         ):
             st.button(
@@ -82,7 +82,7 @@ def render_sidebar(
 
     # 1. Current paper settings (back / prev / next live in the reader toolbar)
     if "current_paper_bundle" in st.session_state and st.session_state["current_paper_bundle"]:
-        with st.sidebar.container(border=True):
+        with st.sidebar.container(key="sidebar_reader"):
             st.markdown("**현재 논문**")
 
             selected_page = st.selectbox(
@@ -112,7 +112,7 @@ def render_sidebar(
                 st.rerun()
 
             # Re-translate Current Page Button
-            if st.button("현재 페이지 다시 번역", use_container_width=True, help="선택한 모델 및 프롬프트로 현재 페이지를 즉시 다시 번역합니다."):
+            if st.button("현재 페이지 다시 번역", use_container_width=True, help="선택한 모델과 프롬프트로 이 페이지를 다시 번역합니다."):
                 if "page_translations" in st.session_state and current_page in st.session_state["page_translations"]:
                     del st.session_state["page_translations"][current_page]
                 st.session_state["_force_retranslate"] = True
@@ -147,7 +147,6 @@ def render_sidebar(
         st.sidebar.divider()
     else:
         # Model Selector on initial search screen
-        st.sidebar.caption("번역 설정")
         cur_idx = 0
         if st.session_state["selected_translation_engine"] in PaperTranslator.SUPPORTED_ENGINES:
             cur_idx = PaperTranslator.SUPPORTED_ENGINES.index(st.session_state["selected_translation_engine"])
@@ -164,15 +163,14 @@ def render_sidebar(
 
     # 3. Universal LLM Prompt Customizer (Exposed for fine-tuning translation behavior)
     with st.sidebar.expander("번역 프롬프트", expanded=False):
-        st.caption("Gemini, GPT, Claude 등 모든 LLM 기반 모델에 실시간 적용되는 시스템 프롬프트입니다.")
+        st.caption("Gemini 번역에 쓰는 지시문이에요. Google 번역에는 적용되지 않아요.")
         preset_choice = st.selectbox("프롬프트 프리셋 선택", list(PROMPT_PRESETS.keys()))
         
         # Textarea with current prompt
         cur_prompt = st.text_area(
             "시스템 프롬프트 (수정 가능)",
             value=PROMPT_PRESETS.get(preset_choice, st.session_state["custom_llm_prompt"]),
-            height=190,
-            help="번역 원칙, 괄호 원문 병기 규칙, 학술 어조 등을 원하는 대로 커스텀할 수 있습니다."
+            height=190
         )
         if cur_prompt != st.session_state["custom_llm_prompt"]:
             st.session_state["custom_llm_prompt"] = cur_prompt
@@ -197,11 +195,8 @@ def render_sidebar(
 
     active_engine = st.session_state["selected_translation_engine"]
 
-    # Show engine-specific hint
-    if "Google Neural" in active_engine:
-        st.sidebar.caption("별도 API 키 없이 기본 번역을 사용할 수 있습니다.")
-    elif "Gemini" in active_engine:
-        st.sidebar.caption("Gemini 번역을 쓰려면 API 키 관리에서 키를 등록하세요.")
+    if "Gemini" in active_engine and not active_api_key:
+        st.sidebar.caption("Gemini 번역에는 API 키가 필요해요. 아래 API 키 관리에서 등록하세요.")
 
     with st.sidebar.expander("API 키 관리", expanded=False):
         if all_slots:
@@ -230,7 +225,7 @@ def render_sidebar(
                     KeyManager.set_default(chosen_slot_id)
                     st.session_state["selected_key_slot_id"] = chosen_slot_id
                     st.session_state["selected_translation_engine"] = PaperTranslator.SUPPORTED_ENGINES[1]
-                    st.success("기본 키로 설정되었습니다!")
+                    st.success("기본 키로 설정했어요.")
                     st.rerun()
             with col_k_del:
                 if st.button("선택 키 삭제", use_container_width=True):
@@ -241,8 +236,8 @@ def render_sidebar(
 
         st.divider()
         st.markdown("**새 키 등록**")
-        new_name = st.text_input("키 별칭 (예: 선불 계정 키, Gemini Pro 키)", placeholder="키 이름")
-        new_key = st.text_input("API Key 입력", type="password", placeholder="AIzaSy...")
+        new_name = st.text_input("키 이름", placeholder="예: 개인 Gemini 키")
+        new_key = st.text_input("API 키", type="password", placeholder="AIzaSy...")
         
         col_save_btn, _ = st.columns([1.2, 0.8])
         with col_save_btn:
@@ -251,7 +246,7 @@ def render_sidebar(
                     new_id = KeyManager.save_slot(new_name or "Gemini 유료 키", new_key, set_as_default=True)
                     st.session_state["selected_key_slot_id"] = new_id
                     st.session_state["selected_translation_engine"] = PaperTranslator.SUPPORTED_ENGINES[1]
-                    st.success("새 키가 등록되고 기본 키로 설정되었습니다!")
+                    st.success("키를 등록하고 기본 키로 설정했어요.")
                     st.rerun()
                 else:
                     st.error("API Key를 입력해 주세요.")
@@ -273,8 +268,6 @@ def render_sidebar(
 
     if mode == "🔍 논문 검색":
         config["max_results"] = st.sidebar.number_input("검색 건수", min_value=1, max_value=10, value=5)
-    else:
-        st.sidebar.caption("컬렉션과 논문을 탐색하고 비교분석을 시작하세요.")
 
     _render_maintenance_settings()
     return config
@@ -282,18 +275,11 @@ def render_sidebar(
 
 def _render_essay_sidebar() -> Dict[str, Any]:
     """Renders clean dedicated sidebar for Essay Archive & RAG workspace."""
-    from core.essay.repository import DEFAULT_ESSAY_ARCHIVE_ROOT
-
     active_api_key, active_slot = KeyManager.get_active_key()
     all_slots = KeyManager.get_all_slots()
 
-    with st.sidebar.container(border=True):
-        st.markdown("**자기소개서 보관함**")
-        st.caption(f"저장 경로: `{DEFAULT_ESSAY_ARCHIVE_ROOT}`")
-        if active_api_key:
-            st.success("Gemini API 키 연결됨")
-        else:
-            st.info("API 키 없이 로컬 검색과 규칙 검사만 사용합니다.")
+    if not active_api_key:
+        st.sidebar.caption("Gemini API 키가 없어 로컬 검색과 규칙 검사만 사용해요.")
 
     with st.sidebar.expander("API 키 관리", expanded=False):
         if all_slots:
@@ -320,7 +306,7 @@ def _render_essay_sidebar() -> Dict[str, Any]:
                 if st.button("기본 키 지정", disabled=is_cur_def, use_container_width=True, key="essay_btn_set_def"):
                     KeyManager.set_default(chosen_slot_id)
                     st.session_state["selected_key_slot_id"] = chosen_slot_id
-                    st.success("기본 키로 설정되었습니다!")
+                    st.success("기본 키로 설정했어요.")
                     st.rerun()
             with col_del:
                 if st.button("키 삭제", use_container_width=True, key="essay_btn_del_key"):
@@ -330,13 +316,13 @@ def _render_essay_sidebar() -> Dict[str, Any]:
                     st.rerun()
 
         st.divider()
-        new_name = st.text_input("새 키 이름", placeholder="예: 개인 Gemini 키", key="essay_new_key_name")
-        new_key = st.text_input("새 API Key", type="password", placeholder="AIzaSy...", key="essay_new_key_val")
+        new_name = st.text_input("키 이름", placeholder="예: 개인 Gemini 키", key="essay_new_key_name")
+        new_key = st.text_input("API 키", type="password", placeholder="AIzaSy...", key="essay_new_key_val")
         if st.button("새 키 등록", type="primary", use_container_width=True, key="essay_btn_reg_key"):
             if new_key.strip():
                 new_id = KeyManager.save_slot(new_name or "Gemini 키", new_key, set_as_default=True)
                 st.session_state["selected_key_slot_id"] = new_id
-                st.success("새 키가 등록되었습니다!")
+                st.success("키를 등록했어요.")
                 st.rerun()
 
     _render_maintenance_settings()
@@ -373,7 +359,7 @@ def _render_maintenance_settings():
     with st.sidebar.expander("화면 설정", expanded=False):
         motion_toggle()
     with st.sidebar.expander("고급 설정", expanded=False):
-        if st.button("캐시 초기화 및 새로고침", use_container_width=True, help="세션에 캐시된 이전 번역, BBox, 메모리 모듈을 완전 초기화하고 최신 코드로 즉시 다시 로드합니다."):
+        if st.button("캐시 초기화 및 새로고침", use_container_width=True, help="저장된 번역과 페이지 분석 결과를 지우고 다시 불러옵니다."):
             st.session_state.page_translations = {}
             st.session_state.page_data_cache = {}
             st.session_state["_highlighter_engine_version"] = "FORCE_REFRESH_" + str(os.urandom(4).hex())

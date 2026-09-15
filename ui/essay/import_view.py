@@ -4,7 +4,7 @@ Import View: Batch photo/PDF/text upload and document grouping.
 
 from __future__ import annotations
 import streamlit as st
-from ui.hodu import section_intro, show_state, loading, state_html
+from ui.hodu import page_header, show_state, loading, state_html
 from pathlib import Path
 from typing import List, Tuple
 
@@ -15,7 +15,7 @@ from core.essay.transcription import get_active_ocr_provider, GeminiVisionOCRPro
 
 
 def render_import_view(repo: EssayRepository):
-    section_intro('자료 추가', '자기소개서 사진, PDF, 텍스트 파일을 올려 지원서 하나로 묶어 등록합니다.', '01 · 자료 모으기', pose='fetch')
+    page_header('자료 추가', '자소서 사진, PDF, 텍스트 파일을 올려 지원서 하나로 묶어요.')
 
     ingest_svc = EssayIngestService(repo)
 
@@ -57,7 +57,7 @@ def render_import_view(repo: EssayRepository):
             st.error("최소 1개 이상의 파일을 선택해 주세요.")
             return
 
-        with loading("호두가 자료를 챙기고 있어요", "파일을 확인하고 지원서 하나로 묶어 보관해요.", "organize"):
+        with loading("파일을 등록하고 있어요", "", "organize"):
             file_tuples: List[Tuple[str, bytes, str]] = []
             for up in uploaded_files:
                 b = up.getvalue()
@@ -95,7 +95,7 @@ def render_import_view(repo: EssayRepository):
             ocr_provider = get_active_ocr_provider()
             provider_desc = "Gemini Vision AI" if isinstance(ocr_provider, GeminiVisionOCRProvider) else "오프라인 모의 전사"
 
-            with loading("호두가 사진 속 글을 옮기고 있어요", provider_desc, "read"), st.status(f"{provider_desc} · 전사 진행", expanded=True) as status_box:
+            with loading("사진 속 글을 옮기고 있어요", provider_desc, "read"), st.status(f"{provider_desc} · 전사 진행", expanded=True) as status_box:
                 success_count = 0
                 fail_count = 0
 
@@ -125,5 +125,5 @@ def render_import_view(repo: EssayRepository):
                         expanded=True
                     )
 
-            show_state("글을 옮기는 작업을 마쳤어요", f"성공 {success_count}건 · 실패·건너뜀 {fail_count}건. 원본과 대조한 뒤 승인해 주세요.", "done" if fail_count == 0 else "think", "success" if fail_count == 0 else "error")
-            st.info("**전사 검수** 탭에서 원본 사진과 옮긴 글을 비교하고 승인하세요.")
+            show_state("전사를 마쳤어요", f"성공 {success_count}건 · 실패·건너뜀 {fail_count}건", "done" if fail_count == 0 else "think", "success" if fail_count == 0 else "error")
+            st.info("사이드바의 **전사 검수**에서 원본과 옮긴 글을 비교하고 승인하세요.")

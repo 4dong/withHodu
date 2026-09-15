@@ -6,7 +6,7 @@ Main Workspace Coordinator for Essay Archive System. The section menu lives in t
 from __future__ import annotations
 import json
 import streamlit as st
-from ui.hodu import section_intro, loading, show_state
+from ui.hodu import page_header, loading, show_state
 
 from core.essay.repository import EssayRepository, DEFAULT_ESSAY_ARCHIVE_ROOT
 from core.essay.backup import EssayBackupService
@@ -58,7 +58,7 @@ def render_essay_workspace():
 
 
 def _render_settings(repo: EssayRepository):
-    section_intro("설정·백업", "모아 둔 글과 원본을 안전하게 챙겨두세요.", "작업실 관리", pose="rest")
+    page_header("설정·백업")
 
     col_s1, col_s2 = st.columns(2)
     with col_s1:
@@ -66,9 +66,9 @@ def _render_settings(repo: EssayRepository):
         st.caption("보관함의 글과 원본 이미지를 ZIP 파일 하나로 저장합니다.")
         if st.button("백업 만들기", use_container_width=True):
             backup_dest = repo.exports_dir / "essay_archive_backup.zip"
-            with loading("호두가 자료를 챙기고 있어요", "원본과 글을 한 묶음으로 백업해요.", "organize"):
+            with loading("백업을 만들고 있어요", "", "organize"):
                 res = EssayBackupService.create_backup(repo, backup_dest)
-            show_state("자료를 모두 챙겼어요", f"원본 {res['sources_count']}개 · {res['total_bytes'] / 1024:.1f} KB. 아래에서 백업을 내려받으세요.", "done", "success")
+            show_state("백업을 만들었어요", f"원본 {res['sources_count']}개 · {res['total_bytes'] / 1024:.1f} KB", "done", "success")
             with open(backup_dest, "rb") as bf:
                 st.download_button(
                     "백업 파일 다운로드",

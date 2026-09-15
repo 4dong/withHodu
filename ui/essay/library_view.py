@@ -12,7 +12,7 @@ import re
 from typing import Dict, List, Tuple
 
 import streamlit as st
-from ui.hodu import section_intro, show_state
+from ui.hodu import page_header, show_state
 
 from core.essay.models import Document
 from core.essay.repository import EssayRepository
@@ -69,11 +69,11 @@ def _open_document(doc_id: str):
 
 
 def render_essay_library_view(repo: EssayRepository):
-    section_intro('보관함', '책장에서 자기소개서를 꺼내 읽어요. 선반은 자료 구분별로, 선반 안은 기업별로 꽂혀 있습니다.', '모아 둔 글', pose='organize')
+    page_header('보관함', '선반은 자료 구분별로, 선반 안은 기업별로 꽂혀 있어요.')
 
     docs = repo.list_documents(include_deleted=False)
     if not docs:
-        show_state("아직 책장이 비어 있어요", "자료 추가에서 첫 자기소개서를 등록해 주세요.", "organize", "empty")
+        show_state("아직 책장이 비어 있어요", "자료 추가에서 자소서를 등록해 주세요.", "organize", "empty")
         return
 
     answers_by_doc = {d.id: repo.get_answers_for_document(d.id) for d in docs}
@@ -127,7 +127,8 @@ def _html_lines(text: str, reflow: bool = False) -> str:
 def _render_open_book(repo: EssayRepository, doc: Document, answers):
     appr_cnt = sum(1 for _, r in answers if r and r.review_status == "approved")
     eyebrow = " · ".join(v for v in [COLLECTION_LABELS.get(doc.collection, doc.collection), doc.company] if v)
-    meta = " · ".join(v for v in [doc.division, doc.role, f"승인 {appr_cnt}/{len(answers)}"] if v)
+    # Division and role are often the same text; show it once.
+    meta = " · ".join(dict.fromkeys(v for v in [doc.division, doc.role, f"승인 {appr_cnt}/{len(answers)}"] if v))
     notes = f'<p class="essay-book-notes">{_html_lines(doc.notes, reflow=True)}</p>' if doc.notes and doc.notes.strip() else ''
 
     with st.container(key="essay_open_book"):
@@ -142,7 +143,7 @@ def _render_open_book(repo: EssayRepository, doc: Document, answers):
             _render_book_actions(repo, doc)
 
         if not answers:
-            st.caption("아직 옮겨 적은 문항이 없어요. 전사 검수에서 문항을 확인해 주세요.")
+            st.caption("옮겨 적은 문항이 없어요. 전사 검수에서 확인해 주세요.")
 
         for ans, rev in answers:
             if rev:
@@ -175,7 +176,7 @@ def _render_book_actions(repo: EssayRepository, doc: Document):
                            file_name=f"export_{doc.company}_{doc_id[:6]}.zip", mime="application/zip",
                            width="stretch", key=f"dl_zip_{doc_id}")
         st.divider()
-        confirm_del = st.checkbox("이 자기소개서를 삭제합니다", key=f"del_confirm_{doc_id}")
+        confirm_del = st.checkbox("이 자소서를 삭제합니다", key=f"del_confirm_{doc_id}")
         if st.button("문서 삭제", icon=":material/delete:", key=f"del_{doc_id}", disabled=not confirm_del, width="stretch"):
             repo.delete_document(doc_id)
             st.session_state.pop(OPEN_DOC_KEY, None)

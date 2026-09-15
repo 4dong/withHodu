@@ -4,7 +4,7 @@ Review View: Transcription inspection, original photo comparison, and review app
 
 from __future__ import annotations
 import streamlit as st
-from ui.hodu import section_intro, show_state, loading, state_html
+from ui.hodu import page_header, show_state, loading, state_html
 from PIL import Image, ImageOps
 from typing import Optional, List, Dict, Any
 
@@ -17,7 +17,7 @@ from core.essay.transcription import get_active_ocr_provider
 
 
 def render_review_view(repo: EssayRepository):
-    section_intro('전사 검수', '사진에서 옮긴 글을 원본과 비교하고, 흐릿한 단어와 수치를 확인한 뒤 승인합니다.', '02 · 원본 확인하기', pose='read')
+    page_header('전사 검수', '옮긴 글을 원본 사진과 비교해 고친 뒤 승인해요. 승인한 문항만 검색에 쓰여요.')
 
     # Check for pending OCR jobs in the background queue
     with repo.get_connection() as conn:
@@ -34,7 +34,7 @@ def render_review_view(repo: EssayRepository):
             if st.button("지금 실행", type="primary", key="run_pending_jobs_btn"):
                 job_mgr = JobManager(repo)
                 provider = get_active_ocr_provider()
-                with loading("호두가 사진 속 글을 옮기고 있어요", "아래에서 실제 작업 결과를 확인할 수 있어요.", "read"), st.status("전사 진행", expanded=True) as status_box:
+                with loading("사진 속 글을 옮기고 있어요", "", "read"), st.status("전사 진행", expanded=True) as status_box:
                     done = 0
                     while True:
                         job = job_mgr.claim_next_job()
@@ -136,7 +136,7 @@ def render_review_view(repo: EssayRepository):
     if rev.review_status == "approved":
         st.success("**승인 완료**: 검색에 반영된 문항입니다. 수정한 뒤 다시 승인할 수 있습니다.")
     else:
-        st.warning("**검수 대기**: 원본 사진과 비교해 질문과 본문을 확인한 뒤 [승인하기]를 눌러 주세요.")
+        st.warning("**검수 대기**: 원본과 비교해 확인한 뒤 승인해 주세요.")
 
     st.divider()
 
@@ -286,7 +286,6 @@ def render_review_view(repo: EssayRepository):
 
     with col_right:
         st.subheader("옮긴 글 편집")
-        st.caption("왼쪽 원본과 비교하며 질문과 본문을 고치세요.")
 
         q_text = st.text_area(
             "질문",
@@ -353,7 +352,7 @@ def render_review_view(repo: EssayRepository):
                 except Exception:
                     pass
 
-                st.success("검수가 승인되고 검색 색인 및 문서 폴더에 반영되었습니다!")
+                st.success("승인했어요. 검색과 문서 폴더에 반영했어요.")
                 st.rerun()
 
         with col_b2:

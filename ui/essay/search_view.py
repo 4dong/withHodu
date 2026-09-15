@@ -4,7 +4,7 @@ Search View: Hybrid keyword/vector retrieval and grounded RAG question answering
 
 from __future__ import annotations
 import streamlit as st
-from ui.hodu import section_intro, show_state, loading, state_html
+from ui.hodu import page_header, show_state, loading, state_html
 from typing import Optional, Dict, Any
 
 from core.essay.repository import EssayRepository
@@ -15,7 +15,7 @@ from core.key_manager import KeyManager
 
 
 def render_essay_search_view(repo: EssayRepository):
-    section_intro('근거 검색', '키워드나 질문으로 자기소개서를 찾고, 출처가 표시된 답변을 확인합니다.', '03 · 내 경험 찾아보기', pose='search')
+    page_header('근거 검색', '승인한 자소서에서 문단을 찾고, 출처가 붙은 답변을 보여 줘요.')
 
     # Unified Active Embedding Provider & RAG Generator (F06)
     embed_provider = get_active_embedding_provider()
@@ -75,20 +75,20 @@ def render_essay_search_view(repo: EssayRepository):
         if col_filter != "전체":
             filters["collection"] = col_filter
 
-        with loading("호두가 근거를 찾고 있어요", "보관한 자료를 확인하고 출처와 함께 답변을 준비해요.", "search"):
+        with loading("근거를 찾고 있어요", "", "search"):
             grounded_answer = rag_svc.answer_question(q, filters=filters, max_evidence=5)
             search_response = search_engine.search(q, filters=filters, limit=5)
             st.session_state["essay_search_results"] = (grounded_answer, search_response)
             st.session_state["essay_current_cache_key"] = cache_key
 
     if "essay_search_results" not in st.session_state:
-        show_state("어떤 경험을 찾아볼까요?", "승인한 자료에서 관련 문단과 출처를 함께 찾아드려요.", "search", "empty")
+        show_state("검색어나 질문을 입력해 주세요", "", "search", "empty")
 
     if "essay_search_results" in st.session_state and st.session_state.get("essay_last_search_query"):
         grounded_answer, search_response = st.session_state["essay_search_results"]
 
         # 1. Grounded RAG Answer Box
-        with st.container(border=True):
+        with st.container(border=True, key="card_essay_answer"):
             col_h1, col_h2 = st.columns([3.5, 1.5])
             with col_h1:
                 st.markdown("#### 답변")
@@ -120,7 +120,7 @@ def render_essay_search_view(repo: EssayRepository):
         # 2. Search Evidence Hits
         st.markdown(f"#### 관련 문단 ({search_response.total_hits}건)")
         for idx, hit in enumerate(search_response.hits):
-            with st.container(border=True):
+            with st.container(border=True, key=f"card_essay_hit_{idx}"):
                 st.markdown(f"**#{idx+1}. [{hit.company}] {hit.document_title} - 문항 {hit.question_number}** ({hit.match_origin})")
                 st.caption(f"질문: {hit.question_text}")
                 st.markdown(f"> {hit.text}")
