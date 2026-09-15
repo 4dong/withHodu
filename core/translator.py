@@ -1,6 +1,6 @@
 """
 Multi-Engine Academic Neural & LLM Translation Architecture
-Supports Google Neural, Google Gemini 3.7 Flash, Gemini 3.5 Flash, Gemini 3.1 Pro, OpenAI GPT-4o-mini, Claude 3.5 Haiku, and DeepL.
+Supports Google's free web translation, Google Gemini (3.7 / 3.5 / 2.5 Flash), OpenAI GPT-4o-mini, Claude 3.5 Haiku, and DeepL.
 Full custom prompt engineering support for all LLM models.
 """
 
@@ -11,7 +11,9 @@ import urllib.request
 import urllib.parse
 import urllib.error
 import re
+import time
 from typing import List, Dict, Any, Optional, Tuple
+from core import rate_limit
 from core.math_formatter import AcademicMathFormatter
 from core.key_manager import KeyManager
 from core.visual_highlighter import VisualHighlighter
@@ -34,6 +36,10 @@ DEFAULT_ACADEMIC_PROMPT = """너는 세계 최고 수준의 전문 학술 번역
 입력된 각 문단(paragraphs)의 순서와 개수를 1:1로 정확히 유지하여, key가 'translations'인 JSON 객체(번역된 한국어 문자열 배열)로만 응답해 줘."""
 
 
+class GoogleBlockedError(Exception):
+    """Google's free endpoints refused this client (redirect to its 'sorry' page, or rate limit after retries)."""
+
+
 class PaperTranslator:
     """Multi-Engine Batch Translation Engine supporting Free Zero-Key, Gemini 3.7 Flash, OpenAI, Claude, and DeepL."""
 
@@ -53,7 +59,8 @@ class PaperTranslator:
         custom_prompt: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Translates all paragraphs of a single page in ONE batch request using the selected neural/LLM model.
+        Translates the paragraphs of one page: Gemini takes the page in one request, Google in newline-joined
+        batches (see _translate_with_google). Paragraphs left untranslated are counted in failed_count.
         """
         blocks = page_data.get("blocks", [])
         if not blocks:
@@ -84,7 +91,7 @@ class PaperTranslator:
         prompt_to_use = custom_prompt or DEFAULT_ACADEMIC_PROMPT
         result = None
 
-        # Engine Option 2: Google Gemini (3.7 Flash / 3.5 Flash / 3.1 Pro / 2.5 Flash / 1.5 Flash)
+        # Engine Option 2: Google Gemini (3.7 / 3.5 / 2.5 Flash)
         if "Gemini" in engine:
             effective_key = custom_api_key
             if not effective_key or len(str(effective_key).strip()) < 15:
@@ -99,7 +106,8 @@ class PaperTranslator:
                         blocks=blocks,
                         paper_title=paper_title,
                         api_key=str(effective_key).strip(),
-                        custom_prompt=prompt_to_use
+                        custom_prompt=prompt_to_use,
+                        preferred_model=cls._gemini_model_for(engine)
                     )
                     if pairs:
                         result = {
@@ -124,7 +132,7 @@ class PaperTranslator:
                 result["is_fallback"] = True
                 result["fallback_reason"] = fallback_reason
 
-        # Engine Option 1 (Default): Google High-Speed Neural Translation (< 0.3s, Free, Zero-Key)
+        # Engine Option 1 (Default): Google's free web translation, batched per page
         else:
             result = cls._translate_with_google(extracted_texts, blocks, page_num)
             result["is_fallback"] = False
@@ -134,6 +142,9 @@ class PaperTranslator:
         if result and "pairs" in result:
             result["target_engine"] = engine
             result["page_num"] = page_num
+            # Paragraphs still showing their source text; the reader translates such a page again later.
+            result["failed_count"] = sum(1 for p in result["pairs"] if p.get("untranslated"))
+            result["translated_at"] = time.time()
             normalize = (AcademicMathFormatter.normalize_llm_math if result.get("model_used")
                          else AcademicMathFormatter.format_math_in_text)
             for p in result["pairs"]:
@@ -235,6 +246,14 @@ class PaperTranslator:
         lines = [re.sub(r'^(?:\[\d+\]|\d+[\.\)]|\-\s*)\s*', '', line.strip()).strip() for line in cleaned.splitlines()]
         return [line for line in lines if line]
 
+    # Gemini models the stored key can call (ListModels, 2026-09); the engine's own model is tried first.
+    GEMINI_MODELS = ["gemini-3.7-flash", "gemini-3.5-flash", "gemini-2.5-flash"]
+
+    @staticmethod
+    def _gemini_model_for(engine: str) -> Optional[str]:
+        match = re.search(r"Gemini (\d+(?:\.\d+)?) Flash", engine or "")
+        return f"gemini-{match.group(1)}-flash" if match else None
+
     @classmethod
     def _translate_with_gemini(
         cls,
@@ -242,17 +261,19 @@ class PaperTranslator:
         blocks: List[Dict[str, Any]],
         paper_title: str,
         api_key: str,
-        custom_prompt: str
+        custom_prompt: str,
+        preferred_model: Optional[str] = None
     ) -> Tuple[Optional[List[Dict[str, Any]]], str]:
-        """Translates via official Google Gemini REST API with custom prompt engineering & verified model cascade."""
-        models_to_try = [
-            "gemini-3.7-flash",
-            "gemini-3.5-flash",
-            "gemini-3.1-pro",
-            "gemini-2.5-flash",
-            "gemini-1.5-flash",
-            "gemini-1.5-pro"
-        ]
+        """
+        Translates one page in one request. Moves to the next model on a quota limit (429), a missing model
+        (404), a timeout or an unreadable reply; retries a model once after an overload (5xx); stops at a
+        rejected request (400, 403), which every model would reject the same way. Paragraphs missing from
+        the reply are marked untranslated.
+        """
+        models_to_try = list(cls.GEMINI_MODELS)
+        if preferred_model in models_to_try:
+            models_to_try.remove(preferred_model)
+            models_to_try.insert(0, preferred_model)
 
         user_content = json.dumps({
             "paper_title": paper_title,
@@ -272,47 +293,48 @@ class PaperTranslator:
                 "maxOutputTokens": 16384
             }
         }
-        headers = {"Content-Type": "application/json"}
+        # The key travels in a header, so it never appears in a URL or an error message.
+        headers = {"Content-Type": "application/json", "x-goog-api-key": api_key}
 
         errors = []
         for model_id in models_to_try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={api_key}"
-            try:
-                req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
-                with urllib.request.urlopen(req, timeout=28) as resp:
-                    data = json.loads(resp.read().decode("utf-8"))
-                    candidates = data.get("candidates", [])
-                    if candidates:
-                        parts = candidates[0].get("content", {}).get("parts", [])
-                        if parts:
-                            text_out = parts[0].get("text", "").strip()
-                            translations = cls._parse_json_translations(text_out, expected_count=len(texts))
-                            if translations:
-                                pairs = VisualHighlighter.align_translation_pairs(
-                                    extracted_texts=texts,
-                                    translated_texts=translations,
-                                    blocks=blocks
-                                )
-                                return pairs, model_id
-            except urllib.error.HTTPError as he:
-                err_body = he.read().decode("utf-8", errors="ignore")
-                if he.code == 400:
-                    friendly_err = f"API 키 오류 (HTTP 400 - {err_body[:80]})"
-                elif he.code == 403:
-                    friendly_err = "API 키 권한 없음 (HTTP 403)"
-                elif he.code == 404:
-                    friendly_err = f"{model_id} 모델 미지원 (HTTP 404)"
-                elif he.code == 429:
-                    friendly_err = "Gemini API 일일/분당 사용량 할당량(Quota) 초과 (HTTP 429)"
-                elif he.code == 503:
-                    friendly_err = "Google Gemini 서버 일시적 과부하 (HTTP 503)"
-                else:
-                    friendly_err = f"HTTP {he.code} - {err_body[:80]}"
-                errors.append(f"{model_id}: {friendly_err}")
-                continue
-            except Exception as e:
-                errors.append(f"{model_id}: {str(e)}")
-                continue
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent"
+            for attempt in range(2):
+                try:
+                    req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
+                    with urllib.request.urlopen(req, timeout=60) as resp:
+                        data = json.loads(resp.read().decode("utf-8"))
+                except urllib.error.HTTPError as he:
+                    err_body = he.read().decode("utf-8", errors="ignore")
+                    if he.code == 403:
+                        raise RuntimeError("Gemini 번역 실패: API 키 권한 없음 (HTTP 403)")
+                    if he.code == 400:
+                        raise RuntimeError(f"Gemini 번역 실패: 요청 거부 (HTTP 400 - {err_body[:80]})")
+                    if he.code >= 500 and attempt == 0:
+                        time.sleep(2)
+                        continue
+                    reason = {404: "모델 미지원 (HTTP 404)", 429: "사용량 한도 초과 (HTTP 429)"}.get(he.code, f"HTTP {he.code}")
+                    errors.append(f"{model_id}: {reason}")
+                    break
+                except Exception as e:
+                    errors.append(f"{model_id}: {e}")
+                    break
+
+                candidates = data.get("candidates", [])
+                parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
+                text_out = parts[0].get("text", "").strip() if parts else ""
+                translations = cls._parse_json_translations(text_out, expected_count=len(texts)) if text_out else []
+                if not translations:
+                    errors.append(f"{model_id}: 응답을 해석하지 못함")
+                    break
+                pairs = VisualHighlighter.align_translation_pairs(
+                    extracted_texts=texts,
+                    translated_texts=translations,
+                    blocks=blocks
+                )
+                for pair in pairs[len(translations):]:
+                    pair["untranslated"] = True
+                return pairs, model_id
 
         raise RuntimeError(f"Gemini 번역 실패: {'; '.join(errors[-2:])}")
 
@@ -384,94 +406,148 @@ class PaperTranslator:
                 blocks=blocks
             )
 
+    GOOGLE_GTX_URL = "https://translate.googleapis.com/translate_a/single"
+    GOOGLE_MOBILE_URL = "https://translate.google.com/m"
+    # One typical page fits in one request (a Qwen-Audio page carries at most ~3,800 characters).
+    GOOGLE_BATCH_CHARS = 4500
+    GOOGLE_COOLDOWN_SECONDS = 300
+
+    class _NoRedirect(urllib.request.HTTPRedirectHandler):
+        """Google answers a client it limits with a redirect to its 'sorry' page; surface that instead of following it."""
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None
+
+    _google_opener = urllib.request.build_opener(_NoRedirect)
+
     @classmethod
-    def _translate_google_mobile_raw(cls, text: str) -> Optional[str]:
-        """Translates text via Google's official mobile web interface (100% pure Google Neural, 429 immune)."""
-        if not text or not text.strip():
-            return text
-        try:
-            url = "https://translate.google.com/m?" + urllib.parse.urlencode({
-                "sl": "en",
-                "tl": "ko",
-                "q": text.strip()
-            })
-            req = urllib.request.Request(url, headers={
-                "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
-            })
-            with urllib.request.urlopen(req, timeout=8) as resp:
-                html_doc = resp.read().decode("utf-8", errors="ignore")
-                match = re.search(r'<div class="result-container">([\s\S]*?)</div>', html_doc)
-                if match:
-                    res_txt = html.unescape(match.group(1).strip())
-                    if res_txt:
-                        return res_txt
-        except Exception as e:
-            print(f"_translate_google_mobile_raw error: {e}")
+    def _google_fetch(cls, request: urllib.request.Request, timeout: float) -> str:
+        """
+        Sends one request to a Google translate endpoint. 429 and 5xx wait and retry (Retry-After up to 10 s,
+        otherwise 1 s then 2 s). The 'sorry' redirect, or a 429 on the last try, blocks Google for
+        GOOGLE_COOLDOWN_SECONDS: both endpoints are refused together, so nothing more is sent until then. The
+        deadline lives in core.rate_limit, which survives the module reload app.py does on every run.
+        """
+        if time.time() < rate_limit.google_blocked_until:
+            raise GoogleBlockedError()
+        for attempt in range(3):
+            try:
+                with cls._google_opener.open(request, timeout=timeout) as resp:
+                    return resp.read().decode("utf-8", errors="ignore")
+            except urllib.error.HTTPError as e:
+                if 300 <= e.code < 400 or (e.code == 429 and attempt == 2):
+                    rate_limit.google_blocked_until = time.time() + cls.GOOGLE_COOLDOWN_SECONDS
+                    raise GoogleBlockedError() from e
+                if not (e.code == 429 or e.code >= 500) or attempt == 2:
+                    raise
+                retry_after = (e.headers or {}).get("Retry-After") or ""
+                time.sleep(min(float(retry_after), 10) if retry_after.isdigit() else 2 ** attempt)
+        raise RuntimeError("unreachable")
+
+    @classmethod
+    def _google_gtx(cls, text: str) -> str:
+        data = urllib.parse.urlencode({"client": "gtx", "sl": "en", "tl": "ko", "dt": "t", "q": text}).encode("utf-8")
+        request = urllib.request.Request(cls.GOOGLE_GTX_URL, data=data,
+                                         headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"})
+        reply = json.loads(cls._google_fetch(request, timeout=10))
+        return "".join(part[0] for part in reply[0] if part and part[0])
+
+    @classmethod
+    def _google_mobile(cls, text: str) -> Optional[str]:
+        url = cls.GOOGLE_MOBILE_URL + "?" + urllib.parse.urlencode({"sl": "en", "tl": "ko", "q": text})
+        request = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+        })
+        match = re.search(r'<div class="result-container">([\s\S]*?)</div>', cls._google_fetch(request, timeout=8))
+        return html.unescape(match.group(1)).strip() if match else None
+
+    @classmethod
+    def _translate_google_paragraph(cls, text: str) -> Optional[str]:
+        """One paragraph: gtx, then the mobile page when gtx fails for a reason other than a block."""
+        for translate in (cls._google_gtx, cls._google_mobile):
+            try:
+                translated = translate(text)
+            except GoogleBlockedError:
+                raise
+            except Exception as e:
+                print(f"Google translation error ({translate.__name__}): {e}")
+                continue
+            if translated and translated.strip():
+                return translated.strip()
         return None
 
     @classmethod
-    def _translate_google_single_raw(cls, single_text: str) -> str:
-        """Translates a single paragraph safely as an individual fallback using Google Neural Web."""
-        if not single_text or not single_text.strip():
-            return single_text
-
-        # 1. Try Google Mobile endpoint first (Resilient against 429)
-        mobile_res = cls._translate_google_mobile_raw(single_text)
-        if mobile_res and mobile_res.strip() and mobile_res.strip() != single_text.strip():
-            return mobile_res
-
-        # 2. Try standard gtx endpoint
-        try:
-            url = "https://translate.googleapis.com/translate_a/single"
-            params = {
-                "client": "gtx",
-                "sl": "en",
-                "tl": "ko",
-                "dt": "t",
-                "q": single_text.strip()
-            }
-            data = urllib.parse.urlencode(params).encode("utf-8")
-            req = urllib.request.Request(
-                url,
-                data=data,
-                headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"}
-            )
-            with urllib.request.urlopen(req, timeout=6) as response:
-                res_json = json.loads(response.read().decode("utf-8"))
-                translated = "".join([part[0] for part in res_json[0] if part and part[0]])
-                return translated if translated.strip() else single_text
-        except Exception:
-            return single_text
+    def _google_batches(cls, texts: List[str]) -> List[List[int]]:
+        """Indices of the non-empty paragraphs, grouped so each newline-joined request stays within GOOGLE_BATCH_CHARS."""
+        batches, current, size = [], [], 0
+        for index, text in enumerate(texts):
+            if not text:
+                continue
+            if current and size + len(text) + 1 > cls.GOOGLE_BATCH_CHARS:
+                batches.append(current)
+                current, size = [], 0
+            current.append(index)
+            size += len(text) + 1
+        if current:
+            batches.append(current)
+        return batches
 
     @classmethod
     def _translate_with_google(cls, extracted_texts: List[str], blocks: List[Dict[str, Any]], page_num: int, fallback_note: Optional[str] = None) -> Dict[str, Any]:
         """
-        Translates paragraphs using pure 100% Google Neural translation
-        with zero third-party dependencies and robust 429 resilience.
+        Translates a page with Google's free web endpoints in as few requests as possible. Paragraphs are
+        joined with newlines and sent together, one request for a typical page; the reply is split back on
+        newlines and kept only if it yields the same number of non-empty paragraphs, otherwise that batch
+        goes paragraph by paragraph. Once Google blocks the client nothing more is sent: the remaining
+        paragraphs keep their source text and are marked untranslated.
         """
-        final_translations = []
+        texts = [re.sub(r"\s+", " ", text).strip() for text in extracted_texts]
+        translations: List[Optional[str]] = ["" if not text else None for text in texts]
+        failure_reason = ""
+        unreachable = False
+        try:
+            for batch in cls._google_batches(texts):
+                joined = None
+                if len(batch) > 1:
+                    try:
+                        parts = cls._google_gtx("\n".join(texts[i] for i in batch)).strip().split("\n")
+                        if len(parts) == len(batch) and all(part.strip() for part in parts):
+                            joined = [part.strip() for part in parts]
+                    except GoogleBlockedError:
+                        raise
+                    except urllib.error.HTTPError as e:
+                        print(f"Google batch translation error: {e}")
+                    except (urllib.error.URLError, OSError) as e:
+                        # No connection: asking again paragraph by paragraph would only wait out more timeouts.
+                        print(f"Google batch translation error: {e}")
+                        unreachable = True
+                        continue
+                    except Exception as e:
+                        print(f"Google batch translation error: {e}")
+                if joined is not None:
+                    for index, translated in zip(batch, joined):
+                        translations[index] = translated
+                else:
+                    for index in batch:
+                        translations[index] = cls._translate_google_paragraph(texts[index])
+        except GoogleBlockedError:
+            failure_reason = "Google 번역이 요청을 잠시 막았어요. 몇 분 뒤 다시 시도하거나 사이드바에서 Gemini 엔진을 선택하세요."
 
-        for en_t in extracted_texts:
-            clean_en = en_t.strip()
-            if not clean_en:
-                final_translations.append("")
-                continue
-            ko_res = cls._translate_google_mobile_raw(clean_en)
-            if not ko_res:
-                ko_res = cls._translate_google_single_raw(clean_en)
-            final_translations.append(ko_res if ko_res else clean_en)
-
+        failed = [index for index, translated in enumerate(translations) if translated is None]
+        if failed and not failure_reason:
+            failure_reason = "Google 번역에 연결하지 못했어요." if unreachable else "Google 번역 응답을 받지 못했어요."
         pairs = VisualHighlighter.align_translation_pairs(
             extracted_texts=extracted_texts,
-            translated_texts=final_translations,
+            translated_texts=[t if t is not None else extracted_texts[i].strip() for i, t in enumerate(translations)],
             blocks=blocks
         )
+        for index in failed:
+            pairs[index]["untranslated"] = True
 
-        engine_name = fallback_note if fallback_note else "Google 고속 신경망 (0.3초 · 무료)"
         return {
             "page_num": page_num,
-            "engine": engine_name,
-            "pairs": pairs
+            "engine": fallback_note if fallback_note else "Google 번역 (무료 웹)",
+            "pairs": pairs,
+            "failure_reason": failure_reason
         }
 
     @classmethod
