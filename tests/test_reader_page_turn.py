@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # Offline reader: temporary archive, no stored keys, local stand-ins for PDF parsing and translation.
 APP = '''
-import os, runpy, sys
+import os, runpy, sys, time
 import streamlit as st
 sys.path.insert(0, __ROOT__)
 os.environ["ESSAY_ARCHIVE_ROOT"] = os.path.join(__ARCHIVE__, "essays")
@@ -25,6 +25,7 @@ core.downloader.DEFAULT_ARCHIVE_ROOT = os.path.join(__ARCHIVE__, "papers")
 KeyManager.get_all_slots = classmethod(lambda cls: [])
 KeyManager.get_active_key = classmethod(lambda cls, *args, **kwargs: ("", None))
 FORMULA_ONLY = __FORMULA_ONLY__
+FAILED_AGE = __FAILED_AGE__
 
 
 def offline_page(cls, pdf_path, page_num, output_dir):
@@ -44,8 +45,11 @@ def offline_translation(cls, page_data, paper_title="", engine="", custom_api_ke
     else:
         texts = [block["text"] for block in blocks]
         pairs = VisualHighlighter.align_translation_pairs(texts, ["번역 " + text for text in texts], blocks)
-    return {"page_num": page_data["page_num"], "engine": "offline", "is_fallback": False,
-            "target_engine": engine, "pairs": pairs}
+    result = {"page_num": page_data["page_num"], "engine": "offline", "is_fallback": False,
+              "target_engine": engine, "pairs": pairs}
+    if FAILED_AGE is not None:
+        result.update(failed_count=1, failure_reason="offline failure", translated_at=time.time() - FAILED_AGE)
+    return result
 
 
 PaperPDFParser.get_single_page_data = classmethod(offline_page)
@@ -78,9 +82,9 @@ def reader_positions(node, path=()):
     return found
 
 
-def offline_app(archive, formula_only=False):
+def offline_app(archive, formula_only=False, failed_age=None):
     return (APP.replace("__ROOT__", repr(str(ROOT))).replace("__ARCHIVE__", repr(archive))
-            .replace("__FORMULA_ONLY__", repr(formula_only)))
+            .replace("__FORMULA_ONLY__", repr(formula_only)).replace("__FAILED_AGE__", repr(failed_age)))
 
 
 class ReaderPageTurnTests(unittest.TestCase):
@@ -106,6 +110,22 @@ class ReaderPageTurnTests(unittest.TestCase):
         # Formula pairs have no text to compare, yet the page counts as translated on the next rerun.
         with tempfile.TemporaryDirectory() as archive:
             at = AppTest.from_string(offline_app(archive, formula_only=True), default_timeout=120).run()
+            at.run()
+            self.assertFalse(at.exception)
+            self.assertEqual(at.session_state["translation_calls"][1], 1)
+
+    def test_page_with_untranslated_paragraphs_is_translated_again_after_the_wait(self):
+        with tempfile.TemporaryDirectory() as archive:
+            at = AppTest.from_string(offline_app(archive, failed_age=120), default_timeout=120).run()
+            self.assertTrue(any("번역하지 못해" in w.value for w in at.warning))
+            at.run()
+            self.assertFalse(at.exception)
+            self.assertEqual(at.session_state["translation_calls"][1], 2)
+
+    def test_a_fresh_failure_is_not_requested_again_on_rerun(self):
+        # Reruns within FAILED_PAGE_RETRY_SECONDS keep the partial page instead of hitting a limited service.
+        with tempfile.TemporaryDirectory() as archive:
+            at = AppTest.from_string(offline_app(archive, failed_age=0), default_timeout=120).run()
             at.run()
             self.assertFalse(at.exception)
             self.assertEqual(at.session_state["translation_calls"][1], 1)
