@@ -6,6 +6,7 @@ Google Scholar Search & Authentic Moonlight 3:1 Split Page Reader
 import os
 import html
 import base64
+import time
 from typing import Dict, Any, Optional
 import streamlit as st
 
@@ -184,6 +185,9 @@ else:
 # 0. Session State Initialization & Auto-Cache Invalidation
 # -------------------------------------------------------------
 HIGHLIGHTER_ENGINE_VERSION = "2026_08_25_v8_self_contained_hover_sync_guaranteed+scope-1+formula-1"  # translation scope and reading order changed: drop cached pages
+# A page with untranslated paragraphs stays cached this long, so reruns do not hit a rate-limited service again;
+# opening it after that translates it again.
+FAILED_PAGE_RETRY_SECONDS = 60
 
 if st.session_state.get("_highlighter_engine_version") != HIGHLIGHTER_ENGINE_VERSION:
     st.session_state._highlighter_engine_version = HIGHLIGHTER_ENGINE_VERSION
@@ -466,6 +470,8 @@ def render_active_paper_view(archive_mgr: ArchiveManager, sidebar_config: Dict[s
         and (not cached_text_pairs or (
             any(p.get("bbox", {}).get("height") not in ["0%", "0.0%", "0.00%"] for p in cached_text_pairs)
             and not all(p.get("ko", "").strip() == p.get("en", "").strip() for p in cached_text_pairs)))
+        and not (cached_trans.get("failed_count")
+                 and time.time() - cached_trans.get("translated_at", 0) > FAILED_PAGE_RETRY_SECONDS)
     )
 
     if not is_valid_cache:
@@ -489,13 +495,17 @@ def render_active_paper_view(archive_mgr: ArchiveManager, sidebar_config: Dict[s
         page_data = PaperPDFParser.get_single_page_data(pdf_path, current_page, paper_dir)
         page_trans = st.session_state.page_translations[current_page]
 
-    # Transparent Fallback Notice
+    # The Gemini fallback and untranslated paragraphs share the one status slot.
+    notices = []
     if page_trans.get("is_fallback"):
-        status_slot.warning(
-            f"**Google 번역으로 전환됨**: {page_trans.get('fallback_reason', 'API 키 미등록')}. "
-            f"수식까지 정확한 Gemini 번역을 쓰려면 사이드바의 **API 키 관리**에서 키를 등록해 주세요.",
-            icon="ℹ️"
-        )
+        notices.append(f"**Google 번역으로 전환됨**: {page_trans.get('fallback_reason', 'API 키 미등록')}. "
+                       "수식까지 정확한 Gemini 번역을 쓰려면 사이드바의 **API 키 관리**에서 키를 확인해 주세요.")
+    if page_trans.get("failed_count"):
+        notices.append(f"**문단 {page_trans['failed_count']}개를 번역하지 못해 원문으로 표시했어요.** "
+                       f"{page_trans.get('failure_reason') or ''} 1분 뒤 이 페이지를 다시 열면 다시 번역하고, "
+                       "사이드바의 **현재 페이지 다시 번역**으로 바로 시도할 수도 있어요.")
+    if notices:
+        status_slot.warning("\n\n".join(notices), icon="⚠️")
 
     # Render Moonlight 3:1 Split Screen with integrated action bar & Draggable AI Chatbot
     render_moonlight_split_page_reader(
