@@ -59,10 +59,11 @@ class HoduHomeTests(unittest.TestCase):
         self.at.button(key="essay_section_review").click().run()
         self.assertFalse(self.at.exception)
         self.assertEqual(self.at.button(key="essay_section_review").proto.type, "primary")
-        intros = [m.value for m in self.at.markdown if "h-section-intro" in m.value]
-        self.assertEqual(len(intros), 1)
-        self.assertIn("<h2>전사 검수</h2>", intros[0])
-        self.assertIn("hodu-read", intros[0])
+        headers = [m.value for m in self.at.markdown if "h-page-header" in m.value]
+        self.assertEqual(len(headers), 1)
+        self.assertIn("<h1>전사 검수</h1>", headers[0])
+        # Hodu stays in empty and busy states, not beside page titles.
+        self.assertNotIn("hodu-pose", headers[0])
 
         self.at.button(key="sidebar_nav_search").click().run()
         self.assertFalse(any(b.key == "essay_section_library" for b in self.at.button))

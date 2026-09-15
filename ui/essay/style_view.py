@@ -5,7 +5,7 @@ Style View: Draft rewriting, style profile transfer, fact preservation validatio
 from __future__ import annotations
 import json
 import streamlit as st
-from ui.hodu import section_intro, show_state, loading, state_html
+from ui.hodu import page_header, show_state, loading, state_html
 from typing import Optional
 
 from core.essay.repository import EssayRepository
@@ -17,7 +17,7 @@ from core.key_manager import KeyManager
 
 
 def render_style_view(repo: EssayRepository):
-    section_intro('문체 편집', '내 초안을 원하는 문체로 다듬고, 사실과 수치가 그대로인지 확인한 뒤 새 버전으로 저장합니다.', '04 · 나답게 다듬기', pose='think')
+    page_header('문체 편집', '초안을 원하는 문체로 다듬고, 수치와 사실이 그대로인지 확인한 뒤 새 버전으로 저장해요.')
 
     style_svc = EssayStyleService(repo)
 
@@ -54,7 +54,7 @@ def render_style_view(repo: EssayRepository):
             "초안 텍스트",
             value=initial_text,
             height=280,
-            placeholder="수정할 본인의 자기소개서 초안을 여기에 입력하거나 위에서 불러오세요.",
+            placeholder="다듬을 초안을 붙여넣거나 위에서 불러오세요.",
             key="style_user_draft_text"
         )
         draft_no_spaces = len("".join(draft_input.split()))
@@ -89,7 +89,7 @@ def render_style_view(repo: EssayRepository):
                     ref_ans_map[k] = r.id
 
         ref_sel = st.selectbox(
-            "참고할 자기소개서 (선택)",
+            "참고 자소서 (선택)",
             options=list(ref_options.keys()),
             format_func=lambda x: ref_options[x]
         )
@@ -103,7 +103,7 @@ def render_style_view(repo: EssayRepository):
             st.error("초안 텍스트를 입력해 주세요.")
             return
 
-        with loading("호두가 문장을 다듬고 있어요", "원래의 경험과 수치를 지키면서 문장을 살펴봐요.", "read"):
+        with loading("수정안을 만들고 있어요", "", "read"):
             # F11: Save user edits in text_area as a new revision before generating proposal
             if cur_rev_id:
                 old_rev = repo.get_revision(cur_rev_id)
@@ -164,16 +164,16 @@ def render_style_view(repo: EssayRepository):
         with col_out1:
             st.markdown("##### 원본")
             in_rev = repo.get_revision(proposal.input_revision_id)
-            with st.container(border=True):
+            with st.container(border=True, key="card_style_input"):
                 st.write(in_rev.body_text if in_rev else "(원본 조회 불가)")
 
         with col_out2:
             st.markdown("##### 수정안")
-            with st.container(border=True):
+            with st.container(border=True, key="card_style_output"):
                 st.write(proposal.output_text)
 
         # Validation & Safety Summary
-        with st.container(border=True):
+        with st.container(border=True, key="card_style_check"):
             st.markdown("#### 사실 보존 확인")
             col_v1, col_v2, col_v3 = st.columns(3)
             with col_v1:
