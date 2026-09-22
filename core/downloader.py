@@ -19,6 +19,8 @@ try:
 except ImportError:
     fitz = None
 
+DEFAULT_TOPIC = "default"
+
 DEFAULT_ARCHIVE_ROOT = os.path.expanduser("~/PaperArchive")
 
 class ArchiveManager:
@@ -29,6 +31,7 @@ class ArchiveManager:
         self.reports_dir = os.path.join(self.base_dir, "_reports")
         os.makedirs(self.base_dir, exist_ok=True)
         os.makedirs(self.reports_dir, exist_ok=True)
+        os.makedirs(os.path.join(self.base_dir, DEFAULT_TOPIC), exist_ok=True)
         self.session = requests.Session()
         self.session.headers.update({
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -67,7 +70,7 @@ class ArchiveManager:
         if existing:
             return existing
 
-        safe_topic = self._sanitize_folder_name(topic or "General")
+        safe_topic = DEFAULT_TOPIC
         safe_title = self._sanitize_folder_name(paper.title)
         folder_name = f"{paper.year}_{safe_title}"
         return os.path.join(self.base_dir, safe_topic, folder_name)
@@ -271,7 +274,7 @@ class ArchiveManager:
 
         meta_path = os.path.join(paper_dir, "metadata.json")
         meta_dict = paper.to_dict()
-        meta_dict["topic"] = topic
+        meta_dict["topic"] = os.path.basename(os.path.dirname(paper_dir))
         meta_dict["has_pdf"] = bool(pdf_path and os.path.exists(pdf_path))
         meta_dict["updated_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -339,7 +342,7 @@ class ArchiveManager:
             full_path = os.path.join(self.base_dir, name)
             if os.path.isdir(full_path) and not name.startswith(".") and name != "_reports":
                 topics.append(name)
-        return topics
+        return sorted(topics, key=lambda name: (name != DEFAULT_TOPIC, name))
 
     def list_papers_in_topic(self, topic: str) -> List[Dict[str, Any]]:
         """Lists all archived papers under a specific topic."""
@@ -386,6 +389,8 @@ class ArchiveManager:
             return None
         
         safe_topic = self._sanitize_folder_name(new_topic)
+        if not safe_topic or safe_topic == "_reports":
+            raise ValueError("사용할 수 없는 폴더 이름이에요.")
         target_topic_dir = os.path.join(self.base_dir, safe_topic)
         os.makedirs(target_topic_dir, exist_ok=True)
 
@@ -395,6 +400,8 @@ class ArchiveManager:
         if new_paper_dir == paper_dir:
             return paper_dir
 
+        if os.path.exists(new_paper_dir):
+            raise ValueError("대상 폴더에 같은 이름의 논문이 있어요.")
         shutil.move(paper_dir, new_paper_dir)
 
         # Update metadata.json
@@ -410,7 +417,7 @@ class ArchiveManager:
 
         # Clean old topic folder if empty
         old_topic_dir = os.path.dirname(paper_dir)
-        if os.path.exists(old_topic_dir) and not os.listdir(old_topic_dir):
+        if os.path.basename(old_topic_dir) != DEFAULT_TOPIC and os.path.exists(old_topic_dir) and not os.listdir(old_topic_dir):
             try:
                 os.rmdir(old_topic_dir)
             except Exception:
@@ -423,7 +430,7 @@ class ArchiveManager:
         if os.path.exists(paper_dir) and os.path.isdir(paper_dir):
             shutil.rmtree(paper_dir, ignore_errors=True)
             parent_topic = os.path.dirname(paper_dir)
-            if os.path.exists(parent_topic) and not os.listdir(parent_topic):
+            if os.path.basename(parent_topic) != DEFAULT_TOPIC and os.path.exists(parent_topic) and not os.listdir(parent_topic):
                 try:
                     os.rmdir(parent_topic)
                 except Exception:
