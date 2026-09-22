@@ -45,3 +45,23 @@
  [class*="st-key-hodu_choice_"] {padding:14px 20px 20px;margin-bottom:8px;}
  .hodu-choice-description {min-height:0;}
 }
+
+/* A stable hit target surrounds independent motion and optional sprite layers. */
+.st-key-hodu_home button.h-emotion {display:block;position:relative;width:300px;height:300px;padding:0;border:0!important;background:transparent!important;box-shadow:none!important;border-radius:48%;touch-action:manipulation;pointer-events:auto;}
+.st-key-hodu_home button.h-emotion:focus-visible {outline:3px solid #537c63;outline-offset:6px;}
+.h-emotion-body {display:block;width:300px;height:300px;transform-origin:50% 82%;transform:translateX(var(--look-x,0px)) rotate(var(--look-angle,0deg));transition:transform 180ms ease-out;pointer-events:none;}
+.h-emotion-default,.h-emotion-frame {display:block;}
+.h-emotion [hidden] {display:none!important;}
+.h-emotion-heart {position:absolute;right:42px;top:30px;color:#d77892;font-size:32px;opacity:0;pointer-events:none;}
+.h-emotion[data-emotion="happy"] .h-emotion-body {animation:h-emotion-happy 850ms ease-in-out infinite;}
+.h-emotion[data-emotion="love"] .h-emotion-body {animation:h-emotion-love 650ms ease-out;}
+.h-emotion[data-emotion="love"] .h-emotion-heart {animation:h-emotion-heart 1100ms ease-out both;}
+.h-emotion:not([data-emotion="idle"]) .h-home-idle {animation:none;opacity:1;}
+.h-emotion:not([data-emotion="idle"]) .h-home-shake {display:none;}
+@keyframes h-emotion-happy {50%{transform:translateX(var(--look-x,0px)) translateY(-5px) rotate(var(--look-angle,0deg));}}
+@keyframes h-emotion-love {35%{transform:translateY(-15px) rotate(-3deg);}65%{transform:translateY(-4px) rotate(3deg);}100%{transform:translateY(0);}}
+@keyframes h-emotion-heart {0%{opacity:0;transform:translateY(8px) scale(.7);}20%,65%{opacity:1;}100%{opacity:0;transform:translateY(-20px) scale(1.1);}}
+.h-emotion[data-reduced="true"] .h-emotion-body {animation:none!important;transform:none!important;transition:none!important;}
+.h-emotion[data-reduced="true"] .h-home-shake {display:none!important;}
+.h-emotion[data-reduced="true"] .h-home-idle {opacity:1!important;}
+.h-emotion[data-reduced="true"][data-emotion="love"] .h-emotion-heart {animation:none!important;opacity:1;}
