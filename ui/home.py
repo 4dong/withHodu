@@ -7,7 +7,7 @@ import streamlit as st
 
 
 from ui.hodu import ASSET, reference_data as _reference_data, motion_toggle
-from ui.hodu_animations import home_animation_html
+from ui.hodu_emotions import emotion_html, emotion_script
 SEARCH_MODE = "🔍 논문 검색"
 LIBRARY_MODE = "📚 나의 서재 (Visual Library & AI 분석)"
 
@@ -68,10 +68,12 @@ def render_home():
             '<section class="hodu-welcome" aria-label="호두랑 시작 화면">'
             '<div class="hodu-welcome-copy"><h1>오늘도,<br>호두랑 한 장씩.</h1>'
             '<p class="hodu-intro">논문을 원문과 번역으로 나란히 읽고, 모아 두고, 자소서를 정리해요.</p></div>'
-            '<div class="hodu-scene" aria-hidden="true"><div class="hodu-floor"></div>'
-            '<div class="hodu-hero-dog">' + home_animation_html() + '</div></div></section>',
+            '<div class="hodu-scene"><div class="hodu-floor" aria-hidden="true"></div>'
+            '<div class="hodu-hero-dog">' + emotion_html() + '</div></div></section>',
             unsafe_allow_html=True,
         )
+
+        st.html(emotion_script(reduced), unsafe_allow_javascript=True)
 
         choices = [
             ("search", "fetch", "논문 검색", "주제로 찾아 원문과 번역을 나란히 읽어요.", "논문 찾기"),
