@@ -37,3 +37,5 @@
 로컬 미리보기: `../../../docs/design/previews/hodu-animations/index.html`.
 
 메인 대기 동작은 `home-idle-02`로 보정 적용했다. 몸통 고정 + 꼬리 중간 자세 왕복 + 눈 주변만 깜박이는 27프레임이며 v1 원본은 보관한다. 재현: `python3 scripts/refine_hodu_idle.py`.
+
+꼬리 질감은 `source/home-idle-tail-v3.png`로 보강했다. 물기 털기는 실제 앱에서 `home-shake-02`(23프레임, 4.23초)를 사용한다. 원본 12장과 생성한 완충 자세 11장으로 구성한다.

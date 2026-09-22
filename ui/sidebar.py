@@ -129,21 +129,6 @@ def render_sidebar(
                         use_container_width=True
                     )
 
-        # 2. Viewer & Typography Settings
-        with st.sidebar.expander("글자 크기와 줄 간격", expanded=False):
-            if "trans_font_size" not in st.session_state:
-                st.session_state["trans_font_size"] = 16
-            if "trans_line_height" not in st.session_state:
-                st.session_state["trans_line_height"] = 1.85
-
-            cur_font = st.slider("글자 크기 (px)", min_value=12, max_value=24, value=st.session_state["trans_font_size"], step=1)
-            cur_lh = st.slider("줄 간격", min_value=1.4, max_value=2.4, value=st.session_state["trans_line_height"], step=0.1)
-            
-            if cur_font != st.session_state["trans_font_size"] or cur_lh != st.session_state["trans_line_height"]:
-                st.session_state["trans_font_size"] = cur_font
-                st.session_state["trans_line_height"] = cur_lh
-                st.rerun()
-
         st.sidebar.divider()
     else:
         # Model Selector on initial search screen

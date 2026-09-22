@@ -54,8 +54,8 @@ def animation_css():
         rules.append(_keyframes(f'h-frames-{name}', a))
         rules.append(f'.h-anim-{name}{{background-size:{a["columns"] * 100}% {a["rows"] * 100}%;'
                      f'animation:h-frames-{name} {duration}ms steps(1,end) {repeat} both;}}')
-    if 'home-shake-01' in assets:
-        shake = assets['home-shake-01']
+    if 'home-shake-02' in assets:
+        shake = assets['home-shake-02']
         total = HOME_REST_MS + sum(shake['durationsMs'])
         switch = HOME_REST_MS / total * 100
         rules.append(_keyframes('h-home-shake-frames', shake, HOME_REST_MS))
@@ -88,4 +88,4 @@ def home_animation_html():
     # Both layers share one geometry. The occasional shake starts at its first frame.
     return ('<div class="h-home-animation" aria-hidden="true">'
             '<div class="h-home-idle">' + animation_html('home-idle-02', variant='home') + '</div>'
-            '<div class="h-home-shake">' + animation_html('home-shake-01', variant='home') + '</div></div>')
+            '<div class="h-home-shake">' + animation_html('home-shake-02', variant='home') + '</div></div>')

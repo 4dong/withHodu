@@ -876,13 +876,212 @@
       "suggestedIdleDelayMs": null
     },
     {
-      "id": "home-idle-02",
-      "title": "몸통 고정 · 눈 깜박임과 꼬리 2",
-      "frameCount": 27,
+      "id": "home-shake-02",
+      "title": "물기 털기 · 완충 자세",
+      "frameCount": 23,
       "frameWidth": 368,
       "frameHeight": 368,
       "columns": 6,
-      "rows": 5,
+      "rows": 4,
+      "order": "row-major",
+      "anchor": [
+        184,
+        324
+      ],
+      "durationsMs": [
+        500,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        1000
+      ],
+      "loop": false,
+      "source": "source/home-shake-inbetweens.png",
+      "sheet": "sheets/home-shake-02.png",
+      "preview": "previews/home-shake-02.apng",
+      "frames": [
+        "frames/home-shake-02/home-shake-02-01.png",
+        "frames/home-shake-02/home-shake-02-02.png",
+        "frames/home-shake-02/home-shake-02-03.png",
+        "frames/home-shake-02/home-shake-02-04.png",
+        "frames/home-shake-02/home-shake-02-05.png",
+        "frames/home-shake-02/home-shake-02-06.png",
+        "frames/home-shake-02/home-shake-02-07.png",
+        "frames/home-shake-02/home-shake-02-08.png",
+        "frames/home-shake-02/home-shake-02-09.png",
+        "frames/home-shake-02/home-shake-02-10.png",
+        "frames/home-shake-02/home-shake-02-11.png",
+        "frames/home-shake-02/home-shake-02-12.png",
+        "frames/home-shake-02/home-shake-02-13.png",
+        "frames/home-shake-02/home-shake-02-14.png",
+        "frames/home-shake-02/home-shake-02-15.png",
+        "frames/home-shake-02/home-shake-02-16.png",
+        "frames/home-shake-02/home-shake-02-17.png",
+        "frames/home-shake-02/home-shake-02-18.png",
+        "frames/home-shake-02/home-shake-02-19.png",
+        "frames/home-shake-02/home-shake-02-20.png",
+        "frames/home-shake-02/home-shake-02-21.png",
+        "frames/home-shake-02/home-shake-02-22.png",
+        "frames/home-shake-02/home-shake-02-23.png"
+      ],
+      "applicationTarget": "ui/home.py::.hodu-hero-dog",
+      "alignmentOffsets": [
+        [
+          -12,
+          -10
+        ],
+        [
+          -7,
+          -10
+        ],
+        [
+          -12,
+          -10
+        ],
+        [
+          -6,
+          -10
+        ],
+        [
+          5,
+          11
+        ],
+        [
+          14,
+          11
+        ],
+        [
+          2,
+          11
+        ],
+        [
+          -6,
+          11
+        ],
+        [
+          16,
+          42
+        ],
+        [
+          -11,
+          41
+        ],
+        [
+          -9,
+          41
+        ],
+        [
+          -10,
+          41
+        ]
+      ],
+      "sourceMainComponentBounds": [
+        [
+          73,
+          57,
+          319,
+          334
+        ],
+        [
+          56,
+          84,
+          326,
+          334
+        ],
+        [
+          64,
+          57,
+          328,
+          334
+        ],
+        [
+          50,
+          63,
+          331,
+          334
+        ],
+        [
+          45,
+          33,
+          313,
+          313
+        ],
+        [
+          41,
+          40,
+          298,
+          313
+        ],
+        [
+          65,
+          45,
+          300,
+          313
+        ],
+        [
+          65,
+          48,
+          315,
+          313
+        ],
+        [
+          40,
+          11,
+          296,
+          282
+        ],
+        [
+          55,
+          9,
+          335,
+          283
+        ],
+        [
+          63,
+          9,
+          323,
+          283
+        ],
+        [
+          68,
+          9,
+          321,
+          283
+        ]
+      ],
+      "notes": "12 original keyframes plus 11 generated cushioning poses; 4230ms total.",
+      "previewLoops": true,
+      "suggestedIdleDelayMs": [
+        12000,
+        20000
+      ]
+    },
+    {
+      "id": "home-idle-02",
+      "title": "몸통 고정 · 눈 깜박임과 꼬리 2",
+      "frameCount": 33,
+      "frameWidth": 368,
+      "frameHeight": 368,
+      "columns": 6,
+      "rows": 6,
       "order": "row-major",
       "anchor": [
         184,
@@ -897,12 +1096,18 @@
         110,
         110,
         110,
+        80,
+        80,
+        80,
         110,
         110,
         110,
         110,
         110,
         110,
+        80,
+        80,
+        80,
         110,
         110,
         110,
@@ -918,7 +1123,7 @@
         900
       ],
       "loop": true,
-      "source": "source/home-idle-tail-v2.png",
+      "source": "source/home-idle-tail-v5.png",
       "sheet": "sheets/home-idle-02.png",
       "preview": "previews/home-idle-02.apng",
       "frames": [
@@ -948,7 +1153,13 @@
         "frames/home-idle-02/home-idle-02-24.png",
         "frames/home-idle-02/home-idle-02-25.png",
         "frames/home-idle-02/home-idle-02-26.png",
-        "frames/home-idle-02/home-idle-02-27.png"
+        "frames/home-idle-02/home-idle-02-27.png",
+        "frames/home-idle-02/home-idle-02-28.png",
+        "frames/home-idle-02/home-idle-02-29.png",
+        "frames/home-idle-02/home-idle-02-30.png",
+        "frames/home-idle-02/home-idle-02-31.png",
+        "frames/home-idle-02/home-idle-02-32.png",
+        "frames/home-idle-02/home-idle-02-33.png"
       ],
       "applicationTarget": "ui/home.py::.hodu-hero-dog",
       "alignmentOffsets": [

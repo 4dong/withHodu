@@ -6,6 +6,7 @@ import os
 import base64
 import inspect
 import html
+from pathlib import Path
 import streamlit as st
 from typing import Dict, Any, Optional
 from core.searcher import Paper
@@ -16,6 +17,8 @@ from ui.hodu import loading
 # ==============================================================================
 # Pure JavaScript Controller Engine (Main DOM Native Execution)
 # ==============================================================================
+READER_LAYOUT_JS = Path(__file__).with_name("reader_layout.js").read_text(encoding="utf-8")
+
 CLIENT_CONTROLLER_JS = """
 (function() {
     var win = typeof window !== 'undefined' ? window : this;
@@ -256,6 +259,19 @@ def render_moonlight_split_page_reader(
         view_mode = st.segmented_control("읽기 방식", ["대역", "원문", "번역"], default="대역", required=True,
                                          key="reader_view", label_visibility="collapsed", width="content")
 
+        with st.popover("보기 설정", icon=":material/text_fields:", width="content"):
+            def save_typography():
+                st.session_state.trans_font_size = st.session_state.reader_font_size
+                st.session_state.trans_line_height = st.session_state.reader_line_height
+
+            st.session_state.reader_font_size = st.session_state.get("trans_font_size", 20)
+            st.session_state.reader_line_height = st.session_state.get("trans_line_height", 1.85)
+            st.slider("번역 글자 크기", min_value=12, max_value=28, step=1,
+                      format="%d px", key="reader_font_size", on_change=save_typography)
+            st.slider("줄 간격", min_value=1.4, max_value=2.4, step=0.05,
+                      key="reader_line_height", on_change=save_typography)
+            st.caption("대역 화면의 가운데 구분선을 드래그해 너비를 조절하세요. 두 번 클릭하면 반반으로 돌아갑니다.")
+
         # Native popover preserves keyboard, touch and rerun behavior without DOM-bound chat controls.
         from core.qa_agent import PaperChatAgent
         with st.popover("질문", icon=":material/forum:", width="content"):
@@ -305,7 +321,8 @@ def render_moonlight_split_page_reader(
                 st.rerun()
 
     if view_mode == "대역":
-        col_pdf, col_trans = st.columns(2, gap="small")
+        with st.container(key="reader_split"):
+            col_pdf, col_trans = st.columns(2, gap="small")
     else:
         col_pdf = col_trans = st.container()
 
@@ -323,7 +340,7 @@ def render_moonlight_split_page_reader(
     # 2. Right Column: Maximized Scrollable Translation Pane with KaTeX Math (via VisualHighlighter)
     if view_mode != "원문":
         with col_trans:
-            font_sz = st.session_state.get("trans_font_size", 16)
+            font_sz = st.session_state.get("trans_font_size", 20)
             line_ht = st.session_state.get("trans_line_height", 1.85)
             trans_pane_html = VisualHighlighter.render_translation_paragraphs(
                 pairs=pairs,
@@ -334,7 +351,8 @@ def render_moonlight_split_page_reader(
             st.markdown(trans_pane_html, unsafe_allow_html=True)
 
     # 5. Inject execution trigger directly into main DOM via modern st.html with DOM Lifecycle onload guarantee
-    b64_js = base64.b64encode(CLIENT_CONTROLLER_JS.encode("utf-8")).decode("ascii")
+    controller_js = CLIENT_CONTROLLER_JS + READER_LAYOUT_JS
+    b64_js = base64.b64encode(controller_js.encode("utf-8")).decode("ascii")
     lifecycle_injector = f'''
     <svg width="0" height="0" style="display:none;" onload="
         if(!window._agControllerInstalled){{
@@ -348,7 +366,7 @@ def render_moonlight_split_page_reader(
             }}
         }}
     "></svg>
-    <script>{CLIENT_CONTROLLER_JS}</script>
+    <script>{controller_js}</script>
     '''
     if hasattr(st, "html"):
         if "unsafe_allow_javascript" in inspect.signature(st.html).parameters:
