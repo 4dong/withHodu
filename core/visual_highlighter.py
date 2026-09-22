@@ -843,7 +843,7 @@ class VisualHighlighter:
         cls,
         pairs: List[Dict[str, Any]],
         current_page: int,
-        font_size: int = 16,
+        font_size: int = 20,
         line_height: float = 1.85
     ) -> str:
         """

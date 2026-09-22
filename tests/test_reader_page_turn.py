@@ -106,6 +106,19 @@ class ReaderPageTurnTests(unittest.TestCase):
         self.assertEqual(first, second)
 
 
+    def test_font_size_survives_page_turn_without_retranslation(self):
+        with tempfile.TemporaryDirectory() as archive:
+            at = AppTest.from_string(offline_app(archive), default_timeout=120).run()
+            at.slider(key="reader_font_size").set_value(24).run()
+            self.assertFalse(at.exception)
+            self.assertEqual(at.session_state["translation_calls"][1], 1)
+            at.button(key="reader_next").click().run()
+            self.assertFalse(at.exception)
+            self.assertEqual(at.slider(key="reader_font_size").value, 24)
+            panes = [m.value for m in at.markdown if 'id="trans-scroll-pane-' in m.value]
+            self.assertTrue(panes)
+            self.assertIn("font-size: 24px", panes[0])
+
     def test_page_holding_only_formulas_is_translated_once(self):
         # Formula pairs have no text to compare, yet the page counts as translated on the next rerun.
         with tempfile.TemporaryDirectory() as archive:

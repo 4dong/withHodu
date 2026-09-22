@@ -50,3 +50,7 @@ assets/hodu/hodu-animation-v1.zip
 
 # Personal AI assistant instructions (kept locally, not part of the project)
 GEMINI.md
+
+# Local rendering checks and writing-session intermediates
+tmp/
+_workspace/

@@ -87,3 +87,22 @@
 ### 대기→물기 털기 표시 크기 보정
 
 두 원화는 동일한 368px 캔버스지만 물기 털기 캐릭터 높이가 약 6% 작았다. `ui/hodu.css`에서 발 접지점(높이 88.043478%)을 기준으로 물기 털기 레이어만 1.062배, 가로 -2.99% 보정했다. 원본 이미지와 프레임 재생은 유지한다. Chrome 데스크톱/모바일 전환 화면 및 움직임 감소 동작 확인.
+
+### 꼬리 질감 복원 및 물기 털기 완충
+
+- 내장 image_gen으로 `source/home-idle-tail-v3.png`의 털 도트 질감을 보강했다. `refine_hodu_idle.py`가 이 원화를 사용하며 몸통 불투명 픽셀 고정 검사를 통과했다.
+- `source/home-shake-inbetweens.png`에서 11개 추가 자세를 추출하여 기존 12장 사이에 삽입했다. 새로운 `home-shake-02`는 23프레임, 총 4230ms이며 주요 동작의 유지 시간은 130ms다. 원본 12장은 보관한다.
+- 재현: `python3 scripts/refine_hodu_idle.py`, `python3 scripts/refine_hodu_shake.py`. 생성 프롬프트는 각 source 이미지 옆의 `-prompt.txt`에 저장했다.
+- 실제 앱은 `home-shake-02` 사용. Chrome 데스크톱/390px 모바일, 움직임 감소, 오류 없음 확인. UI 테스트 7개 통과 (`scratch/hodu-cushion-tests.log`).
+
+### 사용자 확대 이미지 기준 꼬리 형태 재수정
+
+오른쪽 꼬리의 긴 깃털형 무늬를 제거하고 짧은 사각 도트 털뭉치와 불규칙한 외곽으로 변경했다. 첫 v4 시도는 긴 무늬가 남아 채택하지 않았다. 내장 image_gen으로 만든 v5를 최종 채택하고 `refine_hodu_idle.py`의 원본 참조를 바꿨다. 축소 시 도트 유지(NEAREST), 몸통 불투명 픽셀 동일성 검사 통과. 물기 털기 자산·타이밍은 변경하지 않았다. 최종 프롬프트: `assets/hodu/animations/source/home-idle-tail-v5-prompt.txt`. 최종 앱 시트: `assets/hodu/animations/sheets/home-idle-02.png`.
+
+### 오른쪽 볼·옆구리 털 경계 복구
+
+사용자 확대 이미지에서 문제 부위를 다시 확인했다. 꼬리 질감뿐 아니라 기존 몸통 분리 다각형 마스크가 오른쪽 볼·옆구리의 도트 외곽을 직선으로 잘라내고 있었다. 해당 다각형을 제거하고 왼쪽 원본의 실제 털끝 픽셀을 오른쪽 외곽 27px 띠에 대칭 복원했다. 안쪽 얼굴·눈·주둥이·가슴은 유지하고, 꼬리는 복구한 몸통 뒤에 합성한다. 전 대기 프레임의 불투명 몸통 픽셀 동일성 검사 통과. 확대 확인: `scratch/hodu-right-fur-fixed.png`. 물기 털기는 변경하지 않았다.
+
+### 꼬리 방향 전환 완충 3장 추가
+
+내장 image_gen으로 `source/home-idle-tail-cushion.png`의 중간 자세 3장을 생성했다. 중앙→오른쪽 구간에 삽입하고 복귀 시 역순으로 재사용한다. 각 완충 자세는 80ms, 기존 자세는 110ms이며 대기 시트는 27→33 재생 프레임(6열×6행)으로 갱신했다. 복구한 볼·옆구리 포함 몸통 픽셀 고정 검사 및 UI 테스트 7개 통과. 물기 털기 변경 없음. 프롬프트는 원본 옆 `home-idle-tail-cushion-prompt.txt`에 저장.

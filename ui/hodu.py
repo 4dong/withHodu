@@ -24,6 +24,8 @@ def reference_data():
 
 
 def apply_theme():
+    from ui.paw_cursor import cursor_html
+    st.html(cursor_html(st.session_state.get("hodu_motion_preference", False)), unsafe_allow_javascript=True)
     st.html('<style>' + Path(__file__).with_name('hodu.css').read_text(encoding='utf-8') + '\n' + animation_css() + '</style>')
     # A destination change starts at its heading; normal editing reruns keep scroll.
     navigation_epoch = int(st.session_state.get("hodu_navigation_epoch", 0))

@@ -3,6 +3,7 @@ Google Scholar & Multi-Source Academic Paper Search Engine with Real-Time Exact 
 """
 
 import os
+import unicodedata
 import re
 import urllib.parse
 import xml.etree.ElementTree as ET
@@ -51,7 +52,7 @@ class Paper:
 
 
 class AcademicSearcher:
-    """Multi-source academic search engine strictly preserving Google Scholar organic ranking with real-time exact date resolution."""
+    """Multi-source academic search with exact-title promotion and date resolution."""
 
     def __init__(self):
         self.session = requests.Session()
@@ -60,8 +61,10 @@ class AcademicSearcher:
         })
 
     def search(self, query: str, max_results: int = 8, sources: Optional[List[str]] = None) -> List[Paper]:
-        """Search papers preserving Google Scholar ranking and resolving exact publication dates in parallel."""
+        """Search across providers, promoting exact titles before truncating results."""
         clean_q = query.strip()
+        if not clean_q or max_results <= 0:
+            return []
         results: List[Paper] = []
         seen_titles = set()
 
@@ -76,8 +79,17 @@ class AcademicSearcher:
         except Exception as e:
             print(f"Google Scholar search error: {e}")
 
-        # 2. Fallback Engine: arXiv (only if Google Scholar returned 0 or few results)
-        if len(results) < 3:
+        # A full-looking title needs verification even when Scholar returns many
+        # loosely related papers. Result count alone is not evidence of a match.
+        title_query = len(re.findall(r"[^\W_]+", clean_q)) >= 4
+
+        def needs_fallback():
+            return len(results) < min(3, max_results) or (
+                title_query and not any(self._title_matches(clean_q, p.title) for p in results)
+            )
+
+        # 2. Fallback Engine: arXiv
+        if needs_fallback():
             try:
                 arxiv_results = self._search_arxiv_direct(clean_q, max_results=max_results)
                 for p in arxiv_results:
@@ -89,7 +101,7 @@ class AcademicSearcher:
                 print(f"arXiv search error: {e}")
 
         # 3. Fallback Engine: Semantic Scholar
-        if len(results) < 3:
+        if needs_fallback():
             try:
                 s2_results = self._search_semantic_scholar(clean_q, max_results=max_results)
                 for p in s2_results:
@@ -100,10 +112,14 @@ class AcademicSearcher:
             except Exception as e:
                 print(f"Semantic Scholar search error: {e}")
 
+        # Stable promotion: retain provider ordering among all other results.
+        results.sort(key=lambda p: not self._title_matches(clean_q, p.title))
         final_papers = results[:max_results]
 
         # 4. Multi-Threaded Real-Time Date & PDF Enrichment Pipeline
         def enrich_paper(p: Paper) -> Paper:
+            if len(p.published_date) >= 10 and p.pdf_url:
+                return p
             exact_date, resolved_pdf = self._resolve_exact_date_and_pdf(p.url, p.title)
             if exact_date and len(exact_date) > len(p.published_date):
                 p.published_date = exact_date
@@ -121,7 +137,11 @@ class AcademicSearcher:
         return final_papers
 
     def _normalize_title(self, title: str) -> str:
-        return re.sub(r'[^a-zA-Z0-9]', '', title.lower())
+        return "".join(c for c in unicodedata.normalize("NFKC", title).casefold() if c.isalnum())
+
+    def _title_matches(self, query: str, title: str) -> bool:
+        normalized = self._normalize_title(query)
+        return bool(normalized) and normalized == self._normalize_title(title)
 
     def _resolve_exact_date_and_pdf(self, url: str, title: str) -> tuple:
         """Resolves exact publication date (YYYY-MM-DD) and direct PDF via arXiv, CrossRef & HTML meta tags."""
@@ -134,7 +154,7 @@ class AcademicSearcher:
             if ar_match:
                 ar_id = ar_match.group(1)
                 resolved_pdf = f"https://arxiv.org/pdf/{ar_id}.pdf"
-                api_url = f"http://export.arxiv.org/api/query?id_list={ar_id}"
+                api_url = f"https://export.arxiv.org/api/query?id_list={ar_id}"
                 try:
                     r = self.session.get(api_url, timeout=3.5)
                     if r.status_code == 200:
@@ -180,7 +200,7 @@ class AcademicSearcher:
         # Step C: arXiv Title Query Fallback
         try:
             clean_q = " ".join(re.sub(r'[^a-zA-Z0-9\s]', '', title).split()[:6])
-            api_url = f"http://export.arxiv.org/api/query?search_query=all:{urllib.parse.quote(clean_q)}&max_results=2"
+            api_url = f"https://export.arxiv.org/api/query?search_query=all:{urllib.parse.quote(clean_q)}&max_results=2"
             r = self.session.get(api_url, timeout=3.5)
             if r.status_code == 200:
                 root = ET.fromstring(r.content)
@@ -287,15 +307,28 @@ class AcademicSearcher:
         """Queries arXiv API directly for preprint search."""
         papers = []
         ns = {'atom': 'http://www.w3.org/2005/Atom', 'arxiv': 'http://arxiv.org/schemas/atom'}
-        url = f"http://export.arxiv.org/api/query?search_query=all:{urllib.parse.quote(query)}&start=0&max_results={max_results}&sortBy=relevance&sortOrder=descending"
-        try:
-            resp = self.session.get(url, timeout=8)
-            if resp.status_code == 200:
-                root = ET.fromstring(resp.content)
-                for entry in root.findall('atom:entry', ns):
-                    papers.append(self._parse_arxiv_entry(entry, ns))
-        except Exception:
-            pass
+        # Escape punctuation into word boundaries and scope every term explicitly.
+        # First retrieve titles, then search all fields when no title is found.
+        terms = re.findall(r"[^\W_]+", unicodedata.normalize("NFKC", query), re.UNICODE)
+        if not terms:
+            return papers
+        for search_field in ("ti", "all"):
+            params = {
+                "search_query": " AND ".join(f'{search_field}:"{term}"' for term in terms),
+                "start": 0, "max_results": max_results,
+                "sortBy": "relevance", "sortOrder": "descending",
+            }
+            try:
+                resp = self.session.get("https://export.arxiv.org/api/query", params=params, timeout=8)
+                if resp.status_code == 200:
+                    root = ET.fromstring(resp.content)
+                    for entry in root.findall('atom:entry', ns):
+                        if entry.find('atom:published', ns) is not None:
+                            papers.append(self._parse_arxiv_entry(entry, ns))
+            except (requests.RequestException, ET.ParseError):
+                continue
+            if papers:
+                break
         return papers
 
     def _parse_arxiv_entry(self, entry: ET.Element, ns: Dict[str, str]) -> Paper:
