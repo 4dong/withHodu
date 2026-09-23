@@ -73,7 +73,10 @@ def render_sidebar(
         return _render_essay_sidebar()
 
     if "selected_translation_engine" not in st.session_state:
-        st.session_state["selected_translation_engine"] = PaperTranslator.SUPPORTED_ENGINES[0]
+        # With a stored key Gemini is ready to use, so a session starts there; otherwise free Google translation.
+        stored_key, _ = KeyManager.get_active_key(st.session_state.get("selected_key_slot_id"))
+        has_key = bool(stored_key and len(stored_key) > 15)
+        st.session_state["selected_translation_engine"] = PaperTranslator.SUPPORTED_ENGINES[1 if has_key else 0]
 
     if "custom_llm_prompt" not in st.session_state:
         st.session_state["custom_llm_prompt"] = DEFAULT_ACADEMIC_PROMPT
@@ -103,11 +106,9 @@ def render_sidebar(
                 index=cur_idx,
                 format_func=engine_label,
             )
-            if chosen_engine != st.session_state["selected_translation_engine"]:
-                st.session_state["selected_translation_engine"] = chosen_engine
-                st.session_state["page_translations"] = {}  # Wipe all cached pages on engine switch
-                st.session_state["_active_translation_engine"] = chosen_engine
-                st.rerun()
+            # No st.rerun(): the reader sees the new engine later in this same run and drops its pages.
+            # Stopping the run here would skip the page body, and Streamlit then forgets its widgets' values.
+            st.session_state["selected_translation_engine"] = chosen_engine
 
             # Re-translate Current Page Button
             if st.button("현재 페이지 다시 번역", use_container_width=True, help="선택한 모델과 프롬프트로 이 페이지를 다시 번역합니다."):
@@ -140,9 +141,7 @@ def render_sidebar(
             index=cur_idx,
             format_func=engine_label,
         )
-        if chosen_engine != st.session_state["selected_translation_engine"]:
-            st.session_state["selected_translation_engine"] = chosen_engine
-            st.rerun()
+        st.session_state["selected_translation_engine"] = chosen_engine
 
     # 3. Universal LLM Prompt Customizer (Exposed for fine-tuning translation behavior)
     with st.sidebar.expander("번역 프롬프트", expanded=False):
@@ -168,13 +167,6 @@ def render_sidebar(
         st.session_state["selected_key_slot_id"] = None
 
     active_api_key, active_slot = KeyManager.get_active_key(st.session_state.get("selected_key_slot_id"))
-
-    # Smart Default Engine: If valid API key exists and no manual change yet, prioritize Gemini 3.7 Flash
-    if "selected_translation_engine" not in st.session_state:
-        if active_api_key and len(active_api_key) > 15:
-            st.session_state["selected_translation_engine"] = PaperTranslator.SUPPORTED_ENGINES[1]
-        else:
-            st.session_state["selected_translation_engine"] = PaperTranslator.SUPPORTED_ENGINES[0]
 
     active_engine = st.session_state["selected_translation_engine"]
 

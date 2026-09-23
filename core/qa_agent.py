@@ -99,12 +99,12 @@ class PaperChatAgent:
                 except Exception as e:
                     print(f"Gemini QA model {model_id} error: {e}")
 
-        # Fallback heuristic response if API key is not configured or fails
-        fallback_ans = cls._generate_heuristic_response(clean_q, paper, current_page, page_texts)
+        # No made-up fallback: without a working Gemini call there is no answer to show.
         return {
-            "answer": AcademicMathFormatter.format_math_in_text(fallback_ans),
-            "model_used": "로컬 학술 지능 엔진 (휴리스틱 · API 키 등록 시 최신 Gemini Flash 연동)",
-            "success": True
+            "answer": "질문에 답하려면 Gemini API 키가 필요해요." if not effective_key
+                      else "Gemini가 답하지 못했어요. 잠시 후 다시 시도해 주세요.",
+            "model_used": "None",
+            "success": False
         }
 
     @classmethod
@@ -171,59 +171,3 @@ class PaperChatAgent:
                 if parts:
                     return parts[0].get("text", "").strip()
         return None
-
-    @classmethod
-    def _generate_heuristic_response(
-        cls,
-        query: str,
-        paper: Paper,
-        current_page: int,
-        page_texts: Optional[List[str]]
-    ) -> str:
-        """Generates structured academic explanations when external API is unreachable."""
-        q_low = query.lower()
-
-        if any(w in q_low for w in ["수식", "formula", "math", "식", "계산"]):
-            return f"""### 📐 {current_page}페이지 수식 및 방법론 해설
-본 논문 **'{paper.title}'**의 {current_page}페이지에서 다루는 수식 체계는 다음과 같은 핵심 수학적 의미를 가집니다:
-
-1. **상태 벡터 및 목적 함수**:
-   - 모델의 목적 함수는 예측 분포와 실제 데이터 분포 간의 차이를 최소화하도록 설계되었습니다.
-   - 변수 $\\theta$는 훈련 가능한 신경망 파라미터를 나타내며, 목적 함수 $\\mathcal{{L}}(\\theta)$를 최소화하는 방향으로 최적화가 진행됩니다.
-
-2. **정규화 및 스케일링**:
-   - 첨자 $x_t$는 시점 $t$에서의 잠재 표현(Latent Representation)을 의미하며, 분산 $\\sigma^2$ 및 스텝 크기 $\\Delta t$를 통해 안정적인 수렴을 유도합니다.
-
-> 💡 **안내**: 사이드바의 **[🔑 API 키 관리]**에서 Google Gemini API 키를 등록하시면, 실시간 Google Gemini Flash 모델이 본 페이지의 모든 수식을 1:1로 완전 심층 해석해 드립니다."""
-
-        elif any(w in q_low for w in ["요약", "핵심", "기여", "contribution", "summary"]):
-            return f"""### 📌 '{paper.title}' 핵심 기여점 및 {current_page}페이지 맥락
-
-1. **연구 배경 및 목적**:
-   - 본 논문({paper.year}년, {paper.venue})은 기존 방법론이 지닌 일반화 한계와 연산 오버헤드를 극복하기 위해 제안되었습니다.
-
-2. **{current_page}페이지의 핵심 내용**:
-   - 현재 페이지에서는 제안 기법의 구체적인 아키텍처 및 구현 세부사항을 기술하고 있습니다.
-
-3. **학술적 의의**:
-   - 피인용 {paper.citation_count}회에 달하는 영향력 있는 연구로, 후속 생성 및 최적화 연구의 기준선(Baseline)으로 널리 활용됩니다."""
-
-        else:
-            return f"""### 💡 '{query}'에 대한 학술 분석 답변
-
-질문하신 **'{query}'**와 관련하여 본 논문 **'{paper.title}'** ({current_page}페이지)의 핵심 분석 내용은 다음과 같습니다:
-
-- **방법론적 관점**: 제안된 모델은 해당 연구 문제를 해결하기 위해 고유한 손실 함수 설계와 파이프라인 최적화를 도입했습니다.
-- **실무 시사점**: 실험 결과 기존 베이스라인 대비 유의미한 성능 향상을 입증하였으며, 특히 벤치마크 지표에서 우수한 강건성을 보입니다.
-
----
-*(더 깊이 있는 맞춤 분석을 위해 사이드바에서 Gemini API 키를 등록해 사용해 보세요.)*"""
-
-
-def paper_title_short(context: str) -> str:
-    m = re.search(r'\[현재 논문 제목\]:\s*([^\n]+)', context)
-    return m.group(1)[:30] if m else "논문"
-
-def extract_page_str(context: str) -> str:
-    m = re.search(r'\[현재 열람 중인 페이지\]:\s*([^\n]+)', context)
-    return m.group(1) if m else "현재 페이지"

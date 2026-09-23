@@ -326,7 +326,7 @@ def render_moonlight_split_page_reader(
                                 chat_history=history, api_key=api_key)
                         except Exception:
                             result = {"success": False}
-                    if result.get("success") and not result.get("model_used", "").startswith("로컬"):
+                    if result.get("success"):
                         history.extend([{"role": "user", "content": question},
                                         {"role": "assistant", "content": result["answer"]}])
                         st.rerun()
