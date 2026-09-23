@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # Offline reader: temporary archive, no stored keys, local stand-ins for PDF parsing and translation.
 APP = '''
-import os, runpy, sys, time
+import os, runpy, sys, time, types
 import streamlit as st
 sys.path.insert(0, __ROOT__)
 os.environ["ESSAY_ARCHIVE_ROOT"] = os.path.join(__ARCHIVE__, "essays")
@@ -26,6 +26,10 @@ KeyManager.get_all_slots = classmethod(lambda cls: [])
 KeyManager.get_active_key = classmethod(lambda cls, *args, **kwargs: ("", None))
 FORMULA_ONLY = __FORMULA_ONLY__
 FAILED_AGE = __FAILED_AGE__
+SLOW = __SLOW__
+# Translation also runs on the prefetch thread, which has no session; count calls per archive in the process.
+REGISTRY = sys.modules.setdefault("reader_page_turn_calls", types.ModuleType("reader_page_turn_calls"))
+CALLS = vars(REGISTRY).setdefault("calls", {}).setdefault(__ARCHIVE__, {})
 
 
 def offline_page(cls, pdf_path, page_num, output_dir):
@@ -37,8 +41,8 @@ def offline_page(cls, pdf_path, page_num, output_dir):
 
 
 def offline_translation(cls, page_data, paper_title="", engine="", custom_api_key=None, custom_prompt=None):
-    calls = st.session_state.setdefault("translation_calls", {})
-    calls[page_data["page_num"]] = calls.get(page_data["page_num"], 0) + 1
+    CALLS[page_data["page_num"]] = CALLS.get(page_data["page_num"], 0) + 1
+    time.sleep(SLOW)
     blocks = page_data["blocks"]
     if FORMULA_ONLY:
         pairs = [{"id": 1, "en": "", "ko": "", "kind": "equation", "bbox": blocks[0]["bbox"], "image_path": ""}]
@@ -63,6 +67,9 @@ if st.session_state.get("current_paper_bundle") is None:
         "venue": "", "citation_count": 0, "pdf_url": None, "doi": None, "source": "fixture", "url": "",
         "topic": "fixture"}}
 app["main"]()
+if not SLOW:
+    app["wait_for_prefetch"]()
+st.session_state.translation_calls = dict(CALLS)
 '''
 
 
@@ -82,9 +89,10 @@ def reader_positions(node, path=()):
     return found
 
 
-def offline_app(archive, formula_only=False, failed_age=None):
+def offline_app(archive, formula_only=False, failed_age=None, slow=0):
     return (APP.replace("__ROOT__", repr(str(ROOT))).replace("__ARCHIVE__", repr(archive))
-            .replace("__FORMULA_ONLY__", repr(formula_only)).replace("__FAILED_AGE__", repr(failed_age)))
+            .replace("__FORMULA_ONLY__", repr(formula_only)).replace("__FAILED_AGE__", repr(failed_age))
+            .replace("__SLOW__", repr(slow)))
 
 
 class ReaderPageTurnTests(unittest.TestCase):
@@ -96,7 +104,7 @@ class ReaderPageTurnTests(unittest.TestCase):
             at = AppTest.from_string(offline_app(archive), default_timeout=120).run()
             self.assertFalse(at.exception)
             first = reader_positions(at.main)
-            self.assertIn(2, at.session_state["page_translations"], "page 2 should be prefetched")
+            self.assertEqual(at.session_state["translation_calls"], {1: 1, 2: 1}, "page 2 should be prefetched")
 
             at.button(key="reader_next").click().run()
             self.assertFalse(at.exception)
@@ -148,6 +156,15 @@ class ReaderPageTurnTests(unittest.TestCase):
             readings = list(Path(archive).glob("papers/*/*/reading.json"))
             self.assertEqual(len(readings), 1)
             self.assertIn('"last_page": 2', readings[0].read_text(encoding="utf-8"))
+
+    def test_turning_to_a_page_still_translating_waits_for_it_instead_of_asking_again(self):
+        with tempfile.TemporaryDirectory() as archive:
+            at = AppTest.from_string(offline_app(archive, slow=1.0), default_timeout=120).run()
+            # Page 2 is still being translated in the background when the reader turns to it.
+            at.button(key="reader_next").click().run()
+            self.assertFalse(at.exception)
+            self.assertEqual(at.session_state["translation_calls"].get(2), 1)
+            self.assertIn(2, at.session_state["page_translations"])
 
     def test_a_fresh_failure_is_not_requested_again_on_rerun(self):
         # Reruns within FAILED_PAGE_RETRY_SECONDS keep the partial page instead of hitting a limited service.

@@ -7,6 +7,8 @@ import os
 import html
 import base64
 import time
+import threading
+from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Dict, Any, Optional
 import streamlit as st
 
@@ -70,7 +72,7 @@ from core.translator import PaperTranslator
 from core.recommender import IntentRecommender
 from core.intent_copilot import IntentCopilotAgent
 from core.key_manager import KeyManager
-from core.reading_store import ReadingStore, LAYOUT_VERSION, engine_tier, tier_label
+from core.reading_store import ReadingStore, LAYOUT_VERSION, engine_tier, prompt_key, tier_label
 
 # UI imports
 from ui.styles import CUSTOM_CSS
@@ -218,6 +220,59 @@ def stored_or_translate(store: ReadingStore, pdf_path: str, page: int, paper_tit
         engine=engine, custom_api_key=api_key, custom_prompt=custom_prompt)
     store.save_page(page, result, custom_prompt)
     return result
+
+
+@st.cache_resource
+def _prefetch_state() -> Dict[str, Any]:
+    """Outlives reruns, so the next page keeps translating while the reader turns pages."""
+    return {"pool": ThreadPoolExecutor(max_workers=2, thread_name_prefix="hodu-prefetch"),
+            "jobs": {}, "lock": threading.Lock()}
+
+
+def _prefetch_key(store: ReadingStore, page: int, engine: str, custom_prompt: Optional[str]) -> tuple:
+    return store.paper_dir, page, engine, prompt_key(custom_prompt)
+
+
+def _translate_in_background(paper_dir: str, pdf_path: str, page: int, paper_title: str, engine: str,
+                             api_key: Optional[str], custom_prompt: Optional[str]) -> Dict[str, Any]:
+    # No st.* in here: the thread has no script run context. The page lands in the store.
+    store = ReadingStore(paper_dir)
+    result = PaperTranslator.translate_single_page(
+        page_data=PaperPDFParser.get_single_page_data(pdf_path, page, paper_dir), paper_title=paper_title,
+        engine=engine, custom_api_key=api_key, custom_prompt=custom_prompt)
+    store.save_page(page, result, custom_prompt)
+    return result
+
+
+def prefetch_page(store: ReadingStore, pdf_path: str, page: int, paper_title: str, engine: str,
+                  api_key: Optional[str], custom_prompt: Optional[str]) -> None:
+    """Translates a page in the background unless it is stored or already under way."""
+    state = _prefetch_state()
+    key = _prefetch_key(store, page, engine, custom_prompt)
+    with state["lock"]:
+        now = time.time()
+        for old_key, (future, started) in list(state["jobs"].items()):
+            if future.done() and now - started > 600:
+                del state["jobs"][old_key]
+        if key in state["jobs"] or store.load_page(page, engine, custom_prompt):
+            return
+        state["jobs"][key] = (state["pool"].submit(_translate_in_background, store.paper_dir, pdf_path, page,
+                                                   paper_title, engine, api_key, custom_prompt), now)
+
+
+def claim_prefetch(store: ReadingStore, page: int, engine: str, custom_prompt: Optional[str]) -> Optional[Future]:
+    with _prefetch_state()["lock"]:
+        job = _prefetch_state()["jobs"].pop(_prefetch_key(store, page, engine, custom_prompt), None)
+    return job[0] if job else None
+
+
+def wait_for_prefetch() -> None:
+    """Blocks until background translations finish (used by tests)."""
+    for future, _ in list(_prefetch_state()["jobs"].values()):
+        try:
+            future.result(timeout=180)
+        except Exception:
+            pass
 
 if st.session_state.get("_highlighter_engine_version") != HIGHLIGHTER_ENGINE_VERSION:
     st.session_state._highlighter_engine_version = HIGHLIGHTER_ENGINE_VERSION
@@ -535,8 +590,16 @@ def render_active_paper_view(archive_mgr: ArchiveManager, sidebar_config: Dict[s
         if current_page in st.session_state.page_translations:
             del st.session_state.page_translations[current_page]
 
-        # "Retranslate" skips the store; its result still cannot replace a higher stored tier.
+        # "Retranslate" skips the store and any background job; its result still cannot replace a higher tier.
         page_trans = None if force_retrans else store.load_page(current_page, selected_engine, custom_prompt)
+        job = claim_prefetch(store, current_page, selected_engine, custom_prompt)
+        if page_trans is None and job and not force_retrans:
+            # Turned to a page still translating in the background: wait for it instead of asking again.
+            with walking(f"{current_page}페이지 번역 중", placeholder=status_slot):
+                try:
+                    page_trans = job.result(timeout=180)
+                except Exception:
+                    page_trans = None
         if page_trans is None:
             with walking(f"{current_page}페이지 번역 중", placeholder=status_slot):
                 page_trans = stored_or_translate(store, pdf_path, current_page, paper.title, selected_engine,
@@ -578,19 +641,9 @@ def render_active_paper_view(archive_mgr: ArchiveManager, sidebar_config: Dict[s
     )
 
     try:
-        # Optional next-page cache after the requested page has rendered.
+        # The next page translates in the background into the store; turning the page never waits on it.
         if st.session_state.get("auto_translate_mode", True) and (current_page + 1 <= total_pages):
-            next_page = current_page + 1
-            cached_next = st.session_state.page_translations.get(next_page)
-            is_next_valid = (
-                cached_next is not None
-                and isinstance(cached_next, dict)
-                and "pairs" in cached_next
-                and (cached_next.get("target_engine") == selected_engine or cached_next.get("from_store"))
-            )
-            if not is_next_valid:
-                st.session_state.page_translations[next_page] = stored_or_translate(
-                    store, pdf_path, next_page, paper.title, selected_engine, api_key, custom_prompt)
+            prefetch_page(store, pdf_path, current_page + 1, paper.title, selected_engine, api_key, custom_prompt)
 
     except Exception:
         pass  # The current page remains usable; the next page can retry when opened.
