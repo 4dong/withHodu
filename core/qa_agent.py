@@ -171,3 +171,13 @@ class PaperChatAgent:
                 if parts:
                     return parts[0].get("text", "").strip()
         return None
+
+
+def paper_title_short(context: str) -> str:
+    m = re.search(r'\[현재 논문 제목\]:\s*([^\n]+)', context)
+    return m.group(1)[:30] if m else "논문"
+
+
+def extract_page_str(context: str) -> str:
+    m = re.search(r'\[현재 열람 중인 페이지\]:\s*([^\n]+)', context)
+    return m.group(1) if m else "현재 페이지"
