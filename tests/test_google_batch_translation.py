@@ -14,7 +14,7 @@ from core import rate_limit
 from core.translator import PaperTranslator
 
 GOOGLE = PaperTranslator.SUPPORTED_ENGINES[0]
-GEMINI_37 = PaperTranslator.SUPPORTED_ENGINES[1]
+GEMINI = PaperTranslator.SUPPORTED_ENGINES[1]
 BBOX = {"top": "10%", "left": "10%", "width": "80%", "height": "10%"}
 
 
@@ -142,46 +142,52 @@ class GoogleBatchTests(unittest.TestCase):
 
 
 def gemini_reply(translations):
-    body = {"candidates": [{"content": {"parts": [{"text": json.dumps({"translations": translations}, ensure_ascii=False)}]}}]}
+    """A reply keyed by paragraph id; None leaves that id out."""
+    keyed = {f"p{i + 1}": ko for i, ko in enumerate(translations) if ko is not None}
+    body = {"candidates": [{"content": {"parts": [{"text": json.dumps(keyed, ensure_ascii=False)}]}}]}
     return io.BytesIO(json.dumps(body, ensure_ascii=False).encode("utf-8"))
 
 
 class GeminiRequestTests(unittest.TestCase):
-    def test_paragraphs_missing_from_the_reply_are_counted(self):
-        with mock.patch("core.translator.urllib.request.urlopen", return_value=gemini_reply(["첫 문단"])) as urlopen:
-            result = PaperTranslator.translate_single_page(page("First.", "Second."), engine=GEMINI_37, custom_api_key="k" * 20)
-        self.assertEqual(urlopen.call_count, 1)
-        request = urlopen.call_args.args[0]
-        self.assertIn("gemini-3.7-flash", request.full_url)
-        self.assertNotIn("k" * 20, request.full_url)
-        self.assertEqual([p["ko"] for p in result["pairs"]], ["첫 문단", "Second."])
-        self.assertEqual(result["failed_count"], 1)
-
-    def test_gemini_translates_with_low_thinking(self):
+    def test_gemini_translates_with_low_thinking_and_one_required_key_per_paragraph(self):
         # Default thinking took 16-45 s a page and could spend the whole output limit before the answer.
-        self.assertEqual(PaperTranslator.SUPPORTED_ENGINES, [GOOGLE, GEMINI_37])
-        with mock.patch("core.translator.urllib.request.urlopen", return_value=gemini_reply(["번역"])) as urlopen:
-            PaperTranslator.translate_single_page(page("Text."), engine=GEMINI_37, custom_api_key="k" * 20)
+        self.assertEqual(PaperTranslator.SUPPORTED_ENGINES, [GOOGLE, GEMINI])
+        with mock.patch("core.translator.urllib.request.urlopen", return_value=gemini_reply(["첫", "둘"])) as urlopen:
+            PaperTranslator.translate_single_page(page("First.", "Second."), engine=GEMINI, custom_api_key="k" * 20)
         request = urlopen.call_args.args[0]
-        self.assertIn("gemini-3.7-flash", request.full_url)
+        self.assertIn("gemini-3.8-flash", request.full_url)
+        self.assertNotIn("k" * 20, request.full_url)
         config = json.loads(request.data)["generationConfig"]
         self.assertEqual(config["thinkingConfig"], {"thinkingLevel": "low"})
+        self.assertEqual(config["responseSchema"]["required"], ["p1", "p2"])
+        prompt = json.loads(request.data)["contents"][0]["parts"][0]["text"]
+        self.assertIn('"p2": "Second."', prompt)
+
+    def test_a_paragraph_left_out_does_not_shift_the_ones_after_it(self):
+        # The model once skipped a formula line; answered by position, every later paragraph moved up by one.
+        reply = gemini_reply(["첫 문단", None, "셋째 문단"])
+        with mock.patch("core.translator.urllib.request.urlopen", return_value=reply):
+            result = PaperTranslator.translate_single_page(page("First.", "x = y (1)", "Third."), engine=GEMINI,
+                                                           custom_api_key="k" * 20)
+        self.assertEqual([p["ko"] for p in result["pairs"]], ["첫 문단", "x = y (1)", "셋째 문단"])
+        self.assertEqual(result["failed_count"], 1)
+        self.assertTrue(result["pairs"][1]["untranslated"])
 
     def test_an_unsupported_thinking_level_moves_to_the_next_model(self):
         refused = urllib.error.HTTPError("https://gemini.example", 400, "bad", {},
                                          io.BytesIO(b"Thinking level MINIMAL is not supported for this model."))
         with mock.patch("core.translator.urllib.request.urlopen", side_effect=[refused, gemini_reply(["번역"])]) as urlopen:
-            result = PaperTranslator.translate_single_page(page("Text."), engine=GEMINI_37, custom_api_key="k" * 20)
+            result = PaperTranslator.translate_single_page(page("Text."), engine=GEMINI, custom_api_key="k" * 20)
         self.assertEqual(urlopen.call_count, 2)
         self.assertFalse(result["is_fallback"])
-        self.assertEqual(result["model_used"], "gemini-3.6-flash")
+        self.assertEqual(result["model_used"], "gemini-3.7-flash")
 
     def test_a_rejected_key_is_not_sent_to_every_model(self):
         rejected = urllib.error.HTTPError("https://gemini.example", 400, "bad", {}, io.BytesIO(b"API_KEY_INVALID"))
         with mock.patch("core.translator.urllib.request.urlopen", side_effect=rejected) as urlopen, \
                 mock.patch.object(PaperTranslator, "_translate_with_google",
                                   return_value={"page_num": 1, "pairs": [{"id": 1, "en": "Text.", "ko": "텍스트", "bbox": BBOX}]}):
-            result = PaperTranslator.translate_single_page(page("Text."), engine=GEMINI_37, custom_api_key="k" * 20)
+            result = PaperTranslator.translate_single_page(page("Text."), engine=GEMINI, custom_api_key="k" * 20)
         self.assertEqual(urlopen.call_count, 1)
         self.assertTrue(result["is_fallback"])
         self.assertIn("HTTP 400", result["fallback_reason"])
@@ -189,12 +195,12 @@ class GeminiRequestTests(unittest.TestCase):
     def test_quota_moves_to_the_next_model(self):
         answers = [urllib.error.HTTPError("https://gemini.example", 429, "quota", {}, io.BytesIO(b"")), gemini_reply(["번역"])]
         with mock.patch("core.translator.urllib.request.urlopen", side_effect=answers) as urlopen:
-            result = PaperTranslator.translate_single_page(page("Text."), engine=GEMINI_37, custom_api_key="k" * 20)
+            result = PaperTranslator.translate_single_page(page("Text."), engine=GEMINI, custom_api_key="k" * 20)
         self.assertEqual(urlopen.call_count, 2)
         fallback = urlopen.call_args.args[0]
-        self.assertIn("gemini-3.6-flash", fallback.full_url)
-        self.assertEqual(json.loads(fallback.data)["generationConfig"]["thinkingConfig"], {"thinkingLevel": "minimal"})
-        self.assertEqual(result["model_used"], "gemini-3.6-flash")
+        self.assertIn("gemini-3.7-flash", fallback.full_url)
+        self.assertEqual(json.loads(fallback.data)["generationConfig"]["thinkingConfig"], {"thinkingLevel": "low"})
+        self.assertEqual(result["model_used"], "gemini-3.7-flash")
 
 
 if __name__ == "__main__":

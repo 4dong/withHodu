@@ -1,6 +1,6 @@
 """
 Multi-Engine Academic Neural & LLM Translation Architecture
-Supports Google's free web translation, Google Gemini 3.7 Flash (3.6 / 3.5 as quota fallbacks), OpenAI GPT-4o-mini, Claude 3.5 Haiku, and DeepL.
+Supports Google's free web translation, Google Gemini 3.8 Flash (3.7 / 3.6 as quota fallbacks), OpenAI GPT-4o-mini, Claude 3.5 Haiku, and DeepL.
 Full custom prompt engineering support for all LLM models.
 """
 
@@ -32,8 +32,8 @@ DEFAULT_ACADEMIC_PROMPT = """너는 세계 최고 수준의 전문 학술 번역
 
 3. 번역 톤:
 - 객관적이고 격식 있는 학술 논문 어조를 유지할 것.
-
-입력된 각 문단(paragraphs)의 순서와 개수를 1:1로 정확히 유지하여, key가 'translations'인 JSON 객체(번역된 한국어 문자열 배열)로만 응답해 줘."""
+- 문장 끝은 논문 전체에서 '~합니다/~입니다'체로 통일할 것 (쪽마다 따로 번역되므로 '~한다'체와 섞이지 않게).
+- 원문의 'we'는 '우리는'으로 직역하지 말고 '본 연구에서는' 등으로 자연스럽게 옮기거나 생략할 것."""
 
 
 class GoogleBlockedError(Exception):
@@ -45,7 +45,7 @@ class PaperTranslator:
 
     SUPPORTED_ENGINES = [
         "⚡️ Google Neural (무료 · 무제한)",
-        "🤖 Google Gemini 3.7 Flash (최신 고성능 학술 AI · API 키 필요)",
+        "🤖 Google Gemini 3.8 Flash (최신 고성능 학술 AI · API 키 필요)",
     ]
 
     @classmethod
@@ -245,12 +245,32 @@ class PaperTranslator:
         lines = [re.sub(r'^(?:\[\d+\]|\d+[\.\)]|\-\s*)\s*', '', line.strip()).strip() for line in cleaned.splitlines()]
         return [line for line in lines if line]
 
-    # Model -> the lowest thinking level it accepts (3.7 rejects "minimal"). Measured 2026-09-23 on three paper
-    # pages, two runs each: default thinking spent 4-20x the answer on thought tokens, took 16-45 s a page and
-    # on dense pages hit maxOutputTokens, cutting paragraphs off. At these levels every page came back whole
-    # in 4-9 s. 3.7 read best and was as fast as 3.5 (5.6 s mean), so it is the one translation model; the
-    # others only take over on a quota limit. gemini-2.5-flash is closed to this key (404).
-    GEMINI_MODELS = {"gemini-3.7-flash": "low", "gemini-3.6-flash": "minimal", "gemini-3.5-flash": "minimal"}
+    @classmethod
+    def _keyed_translations(cls, text_out: str, ids: List[str]) -> Optional[List[str]]:
+        """Translation for each paragraph id, "" where the reply has none; None when the reply is not an object."""
+        cleaned = text_out.strip()
+        for candidate in dict.fromkeys((cleaned, cls._repair_latex_backslashes(cleaned))):
+            try:
+                parsed = json.loads(candidate)
+            except ValueError:
+                continue
+            if isinstance(parsed, dict):
+                return [str(parsed.get(i) or "").strip() for i in ids]
+        return None
+
+    # Model -> thinking level. Measured 2026-09-23 on the densest pages in the library (up to 5,500 characters):
+    # default thinking spent 4-20x the answer on thought tokens, 16-45 s a page, and could use up
+    # maxOutputTokens before the answer ended. On "low" every page came back whole in 5-15 s. 3.8 and 3.7 cost
+    # the same; 3.8 was faster with keyed output (7.4 s vs 9.2 s mean) and read more naturally, so it is the one
+    # translation model and the others only take over on a quota limit. 3.7/3.8 reject "minimal";
+    # gemini-2.5-flash is closed to this key (404).
+    GEMINI_MODELS = {"gemini-3.8-flash": "low", "gemini-3.7-flash": "low", "gemini-3.6-flash": "minimal"}
+
+    # Owned by the code, not the editable prompt. Answering a list by position let the model drop or merge a
+    # short paragraph (a formula line, "The final objective is:") in ~1 of 10 pages, which shifted every later
+    # translation onto the wrong paragraph; one required key per paragraph keeps each answer on its source.
+    GEMINI_OUTPUT_RULES = ("[응답 형식]\n입력 paragraphs의 key(p1, p2, ...)마다 그 문단 하나의 번역을 같은 key에 넣은 "
+                           "JSON 객체로만 응답할 것. 짧은 제목이나 수식 한 줄도 하나의 문단이며, 문단을 합치거나 빼거나 나누지 말 것.")
 
     @staticmethod
     def _gemini_model_for(engine: str) -> Optional[str]:
@@ -278,12 +298,11 @@ class PaperTranslator:
             models_to_try.remove(preferred_model)
             models_to_try.insert(0, preferred_model)
 
-        user_content = json.dumps({
-            "paper_title": paper_title,
-            "paragraphs": texts
-        }, ensure_ascii=False)
-
-        full_prompt = f"{custom_prompt}\n\n[번역할 본문 데이터]:\n{user_content}"
+        ids = [f"p{i + 1}" for i in range(len(texts))]
+        user_content = json.dumps({"paper_title": paper_title, "paragraphs": dict(zip(ids, texts))}, ensure_ascii=False)
+        full_prompt = f"{custom_prompt}\n\n{cls.GEMINI_OUTPUT_RULES}\n\n[번역할 본문 데이터]:\n{user_content}"
+        schema = {"type": "object", "properties": {i: {"type": "string"} for i in ids},
+                  "required": ids, "propertyOrdering": ids}
         # The key travels in a header, so it never appears in a URL or an error message.
         headers = {"Content-Type": "application/json", "x-goog-api-key": api_key}
 
@@ -294,6 +313,7 @@ class PaperTranslator:
                 "contents": [{"parts": [{"text": full_prompt}]}],
                 "generationConfig": {
                     "responseMimeType": "application/json",
+                    "responseSchema": schema,
                     "temperature": 0.15,
                     "maxOutputTokens": 16384,
                     "thinkingConfig": {"thinkingLevel": cls.GEMINI_MODELS[model_id]},
@@ -326,17 +346,18 @@ class PaperTranslator:
                 candidates = data.get("candidates", [])
                 parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
                 text_out = parts[0].get("text", "").strip() if parts else ""
-                translations = cls._parse_json_translations(text_out, expected_count=len(texts)) if text_out else []
-                if not translations:
+                keyed = cls._keyed_translations(text_out, ids) if text_out else None
+                if not keyed or not any(keyed):
                     errors.append(f"{model_id}: 응답을 해석하지 못함")
                     break
                 pairs = VisualHighlighter.align_translation_pairs(
                     extracted_texts=texts,
-                    translated_texts=translations,
+                    translated_texts=[ko or en for ko, en in zip(keyed, texts)],
                     blocks=blocks
                 )
-                for pair in pairs[len(translations):]:
-                    pair["untranslated"] = True
+                for pair, ko in zip(pairs, keyed):
+                    if not ko:
+                        pair["untranslated"] = True
                 return pairs, model_id
 
         raise RuntimeError(f"Gemini 번역 실패: {'; '.join(errors[-2:])}")
