@@ -8,12 +8,12 @@ import json
 import difflib
 import urllib.request
 import urllib.error
-from typing import List, Dict, Any, Optional, Set, Tuple
+from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field, asdict
 
 from core.key_manager import KeyManager
 from core.essay.models import (
-    RewriteProposal, StyleProfile, AnswerRevision, new_uuid, utc_now_iso
+    RewriteProposal, AnswerRevision, new_uuid, utc_now_iso
 )
 from core.essay.repository import EssayRepository
 

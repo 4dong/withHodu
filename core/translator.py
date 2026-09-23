@@ -1,6 +1,6 @@
 """
 Multi-Engine Academic Neural & LLM Translation Architecture
-Supports Google's free web translation, Google Gemini 3.8 Flash (3.7 / 3.6 as quota fallbacks), OpenAI GPT-4o-mini, Claude 3.5 Haiku, and DeepL.
+Google's free web translation, or Google Gemini 3.8 Flash (3.7 / 3.6 as quota fallbacks).
 Full custom prompt engineering support for all LLM models.
 """
 
@@ -41,7 +41,7 @@ class GoogleBlockedError(Exception):
 
 
 class PaperTranslator:
-    """Multi-Engine Batch Translation Engine supporting Free Zero-Key, Gemini 3.7 Flash, OpenAI, Claude, and DeepL."""
+    """Translates one page at a time with free Google translation or Gemini."""
 
     SUPPORTED_ENGINES = [
         "⚡️ Google Neural (무료 · 무제한)",
@@ -186,77 +186,26 @@ class PaperTranslator:
         """Doubles lone backslashes so LaTeX written with single backslashes survives json.loads."""
         return cls._JSON_ESCAPE.sub(lambda m: m.group(0) if len(m.group(0)) > 1 else "\\\\", raw)
 
-    @staticmethod
-    def _translation_list(candidate: str) -> Optional[List[str]]:
-        """The translation strings of a JSON object or array, or None when nothing decodes."""
-        for pattern in (None, r'\{[\s\S]*\}', r'\[[\s\S]*\]'):
-            match = re.search(pattern, candidate) if pattern else None
-            if pattern and not match:
-                continue
-            try:
-                parsed = json.loads(match.group(0) if match else candidate)
-            except ValueError:
-                continue
-            if isinstance(parsed, dict):
-                for key in ("translations", "korean_translations", "results", "data", "paragraphs"):
-                    if isinstance(parsed.get(key), list):
-                        return [str(item).strip() for item in parsed[key]]
-                if parsed and all(str(k).isdigit() for k in parsed):
-                    return [str(parsed[str(i)]).strip() for i in range(1, len(parsed) + 1) if str(i) in parsed]
-            elif isinstance(parsed, list):
-                return [str(item).strip() for item in parsed]
-        return None
-
-    @classmethod
-    def _parse_json_translations(cls, text_out: str, expected_count: int) -> List[str]:
-        """
-        Parses the model's translation list.
-        LaTeX with single backslashes is repaired before decoding (otherwise \\text turns into a tab and
-        \\odot makes the JSON invalid), and a response cut off by the output limit keeps its complete
-        items. Undecodable JSON is a failed attempt, never shown as a translation.
-        """
-        cleaned = text_out.strip()
-        if "```" in cleaned:
-            code_block_match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', cleaned, re.IGNORECASE)
-            if code_block_match:
-                cleaned = code_block_match.group(1).strip()
-        repaired = cls._repair_latex_backslashes(cleaned)
-
-        for candidate in dict.fromkeys((repaired, cleaned)):
-            found = cls._translation_list(candidate)
-            if found is not None:
-                return found
-
-        start = re.search(r'"translations"\s*:\s*\[', repaired)
-        if start:
-            items = []
-            for literal in re.finditer(r'"(?:[^"\\]|\\.)*"', repaired[start.end():]):
-                try:
-                    items.append(str(json.loads(literal.group(0))).strip())
-                except ValueError:
-                    break
-            if items:
-                return items
-
-        if cleaned.startswith(("{", "[")):
-            return []
-
-        # Plain-text answer: numbered lines or one paragraph per line.
-        lines = [re.sub(r'^(?:\[\d+\]|\d+[\.\)]|\-\s*)\s*', '', line.strip()).strip() for line in cleaned.splitlines()]
-        return [line for line in lines if line]
-
     @classmethod
     def _keyed_translations(cls, text_out: str, ids: List[str]) -> Optional[List[str]]:
         """Translation for each paragraph id, "" where the reply has none; None when the reply is not an object."""
         cleaned = text_out.strip()
-        for candidate in dict.fromkeys((cleaned, cls._repair_latex_backslashes(cleaned))):
+        repaired = cls._repair_latex_backslashes(cleaned)
+        for candidate in dict.fromkeys((cleaned, repaired)):
             try:
                 parsed = json.loads(candidate)
             except ValueError:
                 continue
             if isinstance(parsed, dict):
                 return [str(parsed.get(i) or "").strip() for i in ids]
-        return None
+        # A reply cut off by the output limit still holds its complete "pN": "..." items.
+        found = {}
+        for key, literal in re.findall(r'"(p\d+)"\s*:\s*("(?:[^"\\]|\\.)*")', repaired):
+            try:
+                found[key] = str(json.loads(literal)).strip()
+            except ValueError:
+                break
+        return [found.get(i, "") for i in ids] if found else None
 
     # Model -> thinking level. Measured 2026-09-23 on the densest pages in the library (up to 5,500 characters):
     # default thinking spent 4-20x the answer on thought tokens, 16-45 s a page, and could use up
@@ -361,74 +310,6 @@ class PaperTranslator:
                 return pairs, model_id
 
         raise RuntimeError(f"Gemini 번역 실패: {'; '.join(errors[-2:])}")
-
-    @classmethod
-    def _translate_with_openai(
-        cls,
-        texts: List[str],
-        blocks: List[Dict[str, Any]],
-        paper_title: str,
-        api_key: str,
-        custom_prompt: str
-    ) -> Optional[List[Dict[str, Any]]]:
-        endpoint = "https://api.openai.com/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "model": "gpt-4o-mini",
-            "messages": [
-                {"role": "system", "content": custom_prompt},
-                {"role": "user", "content": json.dumps({"paper_title": paper_title, "paragraphs": texts}, ensure_ascii=False)}
-            ],
-            "response_format": {"type": "json_object"},
-            "temperature": 0.2
-        }
-        req = urllib.request.Request(endpoint, data=json.dumps(payload).encode("utf-8"), headers=headers)
-        with urllib.request.urlopen(req, timeout=25) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            content = data["choices"][0]["message"]["content"]
-            translations = cls._parse_json_translations(content, expected_count=len(texts))
-            return VisualHighlighter.align_translation_pairs(
-                extracted_texts=texts,
-                translated_texts=translations,
-                blocks=blocks
-            )
-
-    @classmethod
-    def _translate_with_claude(
-        cls,
-        texts: List[str],
-        blocks: List[Dict[str, Any]],
-        paper_title: str,
-        api_key: str,
-        custom_prompt: str
-    ) -> Optional[List[Dict[str, Any]]]:
-        endpoint = "https://api.anthropic.com/v1/messages"
-        headers = {
-            "x-api-key": api_key,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json"
-        }
-        payload = {
-            "model": "claude-3-5-haiku-20241022",
-            "max_tokens": 2048,
-            "system": custom_prompt,
-            "messages": [
-                {"role": "user", "content": f"Translate these paragraphs into JSON with key 'translations':\n{json.dumps(texts, ensure_ascii=False)}"}
-            ]
-        }
-        req = urllib.request.Request(endpoint, data=json.dumps(payload).encode("utf-8"), headers=headers)
-        with urllib.request.urlopen(req, timeout=25) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            content_text = data["content"][0]["text"].strip()
-            translations = cls._parse_json_translations(content_text, expected_count=len(texts))
-            return VisualHighlighter.align_translation_pairs(
-                extracted_texts=texts,
-                translated_texts=translations,
-                blocks=blocks
-            )
 
     GOOGLE_GTX_URL = "https://translate.googleapis.com/translate_a/single"
     GOOGLE_MOBILE_URL = "https://translate.google.com/m"
@@ -574,33 +455,3 @@ class PaperTranslator:
             "failure_reason": failure_reason
         }
 
-    @classmethod
-    def _translate_with_deepl(cls, texts: List[str], blocks: List[Dict[str, Any]], api_key: str) -> Optional[List[Dict[str, Any]]]:
-        endpoint = "https://api-free.deepl.com/v2/translate" if api_key.endswith(":fx") else "https://api.deepl.com/v2/translate"
-        headers = {
-            "Authorization": f"DeepL-Auth-Key {api_key}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "text": texts,
-            "target_lang": "KO",
-            "source_lang": "EN"
-        }
-        req = urllib.request.Request(endpoint, data=json.dumps(payload).encode("utf-8"), headers=headers)
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            translations_raw = data.get("translations", [])
-            translated_list = [item.get("text", "") for item in translations_raw]
-            return VisualHighlighter.align_translation_pairs(
-                extracted_texts=texts,
-                translated_texts=translated_list,
-                blocks=blocks
-            )
-
-    @classmethod
-    def _is_valid_deepl_key(cls, key: str) -> bool:
-        if not key or len(key) < 20:
-            return False
-        if key.endswith(":fx") or re.match(r'^[a-f0-9\-]{30,45}(:fx)?$', key.lower()):
-            return True
-        return False

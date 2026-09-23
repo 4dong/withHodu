@@ -4,13 +4,12 @@ File ingestion, validation, and batch document grouping for Essay Archive.
 
 from __future__ import annotations
 import io
-import os
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Optional, Tuple
 from PIL import Image
 
 from core.essay.models import (
-    Document, SourceFile, Page, DocumentPage, new_uuid, utc_now_iso
+    Document, SourceFile, Page, new_uuid, utc_now_iso
 )
 from core.essay.repository import EssayRepository
 

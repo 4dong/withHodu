@@ -4,12 +4,12 @@ Search View: Hybrid keyword/vector retrieval and grounded RAG question answering
 
 from __future__ import annotations
 import streamlit as st
-from ui.hodu import page_header, show_state, loading, state_html
-from typing import Optional, Dict, Any
+from ui.hodu import page_header, show_state, loading
+from typing import Dict, Any
 
 from core.essay.repository import EssayRepository
 from core.essay.retrieval import EssaySearchEngine
-from core.essay.embedding import get_active_embedding_provider, MockEmbeddingProvider, GeminiEmbeddingProvider
+from core.essay.embedding import get_active_embedding_provider
 from core.essay.rag import EssayRAGService, MockRAGGenerator, GeminiRAGGenerator
 from core.key_manager import KeyManager
 

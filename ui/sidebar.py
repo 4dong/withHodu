@@ -334,9 +334,8 @@ def _render_maintenance_settings():
     with st.sidebar.expander("화면 설정", expanded=False):
         motion_toggle()
     with st.sidebar.expander("고급 설정", expanded=False):
-        if st.button("캐시 초기화 및 새로고침", use_container_width=True, help="저장된 번역과 페이지 분석 결과를 지우고 다시 불러옵니다."):
+        if st.button("캐시 초기화 및 새로고침", use_container_width=True, help="화면에 띄운 번역과 페이지 분석을 비우고 지금 페이지를 다시 번역해요. 서재에 저장된 번역은 지우지 않아요."):
             st.session_state.page_translations = {}
-            st.session_state.page_data_cache = {}
             st.session_state["_highlighter_engine_version"] = "FORCE_REFRESH_" + str(os.urandom(4).hex())
             st.session_state["_force_retranslate"] = True
             try:

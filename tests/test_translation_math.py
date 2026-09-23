@@ -19,20 +19,21 @@ BBOX = {"top": "10%", "left": "10%", "width": "80%", "height": "10%"}
 class GeminiResponseParsingTests(unittest.TestCase):
     def test_single_backslash_latex_is_repaired(self):
         # JSON reads \t \f \b \n \r as control characters, and \o is invalid JSON.
-        raw = '{"translations": ["$\\text{a} \\frac{1}{2} \\beta \\nabla \\rho$", "$x \\odot y$"]}'
-        self.assertEqual(PaperTranslator._parse_json_translations(raw, 2),
+        raw = '{"p1": "$\\text{a} \\frac{1}{2} \\beta \\nabla \\rho$", "p2": "$x \\odot y$"}'
+        self.assertEqual(PaperTranslator._keyed_translations(raw, ["p1", "p2"]),
                          [r"$\text{a} \frac{1}{2} \beta \nabla \rho$", r"$x \odot y$"])
 
     def test_valid_json_and_real_escapes_are_unchanged(self):
-        raw = json.dumps({"translations": [SCREENSHOT_FORMULA, '첫 줄\n둘째 줄 "인용"']}, ensure_ascii=False)
-        self.assertEqual(PaperTranslator._parse_json_translations(raw, 2), [SCREENSHOT_FORMULA, '첫 줄\n둘째 줄 "인용"'])
+        raw = json.dumps({"p1": SCREENSHOT_FORMULA, "p2": '첫 줄\n둘째 줄 "인용"'}, ensure_ascii=False)
+        self.assertEqual(PaperTranslator._keyed_translations(raw, ["p1", "p2"]),
+                         [SCREENSHOT_FORMULA, '첫 줄\n둘째 줄 "인용"'])
 
     def test_truncated_response_keeps_complete_items(self):
-        raw = '{"translations": ["첫 문단 $x_t$", "둘째 문단", "셋째 문단이 잘'
-        self.assertEqual(PaperTranslator._parse_json_translations(raw, 3), ["첫 문단 $x_t$", "둘째 문단"])
+        raw = '{"p1": "첫 문단 $x_t$", "p2": "둘째 문단", "p3": "셋째 문단이 잘'
+        self.assertEqual(PaperTranslator._keyed_translations(raw, ["p1", "p2", "p3"]), ["첫 문단 $x_t$", "둘째 문단", ""])
 
     def test_undecodable_json_is_never_a_translation(self):
-        self.assertEqual(PaperTranslator._parse_json_translations('{"translations": oops}', 1), [])
+        self.assertIsNone(PaperTranslator._keyed_translations('{"p1": oops}', ["p1"]))
 
     def test_gemini_output_skips_google_transliteration_heuristics(self):
         pairs = [{"id": 1, "en": "source", "ko": r"로우 레벨에서 모델 A는 \(x \to y\)를 쓴다.", "bbox": BBOX}]
