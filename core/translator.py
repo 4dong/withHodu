@@ -1,6 +1,6 @@
 """
 Multi-Engine Academic Neural & LLM Translation Architecture
-Supports Google's free web translation, Google Gemini (3.7 / 3.5 / 2.5 Flash), OpenAI GPT-4o-mini, Claude 3.5 Haiku, and DeepL.
+Supports Google's free web translation, Google Gemini 3.7 Flash (3.6 / 3.5 as quota fallbacks), OpenAI GPT-4o-mini, Claude 3.5 Haiku, and DeepL.
 Full custom prompt engineering support for all LLM models.
 """
 
@@ -46,7 +46,6 @@ class PaperTranslator:
     SUPPORTED_ENGINES = [
         "⚡️ Google Neural (무료 · 무제한)",
         "🤖 Google Gemini 3.7 Flash (최신 고성능 학술 AI · API 키 필요)",
-        "🤖 Google Gemini 3.5 Flash (고성능 학술 AI · API 키 필요)"
     ]
 
     @classmethod
@@ -246,8 +245,12 @@ class PaperTranslator:
         lines = [re.sub(r'^(?:\[\d+\]|\d+[\.\)]|\-\s*)\s*', '', line.strip()).strip() for line in cleaned.splitlines()]
         return [line for line in lines if line]
 
-    # Gemini models the stored key can call (ListModels, 2026-09); the engine's own model is tried first.
-    GEMINI_MODELS = ["gemini-3.7-flash", "gemini-3.5-flash", "gemini-2.5-flash"]
+    # Model -> the lowest thinking level it accepts (3.7 rejects "minimal"). Measured 2026-09-23 on three paper
+    # pages, two runs each: default thinking spent 4-20x the answer on thought tokens, took 16-45 s a page and
+    # on dense pages hit maxOutputTokens, cutting paragraphs off. At these levels every page came back whole
+    # in 4-9 s. 3.7 read best and was as fast as 3.5 (5.6 s mean), so it is the one translation model; the
+    # others only take over on a quota limit. gemini-2.5-flash is closed to this key (404).
+    GEMINI_MODELS = {"gemini-3.7-flash": "low", "gemini-3.6-flash": "minimal", "gemini-3.5-flash": "minimal"}
 
     @staticmethod
     def _gemini_model_for(engine: str) -> Optional[str]:
@@ -281,24 +284,21 @@ class PaperTranslator:
         }, ensure_ascii=False)
 
         full_prompt = f"{custom_prompt}\n\n[번역할 본문 데이터]:\n{user_content}"
-        payload = {
-            "contents": [
-                {
-                    "parts": [{"text": full_prompt}]
-                }
-            ],
-            "generationConfig": {
-                "responseMimeType": "application/json",
-                "temperature": 0.15,
-                "maxOutputTokens": 16384
-            }
-        }
         # The key travels in a header, so it never appears in a URL or an error message.
         headers = {"Content-Type": "application/json", "x-goog-api-key": api_key}
 
         errors = []
         for model_id in models_to_try:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent"
+            payload = {
+                "contents": [{"parts": [{"text": full_prompt}]}],
+                "generationConfig": {
+                    "responseMimeType": "application/json",
+                    "temperature": 0.15,
+                    "maxOutputTokens": 16384,
+                    "thinkingConfig": {"thinkingLevel": cls.GEMINI_MODELS[model_id]},
+                },
+            }
             for attempt in range(2):
                 try:
                     req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
@@ -308,6 +308,9 @@ class PaperTranslator:
                     err_body = he.read().decode("utf-8", errors="ignore")
                     if he.code == 403:
                         raise RuntimeError("Gemini 번역 실패: API 키 권한 없음 (HTTP 403)")
+                    if he.code == 400 and "thinking" in err_body.lower():
+                        errors.append(f"{model_id}: 생각 수준 미지원 (HTTP 400)")
+                        break
                     if he.code == 400:
                         raise RuntimeError(f"Gemini 번역 실패: 요청 거부 (HTTP 400 - {err_body[:80]})")
                     if he.code >= 500 and attempt == 0:
