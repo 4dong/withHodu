@@ -11,8 +11,9 @@ import base64
 import urllib.parse
 import xml.etree.ElementTree as ET
 import requests
+from bs4 import BeautifulSoup
 from typing import List, Dict, Any, Optional
-from core.searcher import Paper
+from core.searcher import Paper, titles_match
 
 try:
     import fitz  # PyMuPDF
@@ -111,6 +112,13 @@ class ArchiveManager:
                 self.ensure_cover_thumbnail(paper_dir)
                 return pdf_path
 
+        # 2b. Landing page (NeurIPS, PMLR, ACL ...) names its own PDF in citation_pdf_url
+        if paper.url and not paper.url.endswith(".pdf"):
+            landing_pdf = self._resolve_landing_page_pdf(paper.url)
+            if landing_pdf and landing_pdf not in candidate_urls and self._fetch_and_save_pdf(landing_pdf, pdf_path, timeout):
+                self.ensure_cover_thumbnail(paper_dir)
+                return pdf_path
+
         # 3. Multi-Source Resolver: Search arXiv by title
         resolved_arxiv = self._resolve_arxiv_pdf_by_title(paper.title)
         if resolved_arxiv and self._fetch_and_save_pdf(resolved_arxiv, pdf_path, timeout):
@@ -144,16 +152,33 @@ class ArchiveManager:
             pass
         return False
 
-    def _resolve_arxiv_pdf_by_title(self, title: str) -> Optional[str]:
-        """Queries arXiv API using paper title to resolve preprint PDF."""
+    def _resolve_landing_page_pdf(self, url: str) -> Optional[str]:
+        """Reads the citation_pdf_url meta tag that publisher landing pages expose."""
         try:
-            clean_q = " ".join(title.split()[:7])
-            url = f"http://export.arxiv.org/api/query?search_query=all:{urllib.parse.quote(clean_q)}&max_results=2"
-            resp = self.session.get(url, timeout=6)
+            resp = self.session.get(url, timeout=8)
+            if resp.status_code != 200 or "html" not in resp.headers.get("content-type", ""):
+                return None
+            meta = BeautifulSoup(resp.text, "html.parser").find("meta", attrs={"name": "citation_pdf_url"})
+            if meta and meta.get("content"):
+                return urllib.parse.urljoin(resp.url, meta["content"].strip())
+        except Exception:
+            pass
+        return None
+
+    def _resolve_arxiv_pdf_by_title(self, title: str) -> Optional[str]:
+        """Searches arXiv for the exact title phrase and only accepts a matching title."""
+        try:
+            phrase = " ".join(re.sub(r"[^\w\s]", " ", title.rstrip(".… ")).split())
+            if not phrase:
+                return None
+            params = {"search_query": f'ti:"{phrase}"', "max_results": 5}
+            resp = self.session.get("https://export.arxiv.org/api/query", params=params, timeout=6)
             if resp.status_code == 200:
                 root = ET.fromstring(resp.content)
                 ns = {'atom': 'http://www.w3.org/2005/Atom'}
                 for entry in root.findall('atom:entry', ns):
+                    if not titles_match(title, entry.find('atom:title', ns).text or ""):
+                        continue
                     id_url = entry.find('atom:id', ns).text.strip()
                     arxiv_id = id_url.split('/abs/')[-1]
                     return f"https://arxiv.org/pdf/{arxiv_id}.pdf"
@@ -162,15 +187,15 @@ class ArchiveManager:
         return None
 
     def _resolve_semantic_scholar_pdf_by_title(self, title: str) -> Optional[str]:
-        """Queries Semantic Scholar Graph API for open-access PDF."""
+        """Queries Semantic Scholar Graph API for an open-access PDF of the same title."""
         try:
             url = "https://api.semanticscholar.org/graph/v1/paper/search"
-            params = {"query": title, "limit": 1, "fields": "openAccessPdf,externalIds"}
+            params = {"query": title, "limit": 3, "fields": "title,openAccessPdf,externalIds"}
             resp = self.session.get(url, params=params, timeout=6)
             if resp.status_code == 200:
-                data = resp.json().get("data", [])
-                if data:
-                    item = data[0]
+                for item in resp.json().get("data", []):
+                    if not titles_match(title, item.get("title") or ""):
+                        continue
                     pdf_info = item.get("openAccessPdf")
                     if pdf_info and pdf_info.get("url"):
                         return pdf_info.get("url")
