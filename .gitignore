@@ -54,3 +54,11 @@ GEMINI.md
 # Local rendering checks and writing-session intermediates
 tmp/
 _workspace/
+
+# Hodu animation production files; kept in the hodu-art-v1 release, only sheets/ and manifest.json ship
+assets/hodu/animations/frames/
+assets/hodu/animations/previews/
+assets/hodu/animations/source/
+
+# Generated portfolio (scripts/build_portfolio.py writes here)
+output/
