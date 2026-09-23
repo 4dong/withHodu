@@ -1289,6 +1289,684 @@
       "notes": "Immutable reference body; generated tail in-betweens composited behind body; eye-only blink.",
       "previewLoops": true,
       "suggestedIdleDelayMs": null
+    },
+    {
+      "id": "home-pet-01",
+      "title": "머리 쓰담쓰담",
+      "frameCount": 10,
+      "frameWidth": 368,
+      "frameHeight": 368,
+      "columns": 4,
+      "rows": 3,
+      "order": "row-major",
+      "anchor": [
+        180,
+        324
+      ],
+      "durationsMs": [
+        160,
+        160,
+        160,
+        200,
+        200,
+        200,
+        200,
+        160,
+        160,
+        400
+      ],
+      "loop": false,
+      "source": "source/home-pet-01.png",
+      "sheet": "sheets/home-pet-01.png",
+      "preview": "previews/home-pet-01.apng",
+      "frames": [
+        "frames/home-pet-01/home-pet-01-01.png",
+        "frames/home-pet-01/home-pet-01-02.png",
+        "frames/home-pet-01/home-pet-01-03.png",
+        "frames/home-pet-01/home-pet-01-04.png",
+        "frames/home-pet-01/home-pet-01-05.png",
+        "frames/home-pet-01/home-pet-01-06.png",
+        "frames/home-pet-01/home-pet-01-07.png",
+        "frames/home-pet-01/home-pet-01-08.png",
+        "frames/home-pet-01/home-pet-01-09.png",
+        "frames/home-pet-01/home-pet-01-10.png"
+      ],
+      "notes": "Generated from exact idle reference; shared scale per sheet; fixed foot baseline; original idle pixels at both endpoints.",
+      "sourceScale": 0.804945054945055,
+      "alignment": [
+        {
+          "bounds": [
+            41,
+            31,
+            320,
+            324
+          ],
+          "offset": [
+            -2,
+            -21
+          ]
+        },
+        {
+          "bounds": [
+            39,
+            0,
+            323,
+            324
+          ],
+          "offset": [
+            -3,
+            -21
+          ]
+        },
+        {
+          "bounds": [
+            40,
+            21,
+            320,
+            324
+          ],
+          "offset": [
+            -3,
+            -21
+          ]
+        },
+        {
+          "bounds": [
+            40,
+            14,
+            320,
+            324
+          ],
+          "offset": [
+            -3,
+            -21
+          ]
+        },
+        {
+          "bounds": [
+            45,
+            29,
+            320,
+            324
+          ],
+          "offset": [
+            -2,
+            -21
+          ]
+        },
+        {
+          "bounds": [
+            39,
+            28,
+            320,
+            324
+          ],
+          "offset": [
+            -3,
+            -21
+          ]
+        },
+        {
+          "bounds": [
+            40,
+            0,
+            341,
+            324
+          ],
+          "offset": [
+            -3,
+            -21
+          ]
+        },
+        {
+          "bounds": [
+            40,
+            31,
+            320,
+            324
+          ],
+          "offset": [
+            -3,
+            -21
+          ]
+        }
+      ]
+    },
+    {
+      "id": "home-shake-03",
+      "title": "같은 호두 · 몸 털고 제자리",
+      "frameCount": 10,
+      "frameWidth": 368,
+      "frameHeight": 368,
+      "columns": 4,
+      "rows": 3,
+      "order": "row-major",
+      "anchor": [
+        180,
+        324
+      ],
+      "durationsMs": [
+        200,
+        130,
+        110,
+        110,
+        100,
+        100,
+        130,
+        150,
+        140,
+        500
+      ],
+      "loop": false,
+      "source": "source/home-shake-03.png",
+      "sheet": "sheets/home-shake-03.png",
+      "preview": "previews/home-shake-03.apng",
+      "frames": [
+        "frames/home-shake-03/home-shake-03-01.png",
+        "frames/home-shake-03/home-shake-03-02.png",
+        "frames/home-shake-03/home-shake-03-03.png",
+        "frames/home-shake-03/home-shake-03-04.png",
+        "frames/home-shake-03/home-shake-03-05.png",
+        "frames/home-shake-03/home-shake-03-06.png",
+        "frames/home-shake-03/home-shake-03-07.png",
+        "frames/home-shake-03/home-shake-03-08.png",
+        "frames/home-shake-03/home-shake-03-09.png",
+        "frames/home-shake-03/home-shake-03-10.png"
+      ],
+      "notes": "Generated from exact idle reference; shared scale per sheet; fixed foot baseline; original idle pixels at both endpoints.",
+      "sourceScale": 0.7730870712401056,
+      "alignment": [
+        {
+          "bounds": [
+            42,
+            32,
+            317,
+            324
+          ],
+          "offset": [
+            0,
+            3
+          ]
+        },
+        {
+          "bounds": [
+            42,
+            32,
+            317,
+            324
+          ],
+          "offset": [
+            0,
+            3
+          ]
+        },
+        {
+          "bounds": [
+            40,
+            22,
+            316,
+            324
+          ],
+          "offset": [
+            2,
+            3
+          ]
+        },
+        {
+          "bounds": [
+            49,
+            25,
+            314,
+            324
+          ],
+          "offset": [
+            -7,
+            3
+          ]
+        },
+        {
+          "bounds": [
+            44,
+            23,
+            317,
+            324
+          ],
+          "offset": [
+            1,
+            4
+          ]
+        },
+        {
+          "bounds": [
+            46,
+            29,
+            316,
+            324
+          ],
+          "offset": [
+            0,
+            4
+          ]
+        },
+        {
+          "bounds": [
+            44,
+            31,
+            316,
+            324
+          ],
+          "offset": [
+            1,
+            4
+          ]
+        },
+        {
+          "bounds": [
+            43,
+            31,
+            317,
+            324
+          ],
+          "offset": [
+            0,
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "id": "home-shake-bridge-01",
+      "title": "물 털기 준비와 정리",
+      "frameCount": 10,
+      "frameWidth": 368,
+      "frameHeight": 368,
+      "columns": 4,
+      "rows": 3,
+      "order": "row-major",
+      "anchor": [
+        180,
+        324
+      ],
+      "durationsMs": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100
+      ],
+      "loop": false,
+      "source": "source/home-shake-bridge-01.png",
+      "sheet": "sheets/home-shake-bridge-01.png",
+      "preview": "previews/home-shake-bridge-01.apng",
+      "frames": [
+        "frames/home-shake-bridge-01/home-shake-bridge-01-01.png",
+        "frames/home-shake-bridge-01/home-shake-bridge-01-02.png",
+        "frames/home-shake-bridge-01/home-shake-bridge-01-03.png",
+        "frames/home-shake-bridge-01/home-shake-bridge-01-04.png",
+        "frames/home-shake-bridge-01/home-shake-bridge-01-05.png",
+        "frames/home-shake-bridge-01/home-shake-bridge-01-06.png",
+        "frames/home-shake-bridge-01/home-shake-bridge-01-07.png",
+        "frames/home-shake-bridge-01/home-shake-bridge-01-08.png",
+        "frames/home-shake-bridge-01/home-shake-bridge-01-09.png",
+        "frames/home-shake-bridge-01/home-shake-bridge-01-10.png"
+      ],
+      "notes": "Generated from exact idle reference; shared scale per sheet; fixed foot baseline; original idle pixels at both endpoints.",
+      "sourceScale": 0.7417721518987341,
+      "alignment": [
+        {
+          "bounds": [
+            35,
+            31,
+            325,
+            324
+          ],
+          "offset": [
+            -4,
+            3
+          ]
+        },
+        {
+          "bounds": [
+            40,
+            30,
+            321,
+            324
+          ],
+          "offset": [
+            1,
+            2
+          ]
+        },
+        {
+          "bounds": [
+            40,
+            31,
+            320,
+            324
+          ],
+          "offset": [
+            1,
+            3
+          ]
+        },
+        {
+          "bounds": [
+            41,
+            31,
+            318,
+            324
+          ],
+          "offset": [
+            2,
+            3
+          ]
+        },
+        {
+          "bounds": [
+            38,
+            31,
+            323,
+            324
+          ],
+          "offset": [
+            -1,
+            3
+          ]
+        },
+        {
+          "bounds": [
+            35,
+            31,
+            325,
+            324
+          ],
+          "offset": [
+            -4,
+            3
+          ]
+        },
+        {
+          "bounds": [
+            35,
+            31,
+            325,
+            324
+          ],
+          "offset": [
+            -4,
+            3
+          ]
+        },
+        {
+          "bounds": [
+            35,
+            31,
+            325,
+            324
+          ],
+          "offset": [
+            -4,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "home-shake-04",
+      "title": "원래 물 털기 + 생성 중간 자세",
+      "frameCount": 33,
+      "frameWidth": 368,
+      "frameHeight": 368,
+      "columns": 6,
+      "rows": 6,
+      "order": "row-major",
+      "anchor": [
+        180,
+        324
+      ],
+      "durationsMs": [
+        100,
+        90,
+        90,
+        90,
+        90,
+        180,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        220,
+        110,
+        110,
+        110,
+        110,
+        360
+      ],
+      "loop": false,
+      "source": "source/home-shake-bridge-01.png",
+      "sheet": "sheets/home-shake-04.png",
+      "preview": "previews/home-shake-04.apng",
+      "frames": [
+        "frames/home-shake-04/home-shake-04-01.png",
+        "frames/home-shake-04/home-shake-04-02.png",
+        "frames/home-shake-04/home-shake-04-03.png",
+        "frames/home-shake-04/home-shake-04-04.png",
+        "frames/home-shake-04/home-shake-04-05.png",
+        "frames/home-shake-04/home-shake-04-06.png",
+        "frames/home-shake-04/home-shake-04-07.png",
+        "frames/home-shake-04/home-shake-04-08.png",
+        "frames/home-shake-04/home-shake-04-09.png",
+        "frames/home-shake-04/home-shake-04-10.png",
+        "frames/home-shake-04/home-shake-04-11.png",
+        "frames/home-shake-04/home-shake-04-12.png",
+        "frames/home-shake-04/home-shake-04-13.png",
+        "frames/home-shake-04/home-shake-04-14.png",
+        "frames/home-shake-04/home-shake-04-15.png",
+        "frames/home-shake-04/home-shake-04-16.png",
+        "frames/home-shake-04/home-shake-04-17.png",
+        "frames/home-shake-04/home-shake-04-18.png",
+        "frames/home-shake-04/home-shake-04-19.png",
+        "frames/home-shake-04/home-shake-04-20.png",
+        "frames/home-shake-04/home-shake-04-21.png",
+        "frames/home-shake-04/home-shake-04-22.png",
+        "frames/home-shake-04/home-shake-04-23.png",
+        "frames/home-shake-04/home-shake-04-24.png",
+        "frames/home-shake-04/home-shake-04-25.png",
+        "frames/home-shake-04/home-shake-04-26.png",
+        "frames/home-shake-04/home-shake-04-27.png",
+        "frames/home-shake-04/home-shake-04-28.png",
+        "frames/home-shake-04/home-shake-04-29.png",
+        "frames/home-shake-04/home-shake-04-30.png",
+        "frames/home-shake-04/home-shake-04-31.png",
+        "frames/home-shake-04/home-shake-04-32.png",
+        "frames/home-shake-04/home-shake-04-33.png"
+      ],
+      "preservedAnimation": "home-shake-02",
+      "preservedFrameRange": [
+        5,
+        27
+      ],
+      "notes": "All 23 original water-shake frames retained with fixed scale. Eight generated preparation/settling poses. Exact idle endpoints; no opacity crossfade."
+    },
+    {
+      "id": "home-idle-03",
+      "title": "물 털기 기준 · 가벼운 눈 깜빡임",
+      "frameCount": 5,
+      "frameWidth": 368,
+      "frameHeight": 368,
+      "columns": 6,
+      "rows": 1,
+      "order": "row-major",
+      "anchor": [
+        180,
+        324
+      ],
+      "durationsMs": [
+        2300,
+        80,
+        120,
+        80,
+        1400
+      ],
+      "loop": true,
+      "source": "source/home-unified-01.png",
+      "sheet": "sheets/home-idle-03.png",
+      "preview": "previews/home-idle-03.apng",
+      "frames": [
+        "frames/home-idle-03/home-idle-03-01.png",
+        "frames/home-idle-03/home-idle-03-02.png",
+        "frames/home-idle-03/home-idle-03-03.png",
+        "frames/home-idle-03/home-idle-03-04.png",
+        "frames/home-idle-03/home-idle-03-05.png"
+      ],
+      "identityReference": "home-shake-02"
+    },
+    {
+      "id": "home-pet-02",
+      "title": "물 털기 기준 · 쓰담쓰담",
+      "frameCount": 10,
+      "frameWidth": 368,
+      "frameHeight": 368,
+      "columns": 6,
+      "rows": 2,
+      "order": "row-major",
+      "anchor": [
+        180,
+        324
+      ],
+      "durationsMs": [
+        160,
+        160,
+        160,
+        200,
+        200,
+        200,
+        200,
+        160,
+        160,
+        400
+      ],
+      "loop": false,
+      "source": "source/home-unified-01.png",
+      "sheet": "sheets/home-pet-02.png",
+      "preview": "previews/home-pet-02.apng",
+      "frames": [
+        "frames/home-pet-02/home-pet-02-01.png",
+        "frames/home-pet-02/home-pet-02-02.png",
+        "frames/home-pet-02/home-pet-02-03.png",
+        "frames/home-pet-02/home-pet-02-04.png",
+        "frames/home-pet-02/home-pet-02-05.png",
+        "frames/home-pet-02/home-pet-02-06.png",
+        "frames/home-pet-02/home-pet-02-07.png",
+        "frames/home-pet-02/home-pet-02-08.png",
+        "frames/home-pet-02/home-pet-02-09.png",
+        "frames/home-pet-02/home-pet-02-10.png"
+      ],
+      "identityReference": "home-shake-02"
+    },
+    {
+      "id": "home-shake-05",
+      "title": "원래 물 털기 · 같은 호두로 복귀",
+      "frameCount": 27,
+      "frameWidth": 368,
+      "frameHeight": 368,
+      "columns": 6,
+      "rows": 5,
+      "order": "row-major",
+      "anchor": [
+        180,
+        324
+      ],
+      "durationsMs": [
+        500,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        1000,
+        80,
+        120,
+        80,
+        300
+      ],
+      "loop": false,
+      "source": "source/home-unified-01.png",
+      "sheet": "sheets/home-shake-05.png",
+      "preview": "previews/home-shake-05.apng",
+      "frames": [
+        "frames/home-shake-05/home-shake-05-01.png",
+        "frames/home-shake-05/home-shake-05-02.png",
+        "frames/home-shake-05/home-shake-05-03.png",
+        "frames/home-shake-05/home-shake-05-04.png",
+        "frames/home-shake-05/home-shake-05-05.png",
+        "frames/home-shake-05/home-shake-05-06.png",
+        "frames/home-shake-05/home-shake-05-07.png",
+        "frames/home-shake-05/home-shake-05-08.png",
+        "frames/home-shake-05/home-shake-05-09.png",
+        "frames/home-shake-05/home-shake-05-10.png",
+        "frames/home-shake-05/home-shake-05-11.png",
+        "frames/home-shake-05/home-shake-05-12.png",
+        "frames/home-shake-05/home-shake-05-13.png",
+        "frames/home-shake-05/home-shake-05-14.png",
+        "frames/home-shake-05/home-shake-05-15.png",
+        "frames/home-shake-05/home-shake-05-16.png",
+        "frames/home-shake-05/home-shake-05-17.png",
+        "frames/home-shake-05/home-shake-05-18.png",
+        "frames/home-shake-05/home-shake-05-19.png",
+        "frames/home-shake-05/home-shake-05-20.png",
+        "frames/home-shake-05/home-shake-05-21.png",
+        "frames/home-shake-05/home-shake-05-22.png",
+        "frames/home-shake-05/home-shake-05-23.png",
+        "frames/home-shake-05/home-shake-05-24.png",
+        "frames/home-shake-05/home-shake-05-25.png",
+        "frames/home-shake-05/home-shake-05-26.png",
+        "frames/home-shake-05/home-shake-05-27.png"
+      ],
+      "identityReference": "home-shake-02",
+      "preservedAnimation": "home-shake-02",
+      "preservedFrameRange": [
+        0,
+        22
+      ]
     }
   ]
 }

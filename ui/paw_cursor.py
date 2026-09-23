@@ -28,6 +28,8 @@ def cursor_html(reduced=False):
  const reduced=''' + json.dumps(bool(reduced)) + ''';
  document.addEventListener('pointerdown',event=>{
   if(event.pointerType!=='mouse'||event.button!==0) return;
+  // Hodu's own petting art is the feedback; keep click stamps off its face.
+  if(event.target.closest('.h-emotion')) return;
   const marks=document.querySelectorAll('.h-paw-print');
   if(marks.length>=20) marks[0].remove();
   const el=document.createElement('span');el.className='h-paw-print';
