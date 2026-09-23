@@ -17,7 +17,7 @@ from core.translator import PaperTranslator
 from core.qa_agent import PaperChatAgent
 
 def test_full_e2e_pipeline():
-    query = "Autonomous Multi-Agent Systems"
+    query = "Attention Is All You Need"  # open on arXiv; a paywalled top hit has no PDF to test with
     searcher = AcademicSearcher()
     papers = searcher.search(query, max_results=2)
     assert len(papers) > 0, "Failed to fetch papers"
