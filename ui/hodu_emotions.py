@@ -43,4 +43,4 @@ def emotion_script(reduced=False):
     config = json.dumps({"reduced": bool(reduced), "states": {state: {**spec, "durationMs": sum(assets[spec["animation"]]["durationsMs"])}
                       if spec["animation"] in assets else spec
                       for state, spec in EMOTIONS.items()}, "restMs": HOME_REST_MS})
-    return '<script>' + Path(__file__).with_suffix('.js').read_text().replace('__CONFIG__', config) + '</script>'
+    return '<script>' + Path(__file__).with_suffix('.js').read_text(encoding='utf-8').replace('__CONFIG__', config) + '</script>'
