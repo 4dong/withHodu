@@ -22,7 +22,7 @@ except ImportError:
 
 DEFAULT_TOPIC = "default"
 
-DEFAULT_ARCHIVE_ROOT = os.path.expanduser("~/PaperArchive")
+DEFAULT_ARCHIVE_ROOT = os.path.expanduser(os.environ.get("PAPER_ARCHIVE_ROOT", "~/PaperArchive"))
 
 class ArchiveManager:
     """Manages local storage of academic papers with automatic deduplication, covers, and live file renaming."""
