@@ -9,9 +9,7 @@ import streamlit as st
 from typing import Dict, Any, List, Optional
 from core.downloader import ArchiveManager, DEFAULT_TOPIC
 from core.analyzer import MultiPaperComparativeAgent
-from ui.sidebar import engine_label
 from ui.hodu import page_header, show_state, loading
-from core.translator import PaperTranslator
 from core.reading_store import ReadingStore, tier_label
 
 
@@ -53,9 +51,13 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
             folder_col, search_col, sort_col = st.columns([1.3, 2.5, 1.2])
             with folder_col:
                 options = ["전체"] + topics
+                # Streamlit drops a widget's value after a run that does not draw it (another screen),
+                # so the choice is also kept under a plain key.
                 if st.session_state.get("library_folder") not in options:
-                    st.session_state["library_folder"] = DEFAULT_TOPIC
+                    saved = st.session_state.get("library_folder_saved")
+                    st.session_state["library_folder"] = saved if saved in options else DEFAULT_TOPIC
                 folder = st.selectbox("폴더", options, key="library_folder", format_func=lambda t: "기본 폴더" if t == DEFAULT_TOPIC else t)
+                st.session_state["library_folder_saved"] = folder
             with search_col:
                 query = st.text_input("논문 검색", placeholder="제목이나 저자로 검색", key="library_query").strip().casefold()
             with sort_col:
@@ -126,32 +128,20 @@ def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, A
 
             chosen_papers = [all_paper_dict[name] for name in chosen_names]
 
-            col_q, col_eng = st.columns([3.5, 1.8])
-            with col_q:
-                custom_q = st.text_input(
-                    "중점 비교 항목 (선택)",
-                    placeholder="예: 각 논문의 모델 아키텍처 차이점과 평가 지표를 집중 비교해 줘",
-                )
-            with col_eng:
-                default_eng_idx = 0
-                for i, eng in enumerate(PaperTranslator.SUPPORTED_ENGINES):
-                    if "Gemini" in eng:
-                        default_eng_idx = i
-                        break
-                comp_engine = st.selectbox(
-                    "분석 모델",
-                    options=PaperTranslator.SUPPORTED_ENGINES,
-                    index=default_eng_idx,
-                    format_func=engine_label,
-                )
+            custom_q = st.text_input(
+                "중점 비교 항목 (선택)",
+                placeholder="예: 각 논문의 모델 아키텍처 차이점과 평가 지표를 집중 비교해 줘",
+            )
+            api_key = (sidebar_config or {}).get("api_key")
+            if not api_key:
+                st.info("비교분석은 Gemini가 합니다. 사이드바의 API 키 관리에서 키를 등록해 주세요.")
 
-            if st.button("비교분석 시작", type="primary", disabled=(len(chosen_papers) < 1)):
+            if st.button("비교분석 시작", type="primary", disabled=(len(chosen_papers) < 1 or not api_key)):
                 with loading("논문을 비교하고 있어요", f"{len(chosen_papers)}편", "think"):
                     res = MultiPaperComparativeAgent.analyze_papers(
                         papers=chosen_papers,
                         custom_question=custom_q,
-                        engine=comp_engine,
-                        api_key=sidebar_config.get("api_key"),
+                        api_key=api_key,
                         system_prompt=None
                     )
 

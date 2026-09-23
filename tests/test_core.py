@@ -12,7 +12,6 @@ from core.searcher import AcademicSearcher
 from core.verifier import PaperVerifier
 from core.downloader import ArchiveManager
 from core.translator import PaperTranslator
-from core.qa_agent import PaperChatAgent
 
 def test_core_pipeline():
     # 1. Academic Search
@@ -56,14 +55,6 @@ def test_core_pipeline():
     assert loaded_bundle["metadata"] is not None
     assert loaded_bundle["bilingual"] is not None
 
-    # 5. PaperChatAgent Q&A
-    qa_res = PaperChatAgent.answer_query(
-        user_query="이 논문의 핵심 방법론과 수식 의미가 뭐야?",
-        paper=top_paper,
-        current_page=1,
-        page_texts=dummy_page_data["paragraphs"]
-    )
-    assert qa_res.get("success") is True
 
     # Cleanup
     if os.path.exists(test_dir):

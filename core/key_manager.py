@@ -11,6 +11,22 @@ from typing import Dict, Any, List, Optional, Tuple
 
 DEFAULT_KEY_STORE_PATH = os.path.expanduser("~/.gemini_paper_keys.json")
 
+
+def _make_private(path: str) -> None:
+    """Key files are readable by their owner only; files written before this rule are tightened on use."""
+    try:
+        if os.path.exists(path) and os.stat(path).st_mode & 0o077:
+            os.chmod(path, 0o600)
+    except OSError:
+        pass
+
+
+def _write_private(path: str, text: str) -> None:
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(text)
+    _make_private(path)
+
 class KeyManager:
     """Manages multi-slot Gemini API keys persistently across local disk and .env files."""
 
@@ -48,6 +64,7 @@ class KeyManager:
         # 2. Check .env file
         env_path = cls._find_env_file_path()
         if env_path and os.path.exists(env_path):
+            _make_private(env_path)
             try:
                 with open(env_path, "r", encoding="utf-8") as f:
                     for line in f:
@@ -92,8 +109,7 @@ class KeyManager:
                     new_lines.append("\n")
                 new_lines.append(f"GEMINI_API_KEY={api_key.strip()}\n")
 
-            with open(env_path, "w", encoding="utf-8") as f:
-                f.writelines(new_lines)
+            _write_private(env_path, "".join(new_lines))
 
             # Update live runtime environment
             os.environ["GEMINI_API_KEY"] = api_key.strip()
@@ -120,6 +136,7 @@ class KeyManager:
             cls._save_data(initial_data)
             return initial_data
 
+        _make_private(store_path)
         try:
             with open(store_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -150,8 +167,7 @@ class KeyManager:
             parent_dir = os.path.dirname(store_path)
             if parent_dir and not os.path.exists(parent_dir):
                 os.makedirs(parent_dir, exist_ok=True)
-            with open(store_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
+            _write_private(store_path, json.dumps(data, ensure_ascii=False, indent=2))
         except Exception as e:
             print(f"Error saving key store: {e}")
 
