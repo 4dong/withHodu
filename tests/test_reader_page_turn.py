@@ -2,6 +2,7 @@
 
 import re
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -165,6 +166,15 @@ class ReaderPageTurnTests(unittest.TestCase):
             self.assertFalse(at.exception)
             self.assertEqual(at.session_state["translation_calls"].get(2), 1)
             self.assertIn(2, at.session_state["page_translations"])
+
+    def test_toolbar_light_is_red_while_the_next_page_translates_and_green_once_ready(self):
+        with tempfile.TemporaryDirectory() as archive:
+            at = AppTest.from_string(offline_app(archive, slow=1.0), default_timeout=120).run()
+            self.assertTrue(any("h-next-light is-pending" in m.value for m in at.markdown))
+            time.sleep(1.5)
+            at.run()
+            self.assertFalse(at.exception)
+            self.assertTrue(any("h-next-light is-ready" in m.value for m in at.markdown))
 
     def test_a_fresh_failure_is_not_requested_again_on_rerun(self):
         # Reruns within FAILED_PAGE_RETRY_SECONDS keep the partial page instead of hitting a limited service.
