@@ -57,3 +57,16 @@ def test_a_failed_gemini_call_is_reported_not_papered_over():
 
 def test_empty_question_is_rejected():
     assert ask("")["success"] is False
+
+
+def test_the_real_request_is_built_and_parsed():
+    # Only the network is faked, so a broken request builder shows up here instead of as a silent failure.
+    import io
+    import json
+    reply = {"candidates": [{"content": {"parts": [{"text": "답변입니다."}]}}]}
+    with mock.patch("core.qa_agent.urllib.request.urlopen",
+                    return_value=io.BytesIO(json.dumps(reply).encode("utf-8"))) as urlopen:
+        result = ask("핵심은?", api_key="k" * 30)
+    assert result["success"] is True and result["answer"] == "답변입니다."
+    sent = json.loads(urlopen.call_args.args[0].data)
+    assert "CosyVoice 3" in sent["contents"][1]["parts"][0]["text"]
