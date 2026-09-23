@@ -11,9 +11,10 @@ from typing import Dict, Any, Optional
 import streamlit as st
 
 # Set Streamlit Page Configuration
+FAVICON = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "hodu", "favicon.png")
 st.set_page_config(
     page_title="호두랑",
-    page_icon="🐶",
+    page_icon=FAVICON if os.path.isfile(FAVICON) else "🐶",
     layout="wide",
     initial_sidebar_state="auto"
 )
