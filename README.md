@@ -65,6 +65,7 @@ Moonlight로 논문을 읽다가 무료로는 한 주에 몇 편밖에 못 읽�
 | 이름 | 용도 |
 | --- | --- |
 | `GEMINI_API_KEY` | Gemini 번역·질문·전사. 앱 사이드바 **API 키 관리**에서 넣어도 됩니다. 없으면 Google 번역과 오프라인 모드로 동작 |
+| `PAPER_ARCHIVE_ROOT` | 논문 서재 위치 (기본값 `~/PaperArchive`) |
 | `ESSAY_ARCHIVE_ROOT` | 자기소개서 보관 위치 (기본값 `~/EssayArchive`) |
 | `ESSAY_SEED_DIR` | 비공개 샘플·평가 자료 폴더. 없으면 관련 테스트는 건너뜀 |
 

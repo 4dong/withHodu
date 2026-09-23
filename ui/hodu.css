@@ -402,6 +402,7 @@
 .stApp [class*="st-key-library_open_"] button[kind] {justify-content:flex-start;text-align:left;min-height:0;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;}
 .stApp [class*="st-key-library_open_"] button p {font-size:16px;font-weight:600;line-height:1.5;letter-spacing:-.025em;overflow-wrap:anywhere;}
 .stApp .library-paper-meta {font-size:12px;line-height:1.6;color:var(--ap-muted);margin:0;overflow-wrap:anywhere;}
+.stApp .library-paper-progress {color:var(--ap-primary);font-weight:600;}
 .stApp [class*="st-key-library_more_"] button {border:0!important;background:transparent!important;}
 .stApp [class*="st-key-library_open_"] button:focus-visible {outline:2px solid var(--ap-primary);outline-offset:5px;}
 @media(max-width:640px) {

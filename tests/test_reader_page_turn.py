@@ -135,6 +135,20 @@ class ReaderPageTurnTests(unittest.TestCase):
             self.assertFalse(at.exception)
             self.assertEqual(at.session_state["translation_calls"][1], 2)
 
+    def test_pages_read_before_come_back_without_translating_again(self):
+        # The session forgets its translations (restart, another paper); the stored pages bring them back.
+        with tempfile.TemporaryDirectory() as archive:
+            at = AppTest.from_string(offline_app(archive), default_timeout=120).run()
+            at.button(key="reader_next").click().run()
+            self.assertEqual(at.session_state["translation_calls"], {1: 1, 2: 1, 3: 1})
+            at.session_state["page_translations"] = {}
+            at.run()
+            self.assertFalse(at.exception)
+            self.assertEqual(at.session_state["translation_calls"], {1: 1, 2: 1, 3: 1})
+            readings = list(Path(archive).glob("papers/*/*/reading.json"))
+            self.assertEqual(len(readings), 1)
+            self.assertIn('"last_page": 2', readings[0].read_text(encoding="utf-8"))
+
     def test_a_fresh_failure_is_not_requested_again_on_rerun(self):
         # Reruns within FAILED_PAGE_RETRY_SECONDS keep the partial page instead of hitting a limited service.
         with tempfile.TemporaryDirectory() as archive:
