@@ -16,6 +16,10 @@ class HoduHomeTests(unittest.TestCase):
         self.repo_patch = patch("ui.essay.workspace.DEFAULT_ESSAY_ARCHIVE_ROOT", Path(self.temp.name))
         self.repo_patch.start()
         self.addCleanup(self.repo_patch.stop)
+        # The "continue reading" card comes from the paper archive; keep the user's reading record out.
+        self.env_patch = patch.dict("os.environ", {"PAPER_ARCHIVE_ROOT": str(Path(self.temp.name) / "papers")})
+        self.env_patch.start()
+        self.addCleanup(self.env_patch.stop)
         self.at = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=30).run()
 
     def back_home(self):

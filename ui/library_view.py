@@ -12,8 +12,7 @@ from core.analyzer import MultiPaperComparativeAgent
 from ui.sidebar import engine_label
 from ui.hodu import page_header, show_state, loading
 from core.translator import PaperTranslator
-from core.parser import PaperPDFParser
-from core.key_manager import KeyManager
+from core.reading_store import ReadingStore, tier_label
 
 
 def render_library_view(archive_mgr: ArchiveManager, sidebar_config: Dict[str, Any]):
@@ -235,13 +234,15 @@ def _render_bookshelf_grid(papers: List[Dict[str, Any]], archive_mgr: ArchiveMan
                     st.rerun()
                 with st.container(key=f"library_info_{uid}", width="stretch"):
                     if st.button(_plain_label(title), key=f"library_open_{uid}", type="tertiary", use_container_width=True):
-                        _open_paper_in_reader(path, archive_mgr, p, api_key=(sidebar_config or {}).get("api_key"))
+                        _open_paper_in_reader(path)
                         st.rerun()
                     authors = p.get("authors") or []
                     author = ", ".join(authors[:2]) + (" 외" if len(authors) > 2 else "")
                     topic = "기본 폴더" if p.get("topic") == DEFAULT_TOPIC else p.get("topic", "")
                     meta = " · ".join(str(v) for v in [author, p.get("year"), topic] if v)
-                    st.markdown(f'<p class="library-paper-meta">{html_mod.escape(meta)}</p>', unsafe_allow_html=True)
+                    badge = _reading_badge(path)
+                    badge_html = f'<br><span class="library-paper-progress">{html_mod.escape(badge)}</span>' if badge else ""
+                    st.markdown(f'<p class="library-paper-meta">{html_mod.escape(meta)}{badge_html}</p>', unsafe_allow_html=True)
                 with st.popover("", icon=":material/more_horiz:", help="논문 이동·제목 수정·삭제", key=f"library_more_{uid}"):
                     dest = st.selectbox("이동할 폴더", available_topics, index=available_topics.index(p["topic"]), format_func=lambda t: "기본 폴더" if t == DEFAULT_TOPIC else t, key=f"dest_{uid}")
                     if st.button("이동", disabled=dest == p["topic"], key=f"move_{uid}", use_container_width=True):
@@ -263,30 +264,19 @@ def _render_bookshelf_grid(papers: List[Dict[str, Any]], archive_mgr: ArchiveMan
                         st.rerun()
 
 
-def _open_paper_in_reader(folder_path: str, archive_mgr: ArchiveManager, meta_dict: Dict[str, Any], api_key: Optional[str] = None):
-    """Helper to load archived paper into active session reader."""
-    if not api_key:
-        api_key, _ = KeyManager.get_active_key()
+def _open_paper_in_reader(folder_path: str):
+    """The app opens it on the next run, at the page where it was left."""
+    st.session_state["_open_paper_dir"] = folder_path
 
-    pdf_path = os.path.join(folder_path, "paper.pdf")
-    total_pages = PaperPDFParser.get_total_pages(pdf_path) if os.path.exists(pdf_path) else 1
 
-    with loading("첫 페이지를 번역하고 있어요", meta_dict.get("title", ""), "read"):
-        page_1_data = PaperPDFParser.get_single_page_data(pdf_path, 1, folder_path)
-        page_1_trans = PaperTranslator.translate_single_page(
-            page_data=page_1_data,
-            paper_title=meta_dict.get("title", ""),
-            engine=st.session_state.get("selected_translation_engine", PaperTranslator.SUPPORTED_ENGINES[0]),
-            custom_api_key=api_key,
-            custom_prompt=st.session_state.get("custom_llm_prompt")
-        )
-
-    bundle = archive_mgr.load_paper_bundle(folder_path)
-    bundle["total_pages"] = total_pages
-    bundle["metadata"] = meta_dict
-
-    st.session_state.current_paper_bundle = bundle
-    st.session_state.current_page_num = 1
-    st.session_state.page_translations = {1: page_1_trans}
-    st.session_state._active_translation_engine = st.session_state.get("selected_translation_engine", PaperTranslator.SUPPORTED_ENGINES[0])
-    st.session_state._active_custom_prompt = st.session_state.get("custom_llm_prompt")
+def _reading_badge(folder_path: str) -> str:
+    """'12/22쪽까지 읽음 · 번역 8쪽 (Gemini 3.7)' from the paper's reading record."""
+    store = ReadingStore(folder_path)
+    progress = store.progress()
+    tiers = store.translated_pages()
+    parts = []
+    if progress.get("last_page"):
+        parts.append(f"🔖 {progress['last_page']}/{progress.get('total_pages') or '?'}쪽까지 읽음")
+    if tiers:
+        parts.append(f"번역 {len(tiers)}쪽 ({tier_label(max(tiers.values()))})")
+    return " · ".join(parts)
