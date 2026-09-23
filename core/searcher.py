@@ -51,6 +51,21 @@ class Paper:
         return f"{self.year}년" if self.year else "최신 논문"
 
 
+def normalize_title(title: str) -> str:
+    return "".join(c for c in unicodedata.normalize("NFKC", title).casefold() if c.isalnum())
+
+
+def titles_match(expected: str, found: str) -> bool:
+    """Same paper title ignoring case and punctuation. Scholar may cut long titles with '…'."""
+    expected = expected.strip()
+    truncated = expected.endswith(("…", "..."))
+    a = normalize_title(expected.rstrip(".… "))
+    b = normalize_title(found)
+    if not a:
+        return False
+    return a == b or (truncated and len(a) >= 20 and b.startswith(a))
+
+
 class AcademicSearcher:
     """Multi-source academic search with exact-title promotion and date resolution."""
 
@@ -137,7 +152,7 @@ class AcademicSearcher:
         return final_papers
 
     def _normalize_title(self, title: str) -> str:
-        return "".join(c for c in unicodedata.normalize("NFKC", title).casefold() if c.isalnum())
+        return normalize_title(title)
 
     def _title_matches(self, query: str, title: str) -> bool:
         normalized = self._normalize_title(query)
@@ -206,10 +221,8 @@ class AcademicSearcher:
                 root = ET.fromstring(r.content)
                 ns = {'atom': 'http://www.w3.org/2005/Atom'}
                 for entry in root.findall('atom:entry', ns):
-                    t_found = entry.find('atom:title', ns).text.strip().lower()
-                    clean_target = ''.join(c for c in title if c.isalnum()).lower()[:18]
-                    clean_found = ''.join(c for c in t_found if c.isalnum()).lower()
-                    if clean_target in clean_found or clean_found in clean_target:
+                    t_found = entry.find('atom:title', ns).text
+                    if titles_match(title, t_found):
                         pub = entry.find('atom:published', ns)
                         if pub is not None and pub.text:
                             exact_date = pub.text.strip()[:10]
