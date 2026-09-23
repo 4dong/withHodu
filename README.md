@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/hodu/animations/previews/reading-01.apng" width="140" alt="책읽는 댕댕이 호두">
+<img src="docs/screenshots/hodu-reading.apng" width="140" alt="책읽는 댕댕이 호두">
 
 # 호두랑 · withHodu
 

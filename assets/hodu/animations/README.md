@@ -12,6 +12,10 @@
 | 물기 털기 1 | home-shake-01 | 12 | 2520ms |
 | 눈 깜박임·꼬리 흔들기 1 | home-idle-01 | 12 | 3460ms |
 
+> **저장소에 있는 것은 앱이 쓰는 `sheets/`와 `manifest.json`뿐입니다.** 아래의 `frames/`, `previews/`, `source/`는
+> 제작 원본이라 저장소를 가볍게 하려고 [Release `hodu-art-v1`](https://github.com/4dong/withHodu-paper-translator/releases/tag/hodu-art-v1)의
+> zip으로 옮겼습니다. 저장소 루트에서 풀면 원래 위치에 들어가고, `scripts/`의 제작 스크립트를 다시 돌릴 수 있습니다.
+
 ## 사용할 파일
 
 - `frames/<ID>/<ID>-01.png` ~ `-12.png`: **개별 투명 PNG, 368×368**. 하나의 파일은 하나의 프레임이다.

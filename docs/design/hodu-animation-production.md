@@ -1,5 +1,7 @@
 # 호두 애니메이션 이미지 제작
 
+> 제작 원본(`frames/`, `previews/`, `source/`)은 [Release `hodu-art-v1`](https://github.com/4dong/withHodu-paper-translator/releases/tag/hodu-art-v1)로 옮겼습니다. 이 문서의 경로는 그 zip을 저장소 루트에 푼 기준입니다.
+
 작성: 2026-09-14 · 기준: `assets/hodu/hodu-pixel-reference-v1.png`
 
 이미지 제작 **5/5 완료** · 실제 앱 적용 **4/4 완료**
