@@ -5,7 +5,6 @@ OCR Provider Adapters and Vision Transcription Engine for Essay Images.
 from __future__ import annotations
 import abc
 import json
-import re
 import urllib.request
 import urllib.error
 from typing import Dict, Any, List, Optional

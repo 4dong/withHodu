@@ -4,8 +4,6 @@ Google Scholar Search & Authentic Moonlight 3:1 Split Page Reader
 """
 
 import os
-import html
-import base64
 import time
 import threading
 from concurrent.futures import Future, ThreadPoolExecutor
@@ -31,9 +29,7 @@ import core.downloader
 import core.parser
 import core.analyzer
 import core.searcher
-import core.verifier
 import core.qa_agent
-import core.recommender
 import core.intent_copilot
 import core.visual_highlighter
 import core.reading_store
@@ -52,9 +48,7 @@ importlib.reload(core.downloader)
 importlib.reload(core.parser)
 importlib.reload(core.analyzer)
 importlib.reload(core.searcher)
-importlib.reload(core.verifier)
 importlib.reload(core.qa_agent)
-importlib.reload(core.recommender)
 importlib.reload(core.intent_copilot)
 importlib.reload(core.visual_highlighter)
 importlib.reload(ui.library_view)
@@ -69,7 +63,6 @@ from core.searcher import AcademicSearcher, Paper
 from core.downloader import ArchiveManager
 from core.parser import PaperPDFParser
 from core.translator import PaperTranslator
-from core.recommender import IntentRecommender
 from core.intent_copilot import IntentCopilotAgent
 from core.key_manager import KeyManager
 from core.reading_store import ReadingStore, LAYOUT_VERSION, engine_tier, prompt_key, tier_label
@@ -80,7 +73,7 @@ from ui.sidebar import render_sidebar
 from ui.components import render_moonlight_split_page_reader
 from ui.library_view import render_library_view
 from ui.home import render_home
-from ui.hodu import apply_theme, page_header, show_state, loading, state_html, walking
+from ui.hodu import apply_theme, page_header, show_state, loading, walking
 
 st.html(CUSTOM_CSS)
 apply_theme()
@@ -290,26 +283,15 @@ def wait_for_prefetch() -> None:
 if st.session_state.get("_highlighter_engine_version") != HIGHLIGHTER_ENGINE_VERSION:
     st.session_state._highlighter_engine_version = HIGHLIGHTER_ENGINE_VERSION
     st.session_state.page_translations = {}
-    st.session_state.page_data_cache = {}
 
-if "current_view" not in st.session_state:
-    st.session_state.current_view = "library"
-if "selected_topic" not in st.session_state:
-    st.session_state.selected_topic = "전체"
 if "search_query" not in st.session_state:
     st.session_state.search_query = ""
 if "search_results" not in st.session_state:
     st.session_state.search_results = []
-if "is_searching" not in st.session_state:
-    st.session_state.is_searching = False
 if "current_paper_bundle" not in st.session_state:
     st.session_state.current_paper_bundle = None
 if "current_topic" not in st.session_state:
     st.session_state.current_topic = ""
-if "intent_recommendations" not in st.session_state:
-    st.session_state.intent_recommendations = None
-if "copilot_chat_history" not in st.session_state:
-    st.session_state.copilot_chat_history = []
 if "current_page_num" not in st.session_state:
     st.session_state.current_page_num = 1
 if "page_translations" not in st.session_state:
@@ -318,28 +300,22 @@ if "auto_translate_mode" not in st.session_state:
     st.session_state.auto_translate_mode = True
 
 def trigger_search_flow(search_query: str, sidebar_config: Dict[str, Any]):
-    """Executes clean Google Scholar & arXiv search and intent analysis with in-canvas visual progress."""
+    """Searches Google Scholar, then arXiv and Semantic Scholar, behind the walking-Hodu loading state."""
     st.session_state["hodu_search_error"] = None
     try:
         with loading("논문을 찾고 있어요", search_query, "search"):
             searcher = AcademicSearcher()
             raw_papers = searcher.search(query=search_query, max_results=sidebar_config.get("max_results", 5))
-            intent_data = None
-            if raw_papers:
-                intent_data = IntentRecommender.analyze_and_recommend(
-                    query=search_query, retrieved_papers=raw_papers, api_key=sidebar_config.get("api_key"))
     except Exception:
         st.session_state["hodu_search_error"] = "잠시 후 다시 검색해 주세요. 이전 결과는 그대로 있어요."
         return
     st.session_state.current_topic = search_query
     st.session_state.search_results = raw_papers or []
-    st.session_state.intent_recommendations = intent_data
     if raw_papers:
         st.session_state.current_paper_bundle = None
         st.session_state.page_translations = {}
         st.session_state.current_page_num = 1
 
-from ui.library_view import render_library_view
 from ui.essay.workspace import render_essay_workspace
 
 def main():

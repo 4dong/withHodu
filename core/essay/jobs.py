@@ -5,13 +5,12 @@ Background Job Worker and Execution Manager for Essay Processing.
 from __future__ import annotations
 import hashlib
 import json
-import time
-from typing import Optional, Dict, Any, List
+from typing import Optional
 from datetime import datetime, timezone, timedelta
 
 from core.essay.models import Job, SourceSpan, new_uuid, utc_now_iso
 from core.essay.repository import EssayRepository
-from core.essay.transcription import BaseOCRProvider, OCRTranscriptionResult
+from core.essay.transcription import BaseOCRProvider
 
 
 class JobExecutionError(Exception):

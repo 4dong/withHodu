@@ -3,7 +3,6 @@ AI Research Intent Copilot & Conversational Re-search Agent (Google Gemini 3.5 F
 Analyzes user intentions, specific features, architectures, and generates refined multi-tier search queries with 1-click re-search buttons.
 """
 
-import os
 import re
 import json
 import urllib.request

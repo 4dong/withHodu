@@ -4,7 +4,6 @@ Backup and Restore Manager for Essay Archive (Database and Sources).
 
 from __future__ import annotations
 import os
-import shutil
 import sqlite3
 import zipfile
 from pathlib import Path

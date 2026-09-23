@@ -6,7 +6,6 @@ Provides robust HTML escaping that protects mathematical equations for pixel-per
 
 import re
 import html
-from typing import List, Dict, Any, Optional
 
 class AcademicMathFormatter:
     """
