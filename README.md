@@ -27,13 +27,13 @@ pip install -r requirements.txt && streamlit run app.py
 
 브라우저에서 `http://localhost:8501`이 열립니다. API 키가 없어도 Google 번역으로 바로 읽을 수 있습니다.
 
-## 왜 만들었나
+## Why make this?
 
 Moonlight로 논문을 읽다가 무료로는 한 주에 몇 편밖에 못 읽는 게 아쉬웠습니다. 요즘 번역이 그렇게 어려운 일도 아닌데요. 그래서 원문 옆에 번역을 붙여 주는 부분만 직접 만들었습니다.
 
 <sub>Moonlight와 관련 없는 개인 프로젝트입니다.</sub>
 
-## 되는 것
+## Function
 
 - **논문 검색** — Google Scholar에서 찾고, 부족하면 arXiv와 Semantic Scholar로 채웁니다.
 - **나란히 읽기** — 왼쪽은 PDF 원문, 오른쪽은 문단별 번역. 번역 문단에 마우스를 올리면 원문 문단이 같이 표시됩니다.
