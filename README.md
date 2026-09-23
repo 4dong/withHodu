@@ -90,8 +90,9 @@ Moonlight로 논문을 읽다가 무료로는 한 주에 3 편밖에 못 읽는 
 <summary>테스트</summary>
 
 ```bash
-python3 -m unittest discover -s tests -t .   # 논문 기능
-python3 -m pytest tests/essay                # 자기소개서 기능
+pip install -r requirements-dev.txt
+pytest              # 전체 (인터넷이 필요한 테스트는 빼고)
+pytest -m network   # 실제 Scholar·arXiv·Google 번역에 요청하는 테스트
 ```
 
 </details>

@@ -32,7 +32,7 @@ def enter_workspace(destination):
         if st.session_state.get("current_paper_bundle"):
             st.session_state["hodu_saved_reader"] = {
                 key: st.session_state.get(key)
-                for key in ("current_paper_bundle", "current_page_num", "page_translations", "page_data_cache")
+                for key in ("current_paper_bundle", "current_page_num", "page_translations")
             }
         st.session_state["current_paper_bundle"] = None
     elif destination == "reader" and not st.session_state.get("current_paper_bundle"):

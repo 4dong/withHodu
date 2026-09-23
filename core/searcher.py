@@ -2,12 +2,11 @@
 Google Scholar & Multi-Source Academic Paper Search Engine with Real-Time Exact Date Resolution
 """
 
-import os
 import unicodedata
 import re
 import urllib.parse
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, asdict
 from typing import List, Optional, Dict, Any
 from concurrent.futures import ThreadPoolExecutor
 import requests
@@ -28,9 +27,6 @@ class Paper:
     url: str
     published_date: str = ""
     rank: int = 1
-    relevance_score: int = 0
-    verification_summary: str = ""
-    verification_points: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)

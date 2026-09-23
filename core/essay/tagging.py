@@ -4,8 +4,8 @@ Tag dictionary, alias management, and evidence-backed tag suggestions for Essay 
 
 from __future__ import annotations
 import re
-from typing import List, Dict, Any, Tuple, Optional
-from core.essay.models import Tag, TagAlias, TagAssignment, new_uuid, utc_now_iso
+from typing import List, Tuple, Optional
+from core.essay.models import Tag, TagAssignment
 from core.essay.repository import EssayRepository
 
 STANDARD_FACETS = [

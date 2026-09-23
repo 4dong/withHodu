@@ -4,12 +4,11 @@ Hybrid Search Engine combining FTS5 trigram/exact matching and exact cosine vect
 
 from __future__ import annotations
 import re
-import sqlite3
 import numpy as np
 from typing import List, Dict, Any, Optional, Tuple
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, asdict
 
-from core.essay.models import Chunk, Embedding, new_uuid, utc_now_iso
+from core.essay.models import utc_now_iso
 from core.essay.repository import EssayRepository
 from core.essay.chunking import EssayChunker
 from core.essay.embedding import BaseEmbeddingProvider

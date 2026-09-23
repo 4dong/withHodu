@@ -6,23 +6,22 @@ import os
 import sys
 import shutil
 
+import pytest
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.searcher import AcademicSearcher
-from core.verifier import PaperVerifier
 from core.downloader import ArchiveManager
 from core.translator import PaperTranslator
 
+@pytest.mark.network  # live Scholar/arXiv/Google; run with `pytest -m network`
 def test_core_pipeline():
     # 1. Academic Search
     searcher = AcademicSearcher()
     papers = searcher.search("Autonomous AI Agent Architecture", max_results=2)
     assert len(papers) > 0, "No papers retrieved"
 
-    # 2. Verification
-    verified = PaperVerifier.verify_papers(papers, target_topic="Autonomous AI Agent Architecture")
-    top_paper = verified[0]
-    assert top_paper.relevance_score > 0
+    top_paper = papers[0]
 
     # 3. Translation & LaTeX Normalization
     dummy_page_data = {

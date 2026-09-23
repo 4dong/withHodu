@@ -2,7 +2,6 @@
 Moonlight Split Reader with Pixel-Perfect Soft Highlighter Alignment & Interactive Draggable AI Chatbot
 """
 
-import os
 import base64
 import inspect
 import html
@@ -10,7 +9,6 @@ from pathlib import Path
 import streamlit as st
 from typing import Callable, Dict, Any, Optional
 from core.searcher import Paper
-from core.math_formatter import AcademicMathFormatter
 from core.visual_highlighter import VisualHighlighter
 from ui.hodu import loading
 
