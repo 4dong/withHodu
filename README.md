@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="assets/hodu/animations/previews/reading-01.apng" width="140" alt="책을 읽는 도트 포메라니안 호두">
+<img src="assets/hodu/animations/previews/reading-01.apng" width="140" alt="책읽는 댕댕이 호두">
 
 # 호두랑 · withHodu
 
-**영어 논문을 한국어 번역과 나란히 읽는 번역기. 편수 제한 없음.**
+**영어 논문을 한국어 번역과 나란히 읽는 논문 리더기.**
 
-Side-by-side English → Korean research paper translator. Free, no weekly limit.
+Side-by-side English → Korean research paper translator.
 
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.62-FF4B4B?logo=streamlit&logoColor=white)
@@ -25,11 +25,11 @@ cd withHodu-paper-translator
 pip install -r requirements.txt && streamlit run app.py
 ```
 
-브라우저에서 `http://localhost:8501`이 열립니다. API 키가 없어도 Google 번역으로 바로 읽을 수 있습니다.
+브라우저에서 `http://localhost:8501`이 열립니다. API 키가 없어도 Google 신경망 번역으로 바로 읽을 수 있습니다.
 
 ## Why make this?
 
-Moonlight로 논문을 읽다가 무료로는 한 주에 몇 편밖에 못 읽는 게 아쉬웠습니다. 요즘 번역이 그렇게 어려운 일도 아닌데요. 그래서 원문 옆에 번역을 붙여 주는 부분만 직접 만들었습니다.
+Moonlight로 논문을 읽다가 무료로는 한 주에 3 편밖에 못 읽는 게 아쉬웠습니다. 요즘 번역이 그렇게 어려운 일도 아닌데 말이죠. 그래서 원문 옆에 번역을 붙여 주는 부분만 직접 만들었습니다.
 
 <sub>Moonlight와 관련 없는 개인 프로젝트입니다.</sub>
 
@@ -38,7 +38,7 @@ Moonlight로 논문을 읽다가 무료로는 한 주에 몇 편밖에 못 읽�
 - **논문 검색** — Google Scholar에서 찾고, 부족하면 arXiv와 Semantic Scholar로 채웁니다.
 - **나란히 읽기** — 왼쪽은 PDF 원문, 오른쪽은 문단별 번역. 번역 문단에 마우스를 올리면 원문 문단이 같이 표시됩니다.
 - **수식은 그대로** — 문장 속 수식은 KaTeX로, 줄 수식은 PDF 원본 이미지로 보여 줍니다. 표·그림·참고문헌은 번역하지 않습니다.
-- **번역 엔진 선택** — 키 없이 쓰는 Google 번역, 또는 Gemini(API 키 필요).
+- **번역 엔진 선택** — 키 없이 쓰는 Google 번역, 또는 Gemini(개인 API 키 필요).
 - **서재** — 열어 본 논문은 PDF째 폴더별로 저장됩니다. 여러 편을 골라 비교 보고서도 만들 수 있습니다.
 - **논문에 질문** — 지금 보는 페이지를 바탕으로 Gemini에게 물어봅니다.
 
@@ -50,7 +50,7 @@ Moonlight로 논문을 읽다가 무료로는 한 주에 몇 편밖에 못 읽�
 논문과는 별개로 붙여 둔 실험 기능입니다.
 
 - 자기소개서 사진(JPG·PNG·WEBP), PDF, 텍스트를 올리면 Gemini Vision이 문항과 본문으로 나눠 옮겨 적습니다. 키가 없으면 오프라인 모의 전사로 동작합니다.
-- 원본 사진과 옮긴 글을 나란히 놓고 고친 뒤 승인합니다. 승인한 문항만 검색됩니다.
+- 원본 사진과 옮긴 글을 나란히 놓고 고친 뒤 승인해야 합니다. 승인한 문항만 검색됩니다.
 - 키워드·의미 검색으로 문단을 찾고, 출처를 붙여 답합니다. 참고 자소서의 경험을 내 경험처럼 쓰지 않도록 구분합니다.
 - 초안 문체를 다듬되 수치와 사실이 바뀌지 않았는지 확인하고 새 버전으로 저장합니다.
 - Markdown·텍스트·ZIP으로 내보내고 보관함 전체를 백업할 수 있습니다.
