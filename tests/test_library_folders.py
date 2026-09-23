@@ -71,3 +71,42 @@ render_library_view(a, {})
             at.text_input(key='library_query').set_value('no match').run()
             self.assertFalse(any(b.label == 'Test paper' for b in at.button))
             self.assertFalse(at.exception)
+
+
+class LibraryFolderSurvivesSidebarTest(unittest.TestCase):
+    """The folder filter is a widget; a rerun that skips the library view used to drop it back to default."""
+
+    def test_folder_choice_survives_translation_model_change(self):
+        from unittest.mock import patch
+        from streamlit.testing.v1 import AppTest
+        with tempfile.TemporaryDirectory() as root:
+            papers = Path(root) / 'papers'
+            archive = ArchiveManager(str(papers))
+            path = archive.save_archive_bundle('q', Paper('id', 'Speech paper', ['A'], 2026, '', '', 0, None, None, 't', ''), None)
+            archive.move_paper_topic(path, 'TTS')
+            with patch.dict('os.environ', {'PAPER_ARCHIVE_ROOT': str(papers), 'ESSAY_ARCHIVE_ROOT': str(Path(root) / 'essays')}):
+                at = AppTest.from_file(str(Path(__file__).resolve().parents[1] / 'app.py'), default_timeout=60).run()
+                at.button(key='hodu_enter_library').click().run()
+                folder = next(s for s in at.selectbox if s.label == '폴더')
+                folder.set_value('TTS').run()
+                engine = next(s for s in at.selectbox if s.label == '번역 모델')
+                engine.set_value(engine.options[1]).run()
+                self.assertFalse(at.exception)
+                self.assertEqual(next(s for s in at.selectbox if s.label == '폴더').value, 'TTS')
+
+    def test_folder_choice_survives_a_visit_to_search(self):
+        from unittest.mock import patch
+        from streamlit.testing.v1 import AppTest
+        with tempfile.TemporaryDirectory() as root:
+            papers = Path(root) / 'papers'
+            archive = ArchiveManager(str(papers))
+            path = archive.save_archive_bundle('q', Paper('id', 'Speech paper', ['A'], 2026, '', '', 0, None, None, 't', ''), None)
+            archive.move_paper_topic(path, 'TTS')
+            with patch.dict('os.environ', {'PAPER_ARCHIVE_ROOT': str(papers), 'ESSAY_ARCHIVE_ROOT': str(Path(root) / 'essays')}):
+                at = AppTest.from_file(str(Path(__file__).resolve().parents[1] / 'app.py'), default_timeout=60).run()
+                at.button(key='hodu_enter_library').click().run()
+                next(s for s in at.selectbox if s.label == '폴더').set_value('TTS').run()
+                at.button(key='sidebar_nav_search').click().run()
+                at.button(key='sidebar_nav_library').click().run()
+                self.assertFalse(at.exception)
+                self.assertEqual(next(s for s in at.selectbox if s.label == '폴더').value, 'TTS')

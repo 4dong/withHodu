@@ -4,6 +4,7 @@ Unit Test for KeyManager Multi-Slot API Key Storage and Selection (Isolated Test
 
 import os
 import sys
+import shutil
 import tempfile
 
 # Ensure root directory in sys.path
@@ -57,3 +58,19 @@ def test_key_manager_lifecycle():
 if __name__ == "__main__":
     test_key_manager_lifecycle()
     print("✅ KeyManager tests passed.")
+
+
+def test_key_store_is_readable_by_its_owner_only():
+    temp_dir = tempfile.mkdtemp()
+    store = os.path.join(temp_dir, "keys.json")
+    KeyManager.set_custom_store_path(store)
+    try:
+        KeyManager.save_slot("테스트", "AIzaSyFakeKey1234567890Owner", set_as_default=True, sync_env=False)
+        assert os.stat(store).st_mode & 0o777 == 0o600
+        # A store written by an older version (world-readable) is tightened the next time it is read.
+        os.chmod(store, 0o644)
+        KeyManager.get_active_key()
+        assert os.stat(store).st_mode & 0o777 == 0o600
+    finally:
+        KeyManager.set_custom_store_path(None)
+        shutil.rmtree(temp_dir, ignore_errors=True)

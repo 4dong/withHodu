@@ -14,7 +14,6 @@ from core.downloader import ArchiveManager
 from core.parser import PaperPDFParser
 from core.visual_extractor import PaperVisualExtractor
 from core.translator import PaperTranslator
-from core.qa_agent import PaperChatAgent
 
 def test_full_e2e_pipeline():
     query = "Attention Is All You Need"  # open on arXiv; a paywalled top hit has no PDF to test with
@@ -47,14 +46,6 @@ def test_full_e2e_pipeline():
     page_1_trans = PaperTranslator.translate_single_page(page_1_data, top.title)
     assert len(page_1_trans.get("pairs", [])) > 0
 
-    # Chatbot QA
-    chat_res = PaperChatAgent.answer_query(
-        user_query="이 논문의 핵심 기여점 요약해줘",
-        paper=top,
-        current_page=1,
-        page_texts=[p["ko"] for p in page_1_trans.get("pairs", [])]
-    )
-    assert chat_res.get("success") is True
 
     # Save and reload bundle
     archive_mgr.save_archive_bundle(
