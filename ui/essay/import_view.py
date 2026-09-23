@@ -4,14 +4,13 @@ Import View: Batch photo/PDF/text upload and document grouping.
 
 from __future__ import annotations
 import streamlit as st
-from ui.hodu import page_header, show_state, loading, state_html
-from pathlib import Path
+from ui.hodu import page_header, show_state, loading
 from typing import List, Tuple
 
 from core.essay.repository import EssayRepository
 from core.essay.ingest import EssayIngestService
 from core.essay.jobs import JobManager
-from core.essay.transcription import get_active_ocr_provider, GeminiVisionOCRProvider, MockOCRProvider
+from core.essay.transcription import get_active_ocr_provider, GeminiVisionOCRProvider
 
 
 def render_import_view(repo: EssayRepository):

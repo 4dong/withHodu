@@ -5,15 +5,13 @@ Style View: Draft rewriting, style profile transfer, fact preservation validatio
 from __future__ import annotations
 import json
 import streamlit as st
-from ui.hodu import page_header, show_state, loading, state_html
-from typing import Optional
+from ui.hodu import page_header, loading
 
 from core.essay.repository import EssayRepository
 from core.essay.style import (
-    EssayStyleService, MockStyleRewriter, STYLE_PRESETS,
-    RevisionConflictError, FactExtractor
+    EssayStyleService, STYLE_PRESETS,
+    RevisionConflictError
 )
-from core.key_manager import KeyManager
 
 
 def render_style_view(repo: EssayRepository):

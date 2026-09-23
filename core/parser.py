@@ -5,7 +5,7 @@ Robustly handles diverse academic conference formats (COLM, ICLR, NeurIPS, ACL, 
 
 import os
 import re
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional
 
 try:
     import fitz  # PyMuPDF

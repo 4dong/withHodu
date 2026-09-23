@@ -6,7 +6,6 @@ Manages persistent API key slots, default selections, .env synchronization, and 
 import os
 import json
 import uuid
-import re
 from typing import Dict, Any, List, Optional, Tuple
 
 DEFAULT_KEY_STORE_PATH = os.path.expanduser("~/.gemini_paper_keys.json")

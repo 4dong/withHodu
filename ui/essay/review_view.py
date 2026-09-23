@@ -4,9 +4,8 @@ Review View: Transcription inspection, original photo comparison, and review app
 
 from __future__ import annotations
 import streamlit as st
-from ui.hodu import page_header, show_state, loading, state_html
+from ui.hodu import page_header, show_state, loading
 from PIL import Image, ImageOps
-from typing import Optional, List, Dict, Any
 
 from core.essay.repository import EssayRepository
 from core.essay.retrieval import EssaySearchEngine

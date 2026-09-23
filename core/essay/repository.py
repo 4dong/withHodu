@@ -12,13 +12,11 @@ import shutil
 import zipfile
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Tuple
-from datetime import datetime, timezone
-import numpy as np
 
 from core.essay.models import (
-    Document, SourceFile, Page, DocumentPage, Answer, AnswerRevision,
-    SourceSpan, Tag, TagAlias, TagAssignment, Chunk, Embedding, Job,
-    StyleProfile, RewriteProposal, IndexGeneration, new_uuid, utc_now_iso
+    Document, SourceFile, Answer, AnswerRevision,
+    SourceSpan, Tag, TagAssignment, Job,
+    new_uuid, utc_now_iso
 )
 from core.essay.seed import PROJECT_ROOT, seed_handoff_dir
 
