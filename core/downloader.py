@@ -22,13 +22,18 @@ except ImportError:
 
 DEFAULT_TOPIC = "default"
 
-DEFAULT_ARCHIVE_ROOT = os.path.expanduser(os.environ.get("PAPER_ARCHIVE_ROOT", "~/PaperArchive"))
+DEFAULT_ARCHIVE_ROOT = os.path.expanduser("~/PaperArchive")
+
+
+def archive_root() -> str:
+    """PAPER_ARCHIVE_ROOT when set, read on every call so a changed environment takes effect without a reload."""
+    return os.path.expanduser(os.environ.get("PAPER_ARCHIVE_ROOT") or DEFAULT_ARCHIVE_ROOT)
 
 class ArchiveManager:
     """Manages local storage of academic papers with automatic deduplication, covers, and live file renaming."""
 
     def __init__(self, base_dir: Optional[str] = None):
-        self.base_dir = os.path.abspath(os.path.expanduser(base_dir or DEFAULT_ARCHIVE_ROOT))
+        self.base_dir = os.path.abspath(os.path.expanduser(base_dir or archive_root()))
         self.reports_dir = os.path.join(self.base_dir, "_reports")
         os.makedirs(self.base_dir, exist_ok=True)
         os.makedirs(self.reports_dir, exist_ok=True)

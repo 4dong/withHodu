@@ -330,7 +330,7 @@ class PaperTranslator:
         Sends one request to a Google translate endpoint. 429 and 5xx wait and retry (Retry-After up to 10 s,
         otherwise 1 s then 2 s). The 'sorry' redirect, or a 429 on the last try, blocks Google for
         GOOGLE_COOLDOWN_SECONDS: both endpoints are refused together, so nothing more is sent until then. The
-        deadline lives in core.rate_limit, which survives the module reload app.py does on every run.
+        deadline lives in core.rate_limit, which survives Streamlit reloading this module after an edit.
         """
         if time.time() < rate_limit.google_blocked_until:
             raise GoogleBlockedError()

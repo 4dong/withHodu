@@ -9,7 +9,7 @@ import streamlit as st
 
 from ui.hodu import ASSET, reference_data as _reference_data, motion_toggle
 from ui.hodu_emotions import emotion_html, emotion_script
-from core.downloader import DEFAULT_ARCHIVE_ROOT
+from core.downloader import archive_root
 from core.reading_store import latest_read
 SEARCH_MODE = "🔍 논문 검색"
 LIBRARY_MODE = "📚 나의 서재 (Visual Library & AI 분석)"
@@ -110,7 +110,7 @@ def render_home():
         saved = st.session_state.get("hodu_saved_reader") or {}
         open_bundle = st.session_state.get("current_paper_bundle")
         bundle = open_bundle or saved.get("current_paper_bundle")
-        record = None if bundle else latest_read(DEFAULT_ARCHIVE_ROOT)
+        record = None if bundle else latest_read(archive_root())
         if bundle or record:
             if bundle:
                 page = st.session_state.get("current_page_num") if open_bundle else saved.get("current_page_num")

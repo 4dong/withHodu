@@ -1,64 +1,60 @@
 """Page turns keep reader elements in place, so the previous page never lingers beside the new one."""
 
+import os
 import re
 import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from streamlit.testing.v1 import AppTest
 
-ROOT = Path(__file__).resolve().parents[1]
-
-# Offline reader: temporary archive, no stored keys, local stand-ins for PDF parsing and translation.
-APP = '''
-import os, runpy, sys, time, types
-import streamlit as st
-sys.path.insert(0, __ROOT__)
-os.environ["ESSAY_ARCHIVE_ROOT"] = os.path.join(__ARCHIVE__, "essays")
-app = runpy.run_path(os.path.join(__ROOT__, "app.py"), run_name="reader_page_turn_test")
-import core.downloader
 from core.key_manager import KeyManager
 from core.parser import PaperPDFParser
 from core.translator import PaperTranslator
 from core.visual_highlighter import VisualHighlighter
-core.downloader.DEFAULT_ARCHIVE_ROOT = os.path.join(__ARCHIVE__, "papers")
-KeyManager.get_all_slots = classmethod(lambda cls: [])
-KeyManager.get_active_key = classmethod(lambda cls, *args, **kwargs: ("", None))
-FORMULA_ONLY = __FORMULA_ONLY__
-FAILED_AGE = __FAILED_AGE__
-SLOW = __SLOW__
-# Translation also runs on the prefetch thread, which has no session; count calls per archive in the process.
-REGISTRY = sys.modules.setdefault("reader_page_turn_calls", types.ModuleType("reader_page_turn_calls"))
-CALLS = vars(REGISTRY).setdefault("calls", {}).setdefault(__ARCHIVE__, {})
+from ui.reader import wait_for_prefetch
+
+ROOT = Path(__file__).resolve().parents[1]
+
+# Offline reader: temporary archive, no stored keys, local stand-ins for PDF parsing and translation.
+# The stand-ins are patched per test (and restored) here, not inside the app script, so nothing leaks into
+# the tests that run after these.
+CONFIG = {"formula_only": False, "failed_age": None, "slow": 0}
+CALLS = {}  # page -> translations; the prefetch thread has no session, so the count lives here
 
 
 def offline_page(cls, pdf_path, page_num, output_dir):
     text = f"Page {page_num} compares the method, the experiment, and the result."
     return {"page_num": page_num, "total_pages": 3, "stitched_prefix": "", "image_path": None,
             "blocks": [{"text": text, "bbox": {"top": "10%", "left": "8%", "width": "80%", "height": "6%"},
-                        "kind": "equation" if FORMULA_ONLY else "text"}],
+                        "kind": "equation" if CONFIG["formula_only"] else "text"}],
             "paragraphs": [text], "svg_content": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"></svg>'}
 
 
 def offline_translation(cls, page_data, paper_title="", engine="", custom_api_key=None, custom_prompt=None):
     CALLS[page_data["page_num"]] = CALLS.get(page_data["page_num"], 0) + 1
-    time.sleep(SLOW)
+    time.sleep(CONFIG["slow"])
     blocks = page_data["blocks"]
-    if FORMULA_ONLY:
+    if CONFIG["formula_only"]:
         pairs = [{"id": 1, "en": "", "ko": "", "kind": "equation", "bbox": blocks[0]["bbox"], "image_path": ""}]
     else:
         texts = [block["text"] for block in blocks]
         pairs = VisualHighlighter.align_translation_pairs(texts, ["번역 " + text for text in texts], blocks)
     result = {"page_num": page_data["page_num"], "engine": "offline", "is_fallback": False,
               "target_engine": engine, "pairs": pairs}
-    if FAILED_AGE is not None:
-        result.update(failed_count=1, failure_reason="offline failure", translated_at=time.time() - FAILED_AGE)
+    if CONFIG["failed_age"] is not None:
+        result.update(failed_count=1, failure_reason="offline failure", translated_at=time.time() - CONFIG["failed_age"])
     return result
 
 
-PaperPDFParser.get_single_page_data = classmethod(offline_page)
-PaperTranslator.translate_single_page = classmethod(offline_translation)
+APP = '''
+import os, runpy, sys
+import streamlit as st
+sys.path.insert(0, __ROOT__)
+from tests.test_reader_page_turn import CALLS, CONFIG
+app = runpy.run_path(os.path.join(__ROOT__, "app.py"), run_name="reader_page_turn_test")
 if st.session_state.get("current_paper_bundle") is None:
     st.session_state.hodu_home = False
     st.session_state.current_page_num = 1
@@ -68,7 +64,7 @@ if st.session_state.get("current_paper_bundle") is None:
         "venue": "", "citation_count": 0, "pdf_url": None, "doi": None, "source": "fixture", "url": "",
         "topic": "fixture"}}
 app["main"]()
-if not SLOW:
+if not CONFIG["slow"]:
     app["wait_for_prefetch"]()
 st.session_state.translation_calls = dict(CALLS)
 '''
@@ -90,10 +86,26 @@ def reader_positions(node, path=()):
     return found
 
 
-def offline_app(archive, formula_only=False, failed_age=None, slow=0):
-    return (APP.replace("__ROOT__", repr(str(ROOT))).replace("__ARCHIVE__", repr(archive))
-            .replace("__FORMULA_ONLY__", repr(formula_only)).replace("__FAILED_AGE__", repr(failed_age))
-            .replace("__SLOW__", repr(slow)))
+def offline_app(test, formula_only=False, failed_age=None, slow=0):
+    """Patches the stand-ins for this test (undone at its end) and returns the app script; test.archive is set."""
+    CONFIG.update(formula_only=formula_only, failed_age=failed_age, slow=slow)
+    CALLS.clear()
+    folder = tempfile.TemporaryDirectory()
+    test.addCleanup(folder.cleanup)
+    test.archive = folder.name
+    for patcher in (
+        mock.patch.object(PaperPDFParser, "get_single_page_data", classmethod(offline_page)),
+        mock.patch.object(PaperTranslator, "translate_single_page", classmethod(offline_translation)),
+        mock.patch.object(KeyManager, "get_all_slots", classmethod(lambda cls: [])),
+        mock.patch.object(KeyManager, "get_active_key", classmethod(lambda cls, *args, **kwargs: ("", None))),
+        mock.patch.dict(os.environ, {"PAPER_ARCHIVE_ROOT": os.path.join(folder.name, "papers"),
+                                     "ESSAY_ARCHIVE_ROOT": os.path.join(folder.name, "essays")}),
+    ):
+        patcher.start()
+        test.addCleanup(patcher.stop)
+    # Background translations must finish while the stand-ins are still in place.
+    test.addCleanup(lambda: wait_for_prefetch())
+    return APP.replace("__ROOT__", repr(str(ROOT)))
 
 
 class ReaderPageTurnTests(unittest.TestCase):
@@ -101,88 +113,80 @@ class ReaderPageTurnTests(unittest.TestCase):
         # Page 1 is translated inside the run (loading state); page 2 comes from the prefetch
         # cache. Streamlit matches elements by position across reruns, so any shift leaves the
         # previous page's translation on screen until the run ends.
-        with tempfile.TemporaryDirectory() as archive:
-            at = AppTest.from_string(offline_app(archive), default_timeout=120).run()
-            self.assertFalse(at.exception)
-            first = reader_positions(at.main)
-            self.assertEqual(at.session_state["translation_calls"], {1: 1, 2: 1}, "page 2 should be prefetched")
+        at = AppTest.from_string(offline_app(self), default_timeout=120).run()
+        self.assertFalse(at.exception)
+        first = reader_positions(at.main)
+        self.assertEqual(at.session_state["translation_calls"], {1: 1, 2: 1}, "page 2 should be prefetched")
 
-            at.button(key="reader_next").click().run()
-            self.assertFalse(at.exception)
-            second = reader_positions(at.main)
+        at.button(key="reader_next").click().run()
+        self.assertFalse(at.exception)
+        second = reader_positions(at.main)
 
         self.assertIn("translation_pane", first)
         self.assertEqual(first, second)
 
 
     def test_font_size_survives_page_turn_without_retranslation(self):
-        with tempfile.TemporaryDirectory() as archive:
-            at = AppTest.from_string(offline_app(archive), default_timeout=120).run()
-            at.slider(key="reader_font_size").set_value(24).run()
-            self.assertFalse(at.exception)
-            self.assertEqual(at.session_state["translation_calls"][1], 1)
-            at.button(key="reader_next").click().run()
-            self.assertFalse(at.exception)
-            self.assertEqual(at.slider(key="reader_font_size").value, 24)
-            panes = [m.value for m in at.markdown if 'id="trans-scroll-pane-' in m.value]
-            self.assertTrue(panes)
-            self.assertIn("font-size: 24px", panes[0])
+        at = AppTest.from_string(offline_app(self), default_timeout=120).run()
+        at.slider(key="reader_font_size").set_value(24).run()
+        self.assertFalse(at.exception)
+        self.assertEqual(at.session_state["translation_calls"][1], 1)
+        at.button(key="reader_next").click().run()
+        self.assertFalse(at.exception)
+        self.assertEqual(at.slider(key="reader_font_size").value, 24)
+        panes = [m.value for m in at.markdown if 'id="trans-scroll-pane-' in m.value]
+        self.assertTrue(panes)
+        self.assertIn("font-size: 24px", panes[0])
 
     def test_page_holding_only_formulas_is_translated_once(self):
         # Formula pairs have no text to compare, yet the page counts as translated on the next rerun.
-        with tempfile.TemporaryDirectory() as archive:
-            at = AppTest.from_string(offline_app(archive, formula_only=True), default_timeout=120).run()
-            at.run()
-            self.assertFalse(at.exception)
-            self.assertEqual(at.session_state["translation_calls"][1], 1)
+        at = AppTest.from_string(offline_app(self, formula_only=True), default_timeout=120).run()
+        at.run()
+        self.assertFalse(at.exception)
+        self.assertEqual(at.session_state["translation_calls"][1], 1)
 
     def test_page_with_untranslated_paragraphs_is_translated_again_after_the_wait(self):
-        with tempfile.TemporaryDirectory() as archive:
-            at = AppTest.from_string(offline_app(archive, failed_age=120), default_timeout=120).run()
-            self.assertTrue(any("번역하지 못해" in w.value for w in at.warning))
-            at.run()
-            self.assertFalse(at.exception)
-            self.assertEqual(at.session_state["translation_calls"][1], 2)
+        at = AppTest.from_string(offline_app(self, failed_age=120), default_timeout=120).run()
+        self.assertTrue(any("번역하지 못해" in w.value for w in at.warning))
+        at.run()
+        self.assertFalse(at.exception)
+        self.assertEqual(at.session_state["translation_calls"][1], 2)
 
     def test_pages_read_before_come_back_without_translating_again(self):
         # The session forgets its translations (restart, another paper); the stored pages bring them back.
-        with tempfile.TemporaryDirectory() as archive:
-            at = AppTest.from_string(offline_app(archive), default_timeout=120).run()
-            at.button(key="reader_next").click().run()
-            self.assertEqual(at.session_state["translation_calls"], {1: 1, 2: 1, 3: 1})
-            at.session_state["page_translations"] = {}
-            at.run()
-            self.assertFalse(at.exception)
-            self.assertEqual(at.session_state["translation_calls"], {1: 1, 2: 1, 3: 1})
-            readings = list(Path(archive).glob("papers/*/*/reading.json"))
-            self.assertEqual(len(readings), 1)
-            self.assertIn('"last_page": 2', readings[0].read_text(encoding="utf-8"))
+        at = AppTest.from_string(offline_app(self), default_timeout=120).run()
+        at.button(key="reader_next").click().run()
+        self.assertEqual(at.session_state["translation_calls"], {1: 1, 2: 1, 3: 1})
+        at.session_state["page_translations"] = {}
+        at.run()
+        self.assertFalse(at.exception)
+        self.assertEqual(at.session_state["translation_calls"], {1: 1, 2: 1, 3: 1})
+        readings = list(Path(self.archive).glob("papers/*/*/reading.json"))
+        self.assertEqual(len(readings), 1)
+        self.assertIn('"last_page": 2', readings[0].read_text(encoding="utf-8"))
 
     def test_turning_to_a_page_still_translating_waits_for_it_instead_of_asking_again(self):
-        with tempfile.TemporaryDirectory() as archive:
-            at = AppTest.from_string(offline_app(archive, slow=1.0), default_timeout=120).run()
-            # Page 2 is still being translated in the background when the reader turns to it.
-            at.button(key="reader_next").click().run()
-            self.assertFalse(at.exception)
-            self.assertEqual(at.session_state["translation_calls"].get(2), 1)
-            self.assertIn(2, at.session_state["page_translations"])
+        at = AppTest.from_string(offline_app(self, slow=1.0), default_timeout=120).run()
+        # Page 2 is still being translated in the background when the reader turns to it.
+        at.button(key="reader_next").click().run()
+        self.assertFalse(at.exception)
+        self.assertEqual(at.session_state["translation_calls"].get(2), 1)
+        self.assertIn(2, at.session_state["page_translations"])
 
     def test_toolbar_light_is_red_while_the_next_page_translates_and_green_once_ready(self):
-        with tempfile.TemporaryDirectory() as archive:
-            at = AppTest.from_string(offline_app(archive, slow=1.0), default_timeout=120).run()
-            self.assertTrue(any("h-next-light is-pending" in m.value for m in at.markdown))
-            time.sleep(1.5)
-            at.run()
-            self.assertFalse(at.exception)
-            self.assertTrue(any("h-next-light is-ready" in m.value for m in at.markdown))
+        at = AppTest.from_string(offline_app(self, slow=1.0), default_timeout=120).run()
+        self.assertTrue(any("h-next-light is-pending" in m.value for m in at.markdown))
+        time.sleep(1.5)
+        at.run()
+        self.assertFalse(at.exception)
+        self.assertTrue(any("h-next-light is-ready" in m.value for m in at.markdown))
 
     def test_a_fresh_failure_is_not_requested_again_on_rerun(self):
         # Reruns within FAILED_PAGE_RETRY_SECONDS keep the partial page instead of hitting a limited service.
-        with tempfile.TemporaryDirectory() as archive:
-            at = AppTest.from_string(offline_app(archive, failed_age=0), default_timeout=120).run()
-            at.run()
-            self.assertFalse(at.exception)
-            self.assertEqual(at.session_state["translation_calls"][1], 1)
+        at = AppTest.from_string(offline_app(self, failed_age=0), default_timeout=120).run()
+        at.run()
+        self.assertFalse(at.exception)
+        self.assertEqual(at.session_state["translation_calls"][1], 1)
 
 
 if __name__ == "__main__":

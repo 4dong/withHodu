@@ -3,9 +3,10 @@ Comprehensive Sidebar with Reader Remote Controller, Multi-Engine Selector, and 
 """
 
 import os
+from pathlib import Path
 import streamlit as st
 from typing import Dict, Any, Optional
-from core.downloader import ArchiveManager, DEFAULT_ARCHIVE_ROOT
+from core.downloader import ArchiveManager, archive_root
 from core.key_manager import KeyManager
 from core.translator import PaperTranslator, DEFAULT_ACADEMIC_PROMPT
 from ui.home import go_home, enter_workspace, SEARCH_MODE, LIBRARY_MODE
@@ -25,6 +26,17 @@ PROMPT_PRESETS = {
 1. 모든 수식, 변수, 기호, 첨자, 그리스 문자(예: $\hat{A}^i, \hat{x}_1^i, v_\theta, \lambda_1, \sigma^2, \Delta t$)는 절대로 한글 음역하지 말고 표준 LaTeX `$수식$` 또는 `$$수식$$`으로 정확하게 감싸서 출력할 것.
 2. 모든 전문 용어와 기술 명칭은 원문을 그대로 유지하거나 괄호 병기할 것."""
 }
+
+def _engine_selector():
+    """Translation model picker, shared by the reader and the search screen."""
+    engines = PaperTranslator.SUPPORTED_ENGINES
+    current = st.session_state["selected_translation_engine"]
+    chosen = st.selectbox("번역 모델", options=engines, index=engines.index(current) if current in engines else 0,
+                          format_func=engine_label)
+    # No st.rerun(): the reader sees the new engine later in this same run and drops its pages.
+    # Stopping the run here would skip the page body, and Streamlit then forgets its widgets' values.
+    st.session_state["selected_translation_engine"] = chosen
+
 
 def render_sidebar(
     archive_mgr: ArchiveManager,
@@ -96,19 +108,7 @@ def render_sidebar(
                 st.session_state["current_page_num"] = selected_page
                 st.rerun()
 
-            cur_idx = 0
-            if st.session_state["selected_translation_engine"] in PaperTranslator.SUPPORTED_ENGINES:
-                cur_idx = PaperTranslator.SUPPORTED_ENGINES.index(st.session_state["selected_translation_engine"])
-
-            chosen_engine = st.selectbox(
-                "번역 모델",
-                options=PaperTranslator.SUPPORTED_ENGINES,
-                index=cur_idx,
-                format_func=engine_label,
-            )
-            # No st.rerun(): the reader sees the new engine later in this same run and drops its pages.
-            # Stopping the run here would skip the page body, and Streamlit then forgets its widgets' values.
-            st.session_state["selected_translation_engine"] = chosen_engine
+            _engine_selector()
 
             # Re-translate Current Page Button
             if st.button("현재 페이지 다시 번역", use_container_width=True, help="선택한 모델과 프롬프트로 이 페이지를 다시 번역합니다."):
@@ -119,29 +119,19 @@ def render_sidebar(
 
             # PDF Download
             if active_pdf_path and os.path.exists(active_pdf_path):
-                with open(active_pdf_path, "rb") as pf:
-                    st.download_button(
-                        "원문 PDF 다운로드",
-                        data=pf.read(),
-                        file_name="paper.pdf",
-                        mime="application/pdf",
-                        use_container_width=True
-                    )
+                # Read only when clicked: passing bytes would load the whole PDF on every rerun.
+                st.download_button(
+                    "원문 PDF 다운로드",
+                    data=lambda: Path(active_pdf_path).read_bytes(),
+                    file_name="paper.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
 
         st.sidebar.divider()
     else:
-        # Model Selector on initial search screen
-        cur_idx = 0
-        if st.session_state["selected_translation_engine"] in PaperTranslator.SUPPORTED_ENGINES:
-            cur_idx = PaperTranslator.SUPPORTED_ENGINES.index(st.session_state["selected_translation_engine"])
-
-        chosen_engine = st.sidebar.selectbox(
-            "번역 모델",
-            options=PaperTranslator.SUPPORTED_ENGINES,
-            index=cur_idx,
-            format_func=engine_label,
-        )
-        st.session_state["selected_translation_engine"] = chosen_engine
+        with st.sidebar:
+            _engine_selector()
 
     # 3. Universal LLM Prompt Customizer (Exposed for fine-tuning translation behavior)
     with st.sidebar.expander("번역 프롬프트", expanded=False):
@@ -230,15 +220,12 @@ def render_sidebar(
 
     config = {
         "mode": mode,
-        "query": "",
         "max_results": 5,
-        "archive_dir": DEFAULT_ARCHIVE_ROOT,
+        "archive_dir": archive_root(),
         "selected_engine": active_engine,
         "api_key": active_api_key,
         "active_slot": active_slot,
         "custom_prompt": st.session_state.get("custom_llm_prompt", DEFAULT_ACADEMIC_PROMPT),
-        "selected_archived_paper": None,
-        "trigger_search": False
     }
 
     if mode == "🔍 논문 검색":

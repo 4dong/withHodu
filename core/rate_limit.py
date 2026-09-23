@@ -1,6 +1,6 @@
 """
-Process-wide state for rate-limited services. app.py reloads core.translator on every run, which would reset a
-class attribute; this module is not reloaded, so a block recorded on one run still holds on the next.
+Process-wide state for rate-limited services. Streamlit reloads core.translator when its file changes, which
+would reset a class attribute; this module rarely changes, so a recorded block survives those reloads.
 """
 
 # Until this time (time.time()), requests to Google's free translate endpoints are not sent.

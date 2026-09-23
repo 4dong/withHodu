@@ -126,7 +126,7 @@ class GoogleBatchTests(unittest.TestCase):
         self.assertEqual(result["failed_count"], 2)
         self.assertGreater(rate_limit.google_blocked_until, 0)
 
-    def test_a_block_outlives_the_module_reload_app_py_does_each_run(self):
+    def test_a_block_outlives_a_reload_of_the_translator_module(self):
         self.use(lambda query, n: http_error(302))
         PaperTranslator.translate_single_page(page("One."), engine=GOOGLE)
         reloaded = importlib.reload(core.translator).PaperTranslator
