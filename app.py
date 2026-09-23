@@ -260,6 +260,19 @@ def prefetch_page(store: ReadingStore, pdf_path: str, page: int, paper_title: st
                                                    paper_title, engine, api_key, custom_prompt), now)
 
 
+def next_page_status(store: ReadingStore, page: int, total_pages: int, engine: str,
+                     custom_prompt: Optional[str]) -> str:
+    """'pending' while the page translates in the background, 'ready' once it can open at once, else 'none'."""
+    if page > total_pages:
+        return "none"
+    state = _prefetch_state()
+    with state["lock"]:
+        job = state["jobs"].get(_prefetch_key(store, page, engine, custom_prompt))
+    if job and not job[0].done():
+        return "pending"
+    return "ready" if job or store.load_page(page, engine, custom_prompt) else "none"
+
+
 def claim_prefetch(store: ReadingStore, page: int, engine: str, custom_prompt: Optional[str]) -> Optional[Future]:
     with _prefetch_state()["lock"]:
         job = _prefetch_state()["jobs"].pop(_prefetch_key(store, page, engine, custom_prompt), None)
@@ -629,6 +642,14 @@ def render_active_paper_view(archive_mgr: ArchiveManager, sidebar_config: Dict[s
     elif page_trans.get("from_store") and page_trans.get("stored_tier", 0) > engine_tier(selected_engine):
         status_slot.caption(f"🔖 전에 저장해 둔 {tier_label(page_trans['stored_tier'])} 번역이에요. 새로 번역하지 않았어요.")
 
+    # The next page translates in the background into the store; turning the page never waits on it.
+    # Started before the reader draws so the toolbar light shows it from the first frame.
+    try:
+        if st.session_state.get("auto_translate_mode", True) and (current_page + 1 <= total_pages):
+            prefetch_page(store, pdf_path, current_page + 1, paper.title, selected_engine, api_key, custom_prompt)
+    except Exception:
+        pass  # The current page remains usable; the next page can retry when opened.
+
     # Render Moonlight 3:1 Split Screen with integrated action bar & Draggable AI Chatbot
     render_moonlight_split_page_reader(
         paper=paper,
@@ -637,16 +658,9 @@ def render_active_paper_view(archive_mgr: ArchiveManager, sidebar_config: Dict[s
         page_data=page_data,
         page_translation=page_trans,
         pdf_path=pdf_path,
-        api_key=api_key
+        api_key=api_key,
+        next_page_status=lambda: next_page_status(store, current_page + 1, total_pages, selected_engine, custom_prompt),
     )
-
-    try:
-        # The next page translates in the background into the store; turning the page never waits on it.
-        if st.session_state.get("auto_translate_mode", True) and (current_page + 1 <= total_pages):
-            prefetch_page(store, pdf_path, current_page + 1, paper.title, selected_engine, api_key, custom_prompt)
-
-    except Exception:
-        pass  # The current page remains usable; the next page can retry when opened.
 
 
 if __name__ == "__main__":

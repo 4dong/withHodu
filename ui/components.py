@@ -8,7 +8,7 @@ import inspect
 import html
 from pathlib import Path
 import streamlit as st
-from typing import Dict, Any, Optional
+from typing import Callable, Dict, Any, Optional
 from core.searcher import Paper
 from core.math_formatter import AcademicMathFormatter
 from core.visual_highlighter import VisualHighlighter
@@ -219,6 +219,31 @@ CLIENT_CONTROLLER_JS = """
 })();
 """
 
+_LIGHT_TITLES = {"pending": "다음 쪽 번역 중", "ready": "다음 쪽 준비됨"}
+
+
+def _light_html(status: str) -> str:
+    title = _LIGHT_TITLES.get(status)
+    if not title:
+        return '<span class="h-next-light" aria-hidden="true"></span>'
+    return f'<span class="h-next-light is-{status}" role="img" title="{title}" aria-label="{title}"></span>'
+
+
+@st.fragment(run_every=1.0)
+def _next_page_light_polling(status_fn: Callable[[], str]):
+    """Reruns only this dot each second until the background translation of the next page lands."""
+    st.markdown(_light_html(status_fn()), unsafe_allow_html=True, width="content")
+
+
+def _next_page_light(status_fn: Optional[Callable[[], str]]):
+    status = status_fn() if status_fn else "none"
+    if status == "pending":
+        _next_page_light_polling(status_fn)
+    else:
+        # Same element slot on every run keeps the toolbar positions stable across page turns.
+        st.markdown(_light_html(status), unsafe_allow_html=True, width="content")
+
+
 def render_moonlight_split_page_reader(
     paper: Paper,
     current_page: int,
@@ -226,7 +251,8 @@ def render_moonlight_split_page_reader(
     page_data: Dict[str, Any],
     page_translation: Dict[str, Any],
     pdf_path: Optional[str],
-    api_key: Optional[str] = None
+    api_key: Optional[str] = None,
+    next_page_status: Optional[Callable[[], str]] = None
 ):
     """
     Renders the split reader:
@@ -256,6 +282,7 @@ def render_moonlight_split_page_reader(
         if st.button("다음", key="reader_next", help="다음 페이지", disabled=current_page >= total_pages):
             st.session_state.current_page_num = current_page + 1
             st.rerun()
+        _next_page_light(next_page_status)
         view_mode = st.segmented_control("읽기 방식", ["대역", "원문", "번역"], default="대역", required=True,
                                          key="reader_view", label_visibility="collapsed", width="content")
 

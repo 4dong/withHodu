@@ -33,6 +33,15 @@ CUSTOM_CSS = """
         margin: 0; min-width: 64px; text-align: center; font-size: 13px; color: var(--ap-muted);
         white-space: nowrap; font-variant-numeric: tabular-nums;
     }
+    /* Next page's background translation: red while it runs, green once it is ready. */
+    .h-next-light {
+        display: inline-block; width: 6px; height: 6px; margin: 0 2px 0 -4px; border-radius: 50%;
+        vertical-align: middle; background: transparent;
+    }
+    .h-next-light.is-pending { background: #D9534F; animation: h-next-light-pulse 1.2s ease-in-out infinite; }
+    .h-next-light.is-ready { background: #2F9E5B; }
+    @keyframes h-next-light-pulse { 50% { opacity: .35; } }
+    @media (prefers-reduced-motion: reduce) { .h-next-light.is-pending { animation: none; } }
     .stApp .st-key-reader_toolbar [data-testid="stRadio"] { margin: 0 6px; }
     .stApp .st-key-reader_toolbar [data-testid="stRadio"] label { padding: 0; }
 
